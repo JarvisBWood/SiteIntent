@@ -1,0 +1,70 @@
+SITE INTENT PHASE 2 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Implement account access, project creation, and onboarding.
+- Get the user from first visit to a live SiteIntent project.
+
+Primary Outcome
+- A user can sign in, create a project, enter a website URL, optionally add competitors, and start the first scan.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- The dashboard shell and onboarding patterns from `/Users/jarvis/Documents/GitHub/ConversionBoosterExample`.
+- Existing auth and setup flows in the reference app:
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/app/sign-in/page.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/setup-wizard-modal.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/setup-site-create-form.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/dashboard-shell.tsx`
+
+Build requirements
+- Keep onboarding short and focused.
+- Capture only the fields needed by the spec.
+- Make empty states and first-run states feel intentional, not broken.
+- Ensure project creation is possible before any crawl or analysis runs.
+
+Implementation order
+1. Set up sign-in and session handling.
+2. Add project storage and active-project selection.
+3. Build the onboarding form.
+4. Add validation and helpful errors.
+5. Add first-run and empty states.
+6. Connect onboarding completion to the next phase placeholder scan action.
+
+Detailed instructions
+- Implement auth in the same general way as the reference app if the repo architecture supports it.
+- Create a project model that stores at minimum:
+  - project name
+  - website URL
+  - competitor URLs
+  - scan depth
+  - include sitemap flag
+  - include llms.txt flag
+  - created/updated timestamps
+- Build the onboarding screen so it asks for:
+  - Website URL required
+  - Competitor URLs optional, maximum 3
+  - Scan depth defaulting to 100 pages
+  - Include sitemap enabled by default
+  - Include llms.txt enabled by default
+- Provide a clear next-step action once onboarding is complete:
+  - either start the scan immediately
+  - or send the user to the dashboard with a visible scan action
+- Make sure any project-switching or selection logic is simple and predictable.
+- Preserve the shell and styling from Phase 1.
+
+Deliverables
+- Auth and session flow.
+- Project creation flow.
+- Onboarding form and validation.
+- Empty states for users with no project.
+- A clear post-onboarding handoff.
+
+Verification
+- A new user can create a project without needing extra setup.
+- The onboarding form blocks invalid website input.
+- Optional competitor URLs do not fail the flow when left blank.
+- The app remains usable if no project exists yet.
+
+Definition of done
+- The user can reach a real project state and is ready to scan.

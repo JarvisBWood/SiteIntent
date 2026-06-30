@@ -1,0 +1,58 @@
+SITE INTENT PHASE 6 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Finish the settings area and harden the product.
+- Prepare the codebase for a future Cloudflare deployment without forcing that migration now.
+
+Primary Outcome
+- The app is stable, configurable, and ready to move from local-first development toward production hosting later.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- Any settings architecture or deployment patterns already present in the repo.
+- The reference app’s general settings layout and operational controls in `/Users/jarvis/Documents/GitHub/ConversionBoosterExample`.
+
+Build requirements
+- Keep the settings surface practical and minimal.
+- Add error handling, loading states, and empty states where the app still feels rough.
+- Add test coverage around the crawl and analysis pipeline.
+- Do not introduce Cloudflare complexity earlier than needed.
+
+Implementation order
+1. Build the settings section.
+2. Add scan controls and rerun actions.
+3. Add project configuration controls.
+4. Polish loading and empty states.
+5. Add validation and regression tests.
+6. Review the app for future Cloudflare deployment readiness.
+
+Detailed instructions
+- Implement settings for the project and scan workflow as needed by the earlier phases.
+- Include controls for data retention or project-level options if they are already part of the product by this point.
+- Make the UX consistent with the rest of the dashboard shell and card system.
+- Improve any rough edge that would make the app feel unfinished:
+  - skeleton states
+  - optimistic or pending states
+  - error banners
+  - empty state illustrations or panels
+- Add tests for:
+  - crawl discovery
+  - page analysis parsing
+  - recommendation generation rules
+  - target intent editing behavior
+- Make sure the codebase is still local-first and Ollama-backed by default.
+
+Deliverables
+- Settings page and controls.
+- Better loading/error/empty states.
+- Test coverage for core workflow logic.
+- Cloudflare deployment readiness notes or prep work.
+
+Verification
+- Settings are usable without special-case knowledge.
+- The app feels coherent and stable across all major surfaces.
+- Nothing in the structure blocks a later Cloudflare rollout.
+
+Definition of done
+- The product is complete enough to operate locally and to transition later.

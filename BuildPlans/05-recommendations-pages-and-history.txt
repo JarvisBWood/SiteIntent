@@ -1,0 +1,41 @@
+SiteIntent Build Phase 5: Recommendations, Pages, and Scan History
+
+Goal
+- Deliver the main working dashboard areas that users will live in after onboarding.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Make the recommendations actionable and traceable over time.
+
+Scope
+- Dashboard overview.
+- Pages screen with:
+  - URL
+  - intent
+  - contribution
+  - confidence
+  - updated
+- Page detail view with:
+  - summary
+  - raw JSON
+  - history
+  - recommendations
+- Recommendation generation limited to:
+  - CHANGE
+  - REMOVE
+  - ADD
+- Scan history with change comparison and metric deltas.
+
+Planned Sections
+- Dashboard overview
+- Pages
+- Recommendations
+- Scan history
+
+Deliverables
+- Dashboard pages wired to real data.
+- Recommendation cards or tables that stay focused on the three allowed action types.
+- History views that show what changed between scans.
+
+Acceptance Criteria
+- The user can review recommendations and see where they came from.
+- The pages screen makes it obvious which pages matter most.
+- Scan history explains change over time instead of just showing raw runs.

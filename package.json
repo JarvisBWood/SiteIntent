@@ -1,0 +1,34 @@
+{
+  "name": "site-intent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "research:category-top10": "node scripts/run-category-top10-scan.mjs",
+    "research:discovery-sources": "node scripts/analyze-discovery-sources.mjs",
+    "research:discovery-source-audit": "node scripts/run-discovery-source-audit.mjs",
+    "research:top10-comparison": "node scripts/analyze-top10-comparison.mjs",
+    "research:factor-pilot": "node scripts/run-factor-validation-pilot.mjs",
+    "research:ai-rankings": "node scripts/run-ai-ranking-research.mjs",
+    "research:visitor-management-top10": "node scripts/run-visitor-management-top10-scan.mjs",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "lucide-react": "^0.577.0",
+    "next": "^16.2.9",
+    "openai": "^6.45.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "typescript": "^5.9.2"
+  }
+}

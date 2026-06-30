@@ -1,0 +1,38 @@
+SiteIntent Build Phase 1: Foundation and Dashboard Shell
+
+Goal
+- Establish the repo structure, local dev baseline, and the customer dashboard shell.
+- Mirror the ConversionBooster dashboard framework for layout, styling, responsive behavior, and navigation patterns.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Keep the app local-first with Ollama as the default LLM backend for now.
+
+Scope
+- Define the main app structure and routes for the customer experience.
+- Set up the shared dashboard shell, sidebar, top-level content area, and mobile behavior.
+- Establish theme tokens, typography, spacing, and visual language to match ConversionBooster closely.
+- Create the first-pass navigation map for Site Intent sections.
+- Wire in a local Ollama integration layer stub so later phases can call it without reworking the app structure.
+
+Planned Sections
+- Dashboard overview
+- Projects
+- Pages
+- Competitors
+- Category model
+- Target intent model
+- Recommendations
+- Scan history
+- Settings
+
+Deliverables
+- Root app scaffolding ready for feature work.
+- Shared dashboard layout component.
+- Sidebar navigation component with the Site Intent section names.
+- Global styles that reuse the same customer-dashboard feel as ConversionBooster.
+- LLM provider abstraction with Ollama as the initial implementation target.
+
+Acceptance Criteria
+- The dashboard opens with the same general shell pattern as ConversionBooster.
+- Layout works on desktop and mobile.
+- Navigation is in place even if the pages are placeholders at first.
+- The app can be run locally without Cloudflare dependencies for core UI work.

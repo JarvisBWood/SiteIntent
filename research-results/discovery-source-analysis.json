@@ -1,0 +1,3635 @@
+{
+  "generated_at": "2026-06-28T23:01:54.196Z",
+  "model": "gpt-5-mini",
+  "datasets": [
+    {
+      "category": "visitor management system",
+      "source_file": "visitor-management-top10-scan.json",
+      "generated_at": "2026-06-28T22:05:41.555Z",
+      "requested_model": "gpt-5-mini",
+      "canonical_candidates": [
+        {
+          "canonical_rank": 1,
+          "name": "Sine (Sine by Honeywell)",
+          "website": "https://www.sine.co",
+          "appearance_count": 5,
+          "average_rank": 1.2,
+          "source_count": 8,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Sine – product / visitor management",
+              "source_domain": "sine.co",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sine.co/",
+              "influence": "high",
+              "evidence_found": "Official product pages describing visitor and contractor management and company positioning; clearly Australian roots noted on About pages.",
+              "candidate_rank": 1,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Sine – About (Honeywell / Adelaide origin)",
+              "source_domain": "sine.co",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sine.co/about/",
+              "influence": "high",
+              "evidence_found": "About page describing origins in Adelaide, Australia and current Honeywell affiliation.",
+              "candidate_rank": 1,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Sine — official product site",
+              "source_domain": "sine.co",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sine.co/",
+              "influence": "high",
+              "evidence_found": "Product pages describe Visitor and Contractor Management, badge printing, evacuation roll-call and show AUS contact numbers and Australian case studies.",
+              "candidate_rank": 1,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Sine – About",
+              "source_domain": "sine.co",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sine.co/about/",
+              "influence": "high",
+              "evidence_found": "States Adelaide (Australia) HQ, describes visitor & contractor management features and Honeywell relationship.",
+              "candidate_rank": 1,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Sine – Visitor Management FAQs / product",
+              "source_domain": "sine.co",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sine.co/visitor-management-faqs/",
+              "influence": "high",
+              "evidence_found": "Product FAQ and feature descriptions (visitor, contractor, check-in, AWS Sydney hosting region).",
+              "candidate_rank": 1,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 2,
+          "name": "SwipedOn",
+          "website": "https://www.swipedon.com",
+          "appearance_count": 5,
+          "average_rank": 2.2,
+          "source_count": 9,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "SwipedOn – Visitor management product page",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.swipedon.com/visitor-management",
+              "influence": "high",
+              "evidence_found": "Product page listing visitor sign-in, host notifications, badge printing, Australian case studies and feature set.",
+              "candidate_rank": 1,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "SwipedOn – Homepage / brand",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.swipedon.com/",
+              "influence": "high",
+              "evidence_found": "Company homepage referencing product, App Store links, and Aus customer examples.",
+              "candidate_rank": 1,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "SwipedOn – official product site",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.swipedon.com/",
+              "influence": "high",
+              "evidence_found": "Product pages describing visitor sign-in, kiosk apps and mentions of APAC/global customers and use cases.",
+              "candidate_rank": 2,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "SwipedOn – Visitor Management product page",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.swipedon.com/visitor-management",
+              "influence": "high",
+              "evidence_found": "Product page describing visitor sign-in, QR code options, host notifications and use cases.",
+              "candidate_rank": 2,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "SwipedOn official homepage (redirect/announcement)",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.swipedon.com/",
+              "influence": "high",
+              "evidence_found": "Homepage indicates SwipedOn is now part of Sign In App and describes visitor sign-in, desk/resource booking and evacuation features.",
+              "candidate_rank": 3,
+              "prompt_variation": 2
+            }
+          ]
+        },
+        {
+          "canonical_rank": 3,
+          "name": "Envoy",
+          "website": "https://envoy.com/",
+          "appearance_count": 5,
+          "average_rank": 3.8,
+          "source_count": 10,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Envoy — official site (homepage)",
+              "source_domain": "envoy.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://envoy.com/",
+              "influence": "high",
+              "evidence_found": "Core visitor-management product pages (Visitors) describing secure check-in, audits, host notifications and global/enterprise features.",
+              "candidate_rank": 2,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Envoy – Vendor homepage",
+              "source_domain": "envoy.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.envoy.com/",
+              "influence": "high",
+              "evidence_found": "Corporate/product homepage describing visitor management product, enterprise use cases and integrations.",
+              "candidate_rank": 3,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Envoy – Visitor management product page",
+              "source_domain": "envoy.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.envoy.com/visitor-management-system",
+              "influence": "high",
+              "evidence_found": "Product page detailing visitor check-in, security/compliance and multi-site management features.",
+              "candidate_rank": 3,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Envoy – official site / product overview",
+              "source_domain": "envoy.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.envoy.com/",
+              "influence": "high",
+              "evidence_found": "Corporate product pages describing visitor management, enterprise features and integrations.",
+              "candidate_rank": 4,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Envoy – Visitor management product page",
+              "source_domain": "envoy.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://envoy.com/visitor-management-system",
+              "influence": "high",
+              "evidence_found": "Detailed visitor-management feature list and enterprise positioning.",
+              "candidate_rank": 4,
+              "prompt_variation": 1
+            }
+          ]
+        },
+        {
+          "canonical_rank": 4,
+          "name": "Proxyclick (now Eptura Visitor)",
+          "website": "https://eptura.com/proxyclick/",
+          "appearance_count": 5,
+          "average_rank": 5.4,
+          "source_count": 10,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Eptura (Proxyclick) – Proxyclick / Visitor product page",
+              "source_domain": "eptura.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://eptura.com/proxyclick/",
+              "influence": "high",
+              "evidence_found": "Official redirect/brand page showing Proxyclick’s visitor product (now Eptura Visitor) with product resources and support links.",
+              "candidate_rank": 4,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Eptura – Proxyclick (Visitor) product page",
+              "source_domain": "eptura.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://eptura.com/proxyclick/",
+              "influence": "high",
+              "evidence_found": "Official product page (Proxyclick → Eptura Visitor) describing visitor workflows, integrations and customer success stories.",
+              "candidate_rank": 5,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Proxyclick — official site (redirect to Eptura Proxyclick page)",
+              "source_domain": "proxyclick.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.proxyclick.com/",
+              "influence": "high",
+              "evidence_found": "Official vendor domain redirects to Eptura/Proxyclick product pages describing enterprise visitor management capabilities.",
+              "candidate_rank": 6,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Proxyclick (Eptura) - proxyclick product page",
+              "source_domain": "eptura.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://eptura.com/proxyclick/",
+              "influence": "high",
+              "evidence_found": "Official Proxyclick product presence on Eptura site following corporate changes; documents Proxyclick features and enterprise positioning.",
+              "candidate_rank": 7,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Proxyclick press/brand mention",
+              "source_domain": "proxyclick.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.proxyclick.com/",
+              "influence": "medium",
+              "evidence_found": "Redirects to Eptura Visitor; legacy Proxyclick brand presence and product/account links available.",
+              "candidate_rank": 4,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 5,
+          "name": "WhosOnLocation (OnLocation / MRI OnLocation)",
+          "website": "https://www.whosonlocation.com",
+          "appearance_count": 4,
+          "average_rank": 3.8,
+          "source_count": 8,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "WhosOnLocation – help & product docs",
+              "source_domain": "helpdesk.whosonlocation.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://helpdesk.whosonlocation.com/",
+              "influence": "high",
+              "evidence_found": "Feature documentation for visitor, contractor and evacuation management — confirms product scope and enterprise features.",
+              "candidate_rank": 3,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "MRI OnLocation – OnLocation product (WhosOnLocation) AU page",
+              "source_domain": "mrisoftware.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.mrisoftware.com/au/products/onlocation/",
+              "influence": "high",
+              "evidence_found": "Regional product page describing OnLocation (WhosOnLocation) people presence, visitor, contractor and evacuation features for Australia.",
+              "candidate_rank": 3,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "WhosOnLocation – Help / product documentation",
+              "source_domain": "helpdesk.whosonlocation.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://helpdesk.whosonlocation.com/hc/en-us/articles/6270008529945-Introducing-MRI-OnLocation",
+              "influence": "high",
+              "evidence_found": "Official helpdesk/product docs and portal links showing product capabilities and account/login endpoints.",
+              "candidate_rank": 5,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "MRI OnLocation product page (WhosOnLocation product pages)",
+              "source_domain": "mrisoftware.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.mrisoftware.com/ca/products/onlocation/",
+              "influence": "high",
+              "evidence_found": "Product information confirming WhosOnLocation (OnLocation) capabilities for visitor/contractor management and presence tracking.",
+              "candidate_rank": 4,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "WhosOnLocation – Help/Feature list",
+              "source_domain": "helpdesk.whosonlocation.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://helpdesk.whosonlocation.com/hc/en-us/article_attachments/21608443562393",
+              "influence": "medium",
+              "evidence_found": "Detailed feature list (pre-registration, OnPass, evacuation/mustering and device/kiosk capabilities).",
+              "candidate_rank": 3,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 6,
+          "name": "Traction Guest",
+          "website": "https://www.tractionguest.com",
+          "appearance_count": 3,
+          "average_rank": 6.3,
+          "source_count": 5,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Traction Guest / Sign In Solutions – Official site (redirect)",
+              "source_domain": "tractionguest.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://tractionguest.com/",
+              "influence": "high",
+              "evidence_found": "Official site/redirect showing product pages for enterprise visitor management, compliance workflows and global deployments.",
+              "candidate_rank": 6,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Traction Guest — official site (redirect)",
+              "source_domain": "tractionguest.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://tractionguest.com/",
+              "influence": "high",
+              "evidence_found": "Domain redirects/announces Sign In Enterprise / Sign In Solutions; confirms enterprise visitor-management product lineage and capabilities.",
+              "candidate_rank": 7,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Traction Guest – corporate press & product descriptions",
+              "source_domain": "businesswire.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.businesswire.com/news/home/20200611005803/en/Traction-Guest-Announces-Visitor-and-Employee-Management-System-on-Salesforce-AppExchange-Extending-the-Power-of-Work.com",
+              "influence": "medium",
+              "evidence_found": "Press releases describing Traction Guest’s enterprise capabilities and integrations (Salesforce AppExchange) and global deployments.",
+              "candidate_rank": 6,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Traction Guest – BusinessWire announcement / product positioning",
+              "source_domain": "businesswire.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.businesswire.com/news/home/20200611005803/en/Traction-Guest-Announces-Visitor-and-Employee-Management-System-on-Salesforce-AppExchange-Extending-the-Power-of-Work.com",
+              "influence": "medium",
+              "evidence_found": "Press release and product positioning for enterprise visitor & employee management capabilities (supports large-scale/regulatory use cases).",
+              "candidate_rank": 6,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Traction Guest – product/feature announcements",
+              "source_domain": "prnewswire.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.prnewswire.com/news-releases/traction-guest-launches-first-integrated-parking-management-module-for-visitor-management-300812103.html",
+              "influence": "low",
+              "evidence_found": "Product expansion announcements showing enterprise feature set.",
+              "candidate_rank": 6,
+              "prompt_variation": 1
+            }
+          ]
+        },
+        {
+          "canonical_rank": 7,
+          "name": "Sign In App (includes SwipedOn integration)",
+          "website": "https://signinapp.com/",
+          "appearance_count": 2,
+          "average_rank": 4.5,
+          "source_count": 4,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Sign In App - homepage",
+              "source_domain": "signinapp.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://signinapp.com/",
+              "influence": "high",
+              "evidence_found": "Main product pages describing visitor sign-in, contactless options, evacuation lists, NDAs and multi-site management.",
+              "candidate_rank": 2,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "SwipedOn -> Sign In App announcement / redirect",
+              "source_domain": "swipedon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.swipedon.com/",
+              "influence": "medium",
+              "evidence_found": "SwipedOn homepage redirects to Sign In App and notes the combined platform, supporting inclusion for Australian businesses.",
+              "candidate_rank": 2,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Sign In App – Vendor homepage",
+              "source_domain": "signinapp.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://signinapp.com/",
+              "influence": "high",
+              "evidence_found": "Official product pages and feature list describing visitor/employee sign-in, compliance, multi-site and integrations.",
+              "candidate_rank": 7,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Sign In App – App Store (Australia) listing",
+              "source_domain": "apps.apple.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://apps.apple.com/au/app/sign-in-app-visitor-management/id890807979",
+              "influence": "medium",
+              "evidence_found": "Australian App Store listing demonstrating active availability and AU-focused distribution.",
+              "candidate_rank": 7,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 8,
+          "name": "VisitUs (VisitUs Reception)",
+          "website": "https://visit-us.com/",
+          "appearance_count": 2,
+          "average_rank": 5.5,
+          "source_count": 4,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "VisitUs — official site",
+              "source_domain": "visit-us.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://visit-us.com/",
+              "influence": "high",
+              "evidence_found": "Product pages describe contactless sign-in, pre-registration, evacuation management and real-time on-site visibility for Australian organisations.",
+              "candidate_rank": 5,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "VisitUs – Vendor homepage",
+              "source_domain": "visit-us.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://visit-us.com/",
+              "influence": "high",
+              "evidence_found": "Homepage and product pages describing Australian-focused visitor management, integrations, use-cases and ABN/company details.",
+              "candidate_rank": 6,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "VisitUs — Terms & Conditions (Australia)",
+              "source_domain": "visit-us.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://visit-us.com/terms-and-conditions/",
+              "influence": "medium",
+              "evidence_found": "Terms show VisitUs Reception Pty Ltd is governed by New South Wales law (confirms Australian HQ/legal presence).",
+              "candidate_rank": 5,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "VisitUs – Security / admin PDF",
+              "source_domain": "admin.visit-us.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://admin.visit-us.com.au/VisitUs%20-%20Overview.pdf",
+              "influence": "medium",
+              "evidence_found": "Security summary and admin documentation confirming product features and data hosting details relevant to Australian customers.",
+              "candidate_rank": 6,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 9,
+          "name": "ScanIn (ScanIn.com.au)",
+          "website": "https://scanin.com.au/",
+          "appearance_count": 2,
+          "average_rank": 6,
+          "source_count": 3,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "ScanIn - homepage",
+              "source_domain": "scanin.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://scanin.com.au/",
+              "influence": "high",
+              "evidence_found": "Australian domain homepage describing QR check-in, visitor/contractor workflows, local pricing and features targeted at Australian customers.",
+              "candidate_rank": 4,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "ScanIn – Vendor homepage",
+              "source_domain": "scanin.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://scanin.com.au/",
+              "influence": "high",
+              "evidence_found": "Homepage and product pages showing QR code sign-in, contractor workflows and Australian contact info.",
+              "candidate_rank": 8,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "ScanIn – About / Privacy pages",
+              "source_domain": "scanin.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://scanin.com.au/about.html",
+              "influence": "medium",
+              "evidence_found": "About and privacy pages indicating Australian operations and product use-cases (construction, manufacturing).",
+              "candidate_rank": 8,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 10,
+          "name": "OchreKiosk",
+          "website": "https://ochrekiosk.com.au/",
+          "appearance_count": 2,
+          "average_rank": 7,
+          "source_count": 2,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "OchreKiosk - homepage",
+              "source_domain": "ochrekiosk.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://ochrekiosk.com.au/",
+              "influence": "high",
+              "evidence_found": "Product pages stating 'Built for Australia', Australian-focused feature set (SMS alerts, key tracking, Australian hosting), pricing and local use-cases.",
+              "candidate_rank": 5,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "OchreKiosk – Vendor homepage",
+              "source_domain": "ochrekiosk.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://ochrekiosk.com.au/",
+              "influence": "high",
+              "evidence_found": "Official site noting Australian focus, ABN, features (kiosk/mobile sign-in), pricing and data processed on Australian infrastructure.",
+              "candidate_rank": 9,
+              "prompt_variation": 4
+            }
+          ]
+        }
+      ],
+      "common_sources": {
+        "by_domain": [
+          {
+            "key": "sine.co",
+            "source_domain": "sine.co",
+            "inferred_source_type": "official_site",
+            "appearances": 8,
+            "weighted_score": 133.2,
+            "high_influence_count": 6,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official product pages describing visitor and contractor management and company positioning; clearly Australian roots noted on About pages.",
+              "About page describing origins in Adelaide, Australia and current Honeywell affiliation.",
+              "Product pages describe Visitor and Contractor Management, badge printing, evacuation roll-call and show AUS contact numbers and Australian case studies."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "envoy.com",
+            "source_domain": "envoy.com",
+            "inferred_source_type": "official_site",
+            "appearances": 10,
+            "weighted_score": 131,
+            "high_influence_count": 7,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Core visitor-management product pages (Visitors) describing secure check-in, audits, host notifications and global/enterprise features.",
+              "Corporate/product homepage describing visitor management product, enterprise use cases and integrations.",
+              "Product page detailing visitor check-in, security/compliance and multi-site management features."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "swipedon.com",
+            "source_domain": "swipedon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 9,
+            "weighted_score": 122.6,
+            "high_influence_count": 6,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Product page listing visitor sign-in, host notifications, badge printing, Australian case studies and feature set.",
+              "Company homepage referencing product, App Store links, and Aus customer examples.",
+              "Product pages describing visitor sign-in, kiosk apps and mentions of APAC/global customers and use cases."
+            ],
+            "supported_categories_count": 2,
+            "supported_websites_count": 2
+          },
+          {
+            "key": "eptura.com",
+            "source_domain": "eptura.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 44.9,
+            "high_influence_count": 3,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official redirect/brand page showing Proxyclick’s visitor product (now Eptura Visitor) with product resources and support links.",
+              "Official product page (Proxyclick → Eptura Visitor) describing visitor workflows, integrations and customer success stories.",
+              "Official Proxyclick product presence on Eptura site following corporate changes; documents Proxyclick features and enterprise positioning."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "helpdesk.whosonlocation.com",
+            "source_domain": "helpdesk.whosonlocation.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 32.6,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Feature documentation for visitor, contractor and evacuation management — confirms product scope and enterprise features.",
+              "Official helpdesk/product docs and portal links showing product capabilities and account/login endpoints.",
+              "Detailed feature list (pre-registration, OnPass, evacuation/mustering and device/kiosk capabilities)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "mrisoftware.com",
+            "source_domain": "mrisoftware.com",
+            "inferred_source_type": "unknown",
+            "appearances": 3,
+            "weighted_score": 20.7,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Regional product page describing OnLocation (WhosOnLocation) people presence, visitor, contractor and evacuation features for Australia.",
+              "Product information confirming WhosOnLocation (OnLocation) capabilities for visitor/contractor management and presence tracking.",
+              "Regional product page describing OnLocation (WhosOnLocation) usage and Australian availability/hosting options."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "proxyclick.com",
+            "source_domain": "proxyclick.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 19.7,
+            "high_influence_count": 1,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official vendor domain redirects to Eptura/Proxyclick product pages describing enterprise visitor management capabilities.",
+              "Redirects to Eptura Visitor; legacy Proxyclick brand presence and product/account links available."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "tractionguest.com",
+            "source_domain": "tractionguest.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 14,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official site/redirect showing product pages for enterprise visitor management, compliance workflows and global deployments.",
+              "Domain redirects/announces Sign In Enterprise / Sign In Solutions; confirms enterprise visitor-management product lineage and capabilities."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "visit-us.com",
+            "source_domain": "visit-us.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 9.7,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Product pages describe contactless sign-in, pre-registration, evacuation management and real-time on-site visibility for Australian organisations.",
+              "Homepage and product pages describing Australian-focused visitor management, integrations, use-cases and ABN/company details.",
+              "Terms show VisitUs Reception Pty Ltd is governed by New South Wales law (confirms Australian HQ/legal presence)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "signinapp.com",
+            "source_domain": "signinapp.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 9.6,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Main product pages describing visitor sign-in, contactless options, evacuation lists, NDAs and multi-site management.",
+              "Official product pages and feature list describing visitor/employee sign-in, compliance, multi-site and integrations."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "prnewswire.com",
+            "source_domain": "prnewswire.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 9.3,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Vendor press release describing Proxyclick platform capabilities and global deployments.",
+              "Product expansion announcements showing enterprise feature set."
+            ],
+            "supported_categories_count": 2,
+            "supported_websites_count": 2
+          },
+          {
+            "key": "apps.apple.com",
+            "source_domain": "apps.apple.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 7.9,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "AU App Store listing showing Australian availability and features.",
+              "Australian App Store listing demonstrating active availability and AU-focused distribution."
+            ],
+            "supported_categories_count": 2,
+            "supported_websites_count": 2
+          },
+          {
+            "key": "businesswire.com",
+            "source_domain": "businesswire.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 7.8,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Press releases describing Traction Guest’s enterprise capabilities and integrations (Salesforce AppExchange) and global deployments.",
+              "Press release and product positioning for enterprise visitor & employee management capabilities (supports large-scale/regulatory use cases)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "app.proxyclick.com",
+            "source_domain": "app.proxyclick.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 7.1,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Redirects and customer/support resources showing continuity of Proxyclick product under Eptura and available visitor portal resources."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "whosonlocation.com",
+            "source_domain": "whosonlocation.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 6.7,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Vendor domain and product presence (site/marketing pages and login/portal endpoints)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "scanin.com.au",
+            "source_domain": "scanin.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 6.5,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Australian domain homepage describing QR check-in, visitor/contractor workflows, local pricing and features targeted at Australian customers.",
+              "Homepage and product pages showing QR code sign-in, contractor workflows and Australian contact info.",
+              "About and privacy pages indicating Australian operations and product use-cases (construction, manufacturing)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "checkthat.ai",
+            "source_domain": "checkthat.ai",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 4,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Notes Proxyclick (Eptura Visitor) positioning as enterprise-grade visitor management and mentions rebranding / acquisition history."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "d21buns5ku92am.cloudfront.net",
+            "source_domain": "d21buns5ku92am.cloudfront.net",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 4,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Press/datasheet material supporting the product identity, features and market adoption."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "ochrekiosk.com.au",
+            "source_domain": "ochrekiosk.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 2.4,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Product pages stating 'Built for Australia', Australian-focused feature set (SMS alerts, key tracking, Australian hosting), pricing and local use-cases.",
+              "Official site noting Australian focus, ABN, features (kiosk/mobile sign-in), pricing and data processed on Australian infrastructure."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "admin.visit-us.com.au",
+            "source_domain": "admin.visit-us.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 2,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Security summary and admin documentation confirming product features and data hosting details relevant to Australian customers."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          }
+        ],
+        "by_type": [
+          {
+            "key": "official_site",
+            "appearances": 47,
+            "weighted_score": 516.1,
+            "high_influence_count": 35
+          },
+          {
+            "key": "unknown",
+            "appearances": 16,
+            "weighted_score": 99.6,
+            "high_influence_count": 2
+          }
+        ],
+        "by_url": [
+          {
+            "key": "https://www.swipedon.com/",
+            "source_name": "SwipedOn – Homepage / brand",
+            "source_domain": "swipedon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 6,
+            "weighted_score": 78.8,
+            "supported_websites": {},
+            "evidence_found": "Company homepage referencing product, App Store links, and Aus customer examples.",
+            "supported_websites_count": 2
+          },
+          {
+            "key": "https://www.sine.co/",
+            "source_name": "Sine – product / visitor management",
+            "source_domain": "sine.co",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 66.6,
+            "supported_websites": {},
+            "evidence_found": "Official product pages describing visitor and contractor management and company positioning; clearly Australian roots noted on About pages.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://envoy.com/visitor-management-system",
+            "source_name": "Envoy – Visitor management product page",
+            "source_domain": "envoy.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 53.3,
+            "supported_websites": {},
+            "evidence_found": "Detailed visitor-management feature list and enterprise positioning.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.sine.co/about/",
+            "source_name": "Sine – About (Honeywell / Adelaide origin)",
+            "source_domain": "sine.co",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 48.6,
+            "supported_websites": {},
+            "evidence_found": "About page describing origins in Adelaide, Australia and current Honeywell affiliation.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://eptura.com/proxyclick/",
+            "source_name": "Eptura (Proxyclick) – Proxyclick / Visitor product page",
+            "source_domain": "eptura.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 44.9,
+            "supported_websites": {},
+            "evidence_found": "Official redirect/brand page showing Proxyclick’s visitor product (now Eptura Visitor) with product resources and support links.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://envoy.com/",
+            "source_name": "Envoy — official site (homepage)",
+            "source_domain": "envoy.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 34.6,
+            "supported_websites": {},
+            "evidence_found": "Core visitor-management product pages (Visitors) describing secure check-in, audits, host notifications and global/enterprise features.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.swipedon.com/visitor-management",
+            "source_name": "SwipedOn – Visitor management product page",
+            "source_domain": "swipedon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 32.4,
+            "supported_websites": {},
+            "evidence_found": "Product page listing visitor sign-in, host notifications, badge printing, Australian case studies and feature set.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.envoy.com/",
+            "source_name": "Envoy – Vendor homepage",
+            "source_domain": "envoy.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 28.8,
+            "supported_websites": {},
+            "evidence_found": "Corporate/product homepage describing visitor management product, enterprise use cases and integrations.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.proxyclick.com/",
+            "source_name": "Proxyclick — official site (redirect to Eptura Proxyclick page)",
+            "source_domain": "proxyclick.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 19.7,
+            "supported_websites": {},
+            "evidence_found": "Official vendor domain redirects to Eptura/Proxyclick product pages describing enterprise visitor management capabilities.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.sine.co/visitor-management-faqs/",
+            "source_name": "Sine – Visitor Management FAQs / product",
+            "source_domain": "sine.co",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "Product FAQ and feature descriptions (visitor, contractor, check-in, AWS Sydney hosting region).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://helpdesk.whosonlocation.com/hc/en-us/articles/6270008529945-Introducing-MRI-OnLocation",
+            "source_name": "WhosOnLocation – Help / product documentation",
+            "source_domain": "helpdesk.whosonlocation.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 16.3,
+            "supported_websites": {},
+            "evidence_found": "Official helpdesk/product docs and portal links showing product capabilities and account/login endpoints.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.envoy.com/visitor-management-system",
+            "source_name": "Envoy – Visitor management product page",
+            "source_domain": "envoy.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 14.4,
+            "supported_websites": {},
+            "evidence_found": "Product page detailing visitor check-in, security/compliance and multi-site management features.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://tractionguest.com/",
+            "source_name": "Traction Guest / Sign In Solutions – Official site (redirect)",
+            "source_domain": "tractionguest.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 14,
+            "supported_websites": {},
+            "evidence_found": "Official site/redirect showing product pages for enterprise visitor management, compliance workflows and global deployments.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.mrisoftware.com/au/products/onlocation/",
+            "source_name": "MRI OnLocation – OnLocation product (WhosOnLocation) AU page",
+            "source_domain": "mrisoftware.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 13.1,
+            "supported_websites": {},
+            "evidence_found": "Regional product page describing OnLocation (WhosOnLocation) people presence, visitor, contractor and evacuation features for Australia.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.swipedon.com/consumer-goods",
+            "source_name": "SwipedOn – industry / use-case page",
+            "source_domain": "swipedon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.3,
+            "supported_websites": {},
+            "evidence_found": "Use-case and customer examples showing Australian/NZ commercial deployments.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://signinapp.com/",
+            "source_name": "Sign In App - homepage",
+            "source_domain": "signinapp.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 9.6,
+            "supported_websites": {},
+            "evidence_found": "Main product pages describing visitor sign-in, contactless options, evacuation lists, NDAs and multi-site management.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://helpdesk.whosonlocation.com/",
+            "source_name": "WhosOnLocation – help & product docs",
+            "source_domain": "helpdesk.whosonlocation.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 9.6,
+            "supported_websites": {},
+            "evidence_found": "Feature documentation for visitor, contractor and evacuation management — confirms product scope and enterprise features.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://apps.apple.com/au/app/sign-in-app-visitor-management/id890807979",
+            "source_name": "Sign In App - App Store listing (AU)",
+            "source_domain": "apps.apple.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 7.9,
+            "supported_websites": {},
+            "evidence_found": "AU App Store listing showing Australian availability and features.",
+            "supported_websites_count": 2
+          },
+          {
+            "key": "https://www.businesswire.com/news/home/20200611005803/en/Traction-Guest-Announces-Visitor-and-Employee-Management-System-on-Salesforce-AppExchange-Extending-the-Power-of-Work.com",
+            "source_name": "Traction Guest – corporate press & product descriptions",
+            "source_domain": "businesswire.com",
+            "inferred_source_type": "unknown",
+            "appearances": 2,
+            "weighted_score": 7.8,
+            "supported_websites": {},
+            "evidence_found": "Press releases describing Traction Guest’s enterprise capabilities and integrations (Salesforce AppExchange) and global deployments.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.mrisoftware.com/ca/products/onlocation/",
+            "source_name": "MRI OnLocation product page (WhosOnLocation product pages)",
+            "source_domain": "mrisoftware.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 7.7,
+            "supported_websites": {},
+            "evidence_found": "Product information confirming WhosOnLocation (OnLocation) capabilities for visitor/contractor management and presence tracking.",
+            "supported_websites_count": 1
+          }
+        ]
+      },
+      "recommendations": {
+        "source_type_priority": [
+          {
+            "source_type": "official_site",
+            "weighted_score": 516.1,
+            "recommendation": "Strengthen category fit, entity clarity, location signals, and crawlable product/service detail on the main site."
+          },
+          {
+            "source_type": "unknown",
+            "weighted_score": 99.6,
+            "recommendation": "Increase presence on this source type where category buyers already validate providers."
+          }
+        ],
+        "highest_value_external_sources": [
+          {
+            "source_domain": "mrisoftware.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 20.7,
+            "supported_websites_count": 1,
+            "recommendation": "Treat mrisoftware.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "prnewswire.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 9.3,
+            "supported_websites_count": 2,
+            "recommendation": "Treat prnewswire.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "apps.apple.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 7.9,
+            "supported_websites_count": 2,
+            "recommendation": "Treat apps.apple.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "businesswire.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 7.8,
+            "supported_websites_count": 1,
+            "recommendation": "Treat businesswire.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "app.proxyclick.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 7.1,
+            "supported_websites_count": 1,
+            "recommendation": "Treat app.proxyclick.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "checkthat.ai",
+            "inferred_source_type": "unknown",
+            "weighted_score": 4,
+            "supported_websites_count": 1,
+            "recommendation": "Treat checkthat.ai as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "d21buns5ku92am.cloudfront.net",
+            "inferred_source_type": "unknown",
+            "weighted_score": 4,
+            "supported_websites_count": 1,
+            "recommendation": "Treat d21buns5ku92am.cloudfront.net as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "admin.visit-us.com.au",
+            "inferred_source_type": "unknown",
+            "weighted_score": 2,
+            "supported_websites_count": 1,
+            "recommendation": "Treat admin.visit-us.com.au as a discovery-supporting source and improve presence there where possible."
+          }
+        ]
+      }
+    },
+    {
+      "category": "accounting software",
+      "source_file": "accounting-software-top10-scan.json",
+      "generated_at": "2026-06-28T22:37:09.285Z",
+      "requested_model": "gpt-5-mini",
+      "canonical_candidates": [
+        {
+          "canonical_rank": 1,
+          "name": "Xero (AU)",
+          "website": "https://www.xero.com/au/",
+          "appearance_count": 5,
+          "average_rank": 1,
+          "source_count": 9,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Xero — Pricing & Plans (Australia)",
+              "source_domain": "xero.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.xero.com/au/pricing-plans/",
+              "influence": "high",
+              "evidence_found": "Official Australia pricing page and AU-specific plan details (mentions GST/BAS and payroll capabilities).",
+              "candidate_rank": 1,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Xero AU — GST & BAS product page",
+              "source_domain": "xero.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.xero.com/au/accounting-software/submit-gst-returns/",
+              "influence": "high",
+              "evidence_found": "Describes GST tracking, BAS preparation and direct BAS lodgement to the ATO from Xero (AU product page).",
+              "candidate_rank": 1,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Xero AU — bank feeds / features",
+              "source_domain": "xero.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.xero.com/au/accounting-software/connect-your-bank/",
+              "influence": "high",
+              "evidence_found": "AU-specific guidance on bank feeds, reconciliation and ATO FAQs for Australian customers.",
+              "candidate_rank": 1,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Xero Australia – homepage / accounting solutions",
+              "source_domain": "xero.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.xero.com/au/",
+              "influence": "high",
+              "evidence_found": "AU product pages, AU pricing/signup and references to payroll/BAS features for Australian customers.",
+              "candidate_rank": 1,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Xero AU – About / product pages",
+              "source_domain": "xero.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.xero.com/au/accounting-software/",
+              "influence": "high",
+              "evidence_found": "Detailed AU product description, app integrations and Australian-focused resources.",
+              "candidate_rank": 1,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 2,
+          "name": "MYOB",
+          "website": "https://www.myob.com/au",
+          "appearance_count": 5,
+          "average_rank": 2,
+          "source_count": 8,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "MYOB Australia — Official site",
+              "source_domain": "myob.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.myob.com/au",
+              "influence": "high",
+              "evidence_found": "Official MYOB Australia product pages and industry solutions (mentions BAS, payroll and AU-specific features).",
+              "candidate_rank": 2,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "MYOB Australia — official site",
+              "source_domain": "myob.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.myob.com/au",
+              "influence": "high",
+              "evidence_found": "MYOB AU homepage and product pages targeted to Australian customers, with references to GST/BAS and payroll.",
+              "candidate_rank": 2,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "MYOB Australia – homepage",
+              "source_domain": "myob.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.myob.com/au",
+              "influence": "high",
+              "evidence_found": "AU homepage, product offerings for Australian businesses and references to BAS/ATO integration and local support.",
+              "candidate_rank": 2,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "MYOB Australia — official site / About pages",
+              "source_domain": "myob.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.myob.com/au",
+              "influence": "high",
+              "evidence_found": "Official Australian site describing accounting, payroll, BAS and local support for Australia/NZ.",
+              "candidate_rank": 2,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "MYOB Australia homepage",
+              "source_domain": "myob.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.myob.com/au",
+              "influence": "high",
+              "evidence_found": "Official AU site describing accounting, payroll and business management products for Australian and NZ businesses.",
+              "candidate_rank": 2,
+              "prompt_variation": 5
+            }
+          ]
+        },
+        {
+          "canonical_rank": 3,
+          "name": "QuickBooks Online (Intuit) — Australia",
+          "website": "https://quickbooks.intuit.com/au/",
+          "appearance_count": 5,
+          "average_rank": 3,
+          "source_count": 8,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "QuickBooks Australia — Official site",
+              "source_domain": "quickbooks.intuit.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://quickbooks.intuit.com/au/",
+              "influence": "high",
+              "evidence_found": "Official Intuit QuickBooks Australia product and pricing pages (AU offers, GST/BAS guidance and payroll).",
+              "candidate_rank": 3,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "QuickBooks Australia — official Intuit site",
+              "source_domain": "quickbooks.intuit.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://quickbooks.intuit.com/au/",
+              "influence": "high",
+              "evidence_found": "AU landing page listing features, pricing and AU-specific product details.",
+              "candidate_rank": 3,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "QuickBooks Australia – official country site",
+              "source_domain": "quickbooks.intuit.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://quickbooks.intuit.com/au/",
+              "influence": "high",
+              "evidence_found": "AU landing and pricing pages, Australian product features and accountant resources.",
+              "candidate_rank": 3,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "QuickBooks Australia — official Intuit AU site",
+              "source_domain": "quickbooks.intuit.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://quickbooks.intuit.com/au/",
+              "influence": "high",
+              "evidence_found": "AU product pages and promotions; Australia-specific product and pricing information.",
+              "candidate_rank": 3,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "QuickBooks Online Australia homepage",
+              "source_domain": "quickbooks.intuit.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://quickbooks.intuit.com/au/",
+              "influence": "high",
+              "evidence_found": "AU product pages, pricing and localised features documented on Intuit's Australian QuickBooks site.",
+              "candidate_rank": 3,
+              "prompt_variation": 5
+            }
+          ]
+        },
+        {
+          "canonical_rank": 4,
+          "name": "Reckon",
+          "website": "https://www.reckon.com/au/",
+          "appearance_count": 5,
+          "average_rank": 4,
+          "source_count": 8,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Reckon Australia — Official site",
+              "source_domain": "reckon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.reckon.com/au/",
+              "influence": "high",
+              "evidence_found": "Official AU site highlighting local data hosting, payroll (STP) and compliance for Australian businesses.",
+              "candidate_rank": 4,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Reckon Australia — official site",
+              "source_domain": "reckon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.reckon.com/au/",
+              "influence": "high",
+              "evidence_found": "Reckon AU product pages and statements about serving Australian small businesses and local data residency/specialisations.",
+              "candidate_rank": 4,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Reckon Australia – official site",
+              "source_domain": "reckon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.reckon.com/au/",
+              "influence": "high",
+              "evidence_found": "AU product pages for Reckon One, Reckon Accounts and payroll, plus statements about serving Australian businesses.",
+              "candidate_rank": 4,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Reckon Australia homepage",
+              "source_domain": "reckon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.reckon.com/au/",
+              "influence": "high",
+              "evidence_found": "Official AU site marketing Reckon One and other products, highlighting local hosting and AU compliance.",
+              "candidate_rank": 4,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Reckon – product & info pages (AU)",
+              "source_domain": "reckon.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.reckon.com/au/accounting/",
+              "influence": "medium",
+              "evidence_found": "Details on accounting, payroll and migration offers aimed at Australian customers.",
+              "candidate_rank": 4,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 5,
+          "name": "Sage (Sage Business Cloud Accounting) — Australia",
+          "website": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+          "appearance_count": 5,
+          "average_rank": 5,
+          "source_count": 8,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Sage Business Cloud Accounting — Australia",
+              "source_domain": "sage.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+              "influence": "high",
+              "evidence_found": "Sage AU product pages for cloud accounting and guidance for Australian customers.",
+              "candidate_rank": 5,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Sage Australia — Sage Business Cloud Accounting",
+              "source_domain": "sage.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+              "influence": "high",
+              "evidence_found": "AU-facing product pages and documentation for Sage Business Cloud Accounting.",
+              "candidate_rank": 5,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Sage Australia – Sage Business Cloud Accounting",
+              "source_domain": "sage.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+              "influence": "high",
+              "evidence_found": "AU product pages describing Sage Business Cloud Accounting and local options.",
+              "candidate_rank": 5,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Sage Australia - products / Business Cloud Accounting",
+              "source_domain": "sage.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+              "influence": "high",
+              "evidence_found": "AU product pages and documentation for Sage Business Cloud Accounting and related local offerings.",
+              "candidate_rank": 5,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Sage Australia — company page",
+              "source_domain": "sage.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.sage.com/en-au/company/",
+              "influence": "medium",
+              "evidence_found": "Regional information showing Sage's presence and product offerings in Australia.",
+              "candidate_rank": 5,
+              "prompt_variation": 2
+            }
+          ]
+        },
+        {
+          "canonical_rank": 6,
+          "name": "Zoho Books (Australia)",
+          "website": "https://www.zoho.com/au/books/",
+          "appearance_count": 5,
+          "average_rank": 6.2,
+          "source_count": 6,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Zoho Books — Australia",
+              "source_domain": "zoho.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.zoho.com/au/books/",
+              "influence": "high",
+              "evidence_found": "Official AU Zoho Books page (AU-specific domain) with product details for Australian businesses.",
+              "candidate_rank": 6,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Zoho Books — Australia product page",
+              "source_domain": "zoho.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.zoho.com/au/books/",
+              "influence": "high",
+              "evidence_found": "AU-specific Zoho Books landing page describing regional availability and pricing.",
+              "candidate_rank": 6,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Zoho Books – Australia product page",
+              "source_domain": "zoho.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.zoho.com/au/books/",
+              "influence": "high",
+              "evidence_found": "AU Books landing with features and mentions of Australian localisation.",
+              "candidate_rank": 6,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Zoho Books Australia homepage",
+              "source_domain": "zoho.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.zoho.com/au/books/",
+              "influence": "high",
+              "evidence_found": "AU product page indicating pricing, features and GST/BAS support for Australian customers.",
+              "candidate_rank": 7,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Zoho Books – AU app access",
+              "source_domain": "books.zoho.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://books.zoho.com.au/app/",
+              "influence": "medium",
+              "evidence_found": "Direct AU app endpoint showing active service region for Australian customers.",
+              "candidate_rank": 6,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 7,
+          "name": "Saasu",
+          "website": "https://www.saasu.com/",
+          "appearance_count": 5,
+          "average_rank": 7.8,
+          "source_count": 8,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Saasu — official site",
+              "source_domain": "saasu.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.saasu.com/",
+              "influence": "high",
+              "evidence_found": "Homepage explicitly positions Saasu as online accounting 'made in Australia' for small business.",
+              "candidate_rank": 7,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Saasu – official site (Australia)",
+              "source_domain": "saasu.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.saasu.com/",
+              "influence": "high",
+              "evidence_found": "Homepage emphasises 'cloud accounting made in Australia' and Australian small business focus.",
+              "candidate_rank": 7,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Saasu official homepage",
+              "source_domain": "saasu.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.saasu.com/",
+              "influence": "high",
+              "evidence_found": "Homepage emphasises 'made in Australia' cloud accounting and features targeted to Australian small business needs.",
+              "candidate_rank": 8,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Saasu – product pages / features",
+              "source_domain": "saasu.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.saasu.com/products",
+              "influence": "medium",
+              "evidence_found": "Feature descriptions targeted to AU users including GST handling and BAS reporting.",
+              "candidate_rank": 7,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Saasu — official Australian site",
+              "source_domain": "saasu.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.saasu.com/",
+              "influence": "medium",
+              "evidence_found": "Australian-developed online accounting product pages emphasising local small-business use.",
+              "candidate_rank": 8,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 8,
+          "name": "FreshBooks (Australia)",
+          "website": "https://www.freshbooks.com/en-au/",
+          "appearance_count": 5,
+          "average_rank": 8.4,
+          "source_count": 5,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "FreshBooks — Australia site",
+              "source_domain": "freshbooks.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.freshbooks.com/en-au/",
+              "influence": "high",
+              "evidence_found": "FreshBooks Australia landing pages and feature descriptions aimed at AU small businesses.",
+              "candidate_rank": 8,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "FreshBooks Australia homepage",
+              "source_domain": "freshbooks.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.freshbooks.com/en-au/",
+              "influence": "high",
+              "evidence_found": "AU-specific FreshBooks pages and pricing for Australian customers.",
+              "candidate_rank": 9,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "FreshBooks – Australia landing",
+              "source_domain": "freshbooks.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.freshbooks.com/en-au/",
+              "influence": "high",
+              "evidence_found": "AU landing page and product information for Australian small businesses.",
+              "candidate_rank": 10,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "FreshBooks global product pages (AU localized)",
+              "source_domain": "freshbooks.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.freshbooks.com/features",
+              "influence": "low",
+              "evidence_found": "Product features and invoicing capabilities applicable to AU small business use-cases.",
+              "candidate_rank": 9,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "FreshBooks – features & pricing (AU)",
+              "source_domain": "freshbooks.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.freshbooks.com/en-au/pricing",
+              "influence": "medium",
+              "evidence_found": "AU pricing and plans page indicating support for Australian customers.",
+              "candidate_rank": 10,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 9,
+          "name": "Oracle NetSuite (Australia)",
+          "website": "https://www.netsuite.com.au/",
+          "appearance_count": 4,
+          "average_rank": 8,
+          "source_count": 7,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "NetSuite Australia — Official site",
+              "source_domain": "netsuite.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.netsuite.com.au/",
+              "influence": "high",
+              "evidence_found": "NetSuite AU site and APAC collateral referencing Australia-specific features and compliance.",
+              "candidate_rank": 7,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "NetSuite Australia / Oracle ANZ pages and documentation",
+              "source_domain": "docs.oracle.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_4198253102.html",
+              "influence": "high",
+              "evidence_found": "NetSuite online help/docs describing Australia‑specific features and setup guidance (AU localization, ABN, Australia Post integration).",
+              "candidate_rank": 6,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "NetSuite APAC datasheet (AU)",
+              "source_domain": "netsuite.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.netsuite.com.au/portal/assets/public-pdf/ds-netsuite-apac.pdf",
+              "influence": "medium",
+              "evidence_found": "Product datasheet that mentions Australia regional support and standards.",
+              "candidate_rank": 7,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Oracle ANZ press / NetSuite ANZ mention",
+              "source_domain": "oracle.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.oracle.com/anz/corporate/pressrelease/netsuite-announces-new-anz-industry-cloud-solutions-2019-02-05.html",
+              "influence": "medium",
+              "evidence_found": "Oracle Australia press release referencing NetSuite solutions for ANZ and pointing to netsuite.com.au as the regional site.",
+              "candidate_rank": 6,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "NetSuite Australia – official site",
+              "source_domain": "netsuite.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.netsuite.com.au/",
+              "influence": "high",
+              "evidence_found": "AU regional portal, product collateral for ERP/accounting in Australia and local market information.",
+              "candidate_rank": 9,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 10,
+          "name": "Wave (Wave Financial)",
+          "website": "https://www.waveapps.com/",
+          "appearance_count": 4,
+          "average_rank": 9.5,
+          "source_count": 6,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Wave — official site",
+              "source_domain": "waveapps.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.waveapps.com/",
+              "influence": "high",
+              "evidence_found": "Official product pages describing Wave's core accounting and invoicing features (note: payroll/region specifics explained on site).",
+              "candidate_rank": 9,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Wave — official homepage",
+              "source_domain": "waveapps.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.waveapps.com/",
+              "influence": "medium",
+              "evidence_found": "Official product pages describing accounting, invoicing and payments used by small businesses (global product applicable in AU).",
+              "candidate_rank": 9,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Wave — Official site",
+              "source_domain": "waveapps.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.waveapps.com/",
+              "influence": "high",
+              "evidence_found": "Official Wave product pages describing accounting, invoicing and payroll features (global product; AU users rely on general product with manual GST configuration).",
+              "candidate_rank": 10,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Wave official homepage",
+              "source_domain": "waveapps.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.waveapps.com/",
+              "influence": "high",
+              "evidence_found": "Official product site describing accounting, invoicing and payments features suitable for small businesses internationally (including AU users).",
+              "candidate_rank": 10,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Wave product features / pricing",
+              "source_domain": "waveapps.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.waveapps.com/pricing",
+              "influence": "medium",
+              "evidence_found": "Pricing and feature pages showing free accounting and paid services (payments, payroll) that AU buyers may consider.",
+              "candidate_rank": 10,
+              "prompt_variation": 5
+            }
+          ]
+        }
+      ],
+      "common_sources": {
+        "by_domain": [
+          {
+            "key": "xero.com",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 7,
+            "weighted_score": 126,
+            "high_influence_count": 7,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official Australia pricing page and AU-specific plan details (mentions GST/BAS and payroll capabilities).",
+              "Describes GST tracking, BAS preparation and direct BAS lodgement to the ATO from Xero (AU product page).",
+              "AU-specific guidance on bank feeds, reconciliation and ATO FAQs for Australian customers."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "myob.com",
+            "source_domain": "myob.com",
+            "inferred_source_type": "official_site",
+            "appearances": 8,
+            "weighted_score": 110.2,
+            "high_influence_count": 5,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official MYOB Australia product pages and industry solutions (mentions BAS, payroll and AU-specific features).",
+              "MYOB AU homepage and product pages targeted to Australian customers, with references to GST/BAS and payroll.",
+              "AU homepage, product offerings for Australian businesses and references to BAS/ATO integration and local support."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "quickbooks.intuit.com",
+            "source_domain": "quickbooks.intuit.com",
+            "inferred_source_type": "official_site",
+            "appearances": 8,
+            "weighted_score": 102.2,
+            "high_influence_count": 5,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official Intuit QuickBooks Australia product and pricing pages (AU offers, GST/BAS guidance and payroll).",
+              "AU landing page listing features, pricing and AU-specific product details.",
+              "AU landing and pricing pages, Australian product features and accountant resources."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "reckon.com",
+            "source_domain": "reckon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 7,
+            "weighted_score": 73.1,
+            "high_influence_count": 4,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official AU site highlighting local data hosting, payroll (STP) and compliance for Australian businesses.",
+              "Reckon AU product pages and statements about serving Australian small businesses and local data residency/specialisations.",
+              "AU product pages for Reckon One, Reckon Accounts and payroll, plus statements about serving Australian businesses."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "sage.com",
+            "source_domain": "sage.com",
+            "inferred_source_type": "official_site",
+            "appearances": 8,
+            "weighted_score": 70.2,
+            "high_influence_count": 4,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Sage AU product pages for cloud accounting and guidance for Australian customers.",
+              "AU-facing product pages and documentation for Sage Business Cloud Accounting.",
+              "AU product pages describing Sage Business Cloud Accounting and local options."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "saasu.com",
+            "source_domain": "saasu.com",
+            "inferred_source_type": "official_site",
+            "appearances": 8,
+            "weighted_score": 46.8,
+            "high_influence_count": 4,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Homepage explicitly positions Saasu as online accounting 'made in Australia' for small business.",
+              "Homepage emphasises 'cloud accounting made in Australia' and Australian small business focus.",
+              "Homepage emphasises 'made in Australia' cloud accounting and features targeted to Australian small business needs."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "zoho.com",
+            "source_domain": "zoho.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 42.3,
+            "high_influence_count": 4,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official AU Zoho Books page (AU-specific domain) with product details for Australian businesses.",
+              "AU-specific Zoho Books landing page describing regional availability and pricing.",
+              "AU Books landing with features and mentions of Australian localisation."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "apps.xero.com",
+            "source_domain": "apps.xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 25.2,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Xero AU app marketplace showing integrations for Australian businesses.",
+              "AU App Store listing and AU-targeted app listings and partner ecosystem."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "freshbooks.com",
+            "source_domain": "freshbooks.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 22.1,
+            "high_influence_count": 3,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "FreshBooks Australia landing pages and feature descriptions aimed at AU small businesses.",
+              "AU-specific FreshBooks pages and pricing for Australian customers.",
+              "AU landing page and product information for Australian small businesses."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "netsuite.com.au",
+            "source_domain": "netsuite.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 14.1,
+            "high_influence_count": 3,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "NetSuite AU site and APAC collateral referencing Australia-specific features and compliance.",
+              "Product datasheet that mentions Australia regional support and standards.",
+              "AU regional portal, product collateral for ERP/accounting in Australia and local market information."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "reckon.com.au",
+            "source_domain": "reckon.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 7.1,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Background material showing Reckon's Australian focus and product range for local customers."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "waveapps.com",
+            "source_domain": "waveapps.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 7,
+            "high_influence_count": 3,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official product pages describing Wave's core accounting and invoicing features (note: payroll/region specifics explained on site).",
+              "Official product pages describing accounting, invoicing and payments used by small businesses (global product applicable in AU).",
+              "Official Wave product pages describing accounting, invoicing and payroll features (global product; AU users rely on general product with manual GST configuration)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "books.zoho.com.au",
+            "source_domain": "books.zoho.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 5,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Direct AU app endpoint showing active service region for Australian customers."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "docs.oracle.com",
+            "source_domain": "docs.oracle.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 2.6,
+            "high_influence_count": 1,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "NetSuite online help/docs describing Australia‑specific features and setup guidance (AU localization, ABN, Australia Post integration)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "oracle.com",
+            "source_domain": "oracle.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 1.8,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Oracle Australia press release referencing NetSuite solutions for ANZ and pointing to netsuite.com.au as the regional site."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "support.waveapps.com",
+            "source_domain": "support.waveapps.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 0.6,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Help articles and notices; community posts indicate limited AU bank-feeds/support compared with AU-native vendors."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          }
+        ],
+        "by_type": [
+          {
+            "key": "official_site",
+            "appearances": 69,
+            "weighted_score": 639.9,
+            "high_influence_count": 42
+          },
+          {
+            "key": "unknown",
+            "appearances": 4,
+            "weighted_score": 20.6,
+            "high_influence_count": 1
+          }
+        ],
+        "by_url": [
+          {
+            "key": "https://www.myob.com/au",
+            "source_name": "MYOB Australia — Official site",
+            "source_domain": "myob.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 81,
+            "supported_websites": {},
+            "evidence_found": "Official MYOB Australia product pages and industry solutions (mentions BAS, payroll and AU-specific features).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://quickbooks.intuit.com/au/",
+            "source_name": "QuickBooks Australia — Official site",
+            "source_domain": "quickbooks.intuit.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 72,
+            "supported_websites": {},
+            "evidence_found": "Official Intuit QuickBooks Australia product and pricing pages (AU offers, GST/BAS guidance and payroll).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.xero.com/au/",
+            "source_name": "Xero Australia – homepage / accounting solutions",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 54,
+            "supported_websites": {},
+            "evidence_found": "AU product pages, AU pricing/signup and references to payroll/BAS features for Australian customers.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.reckon.com/au/",
+            "source_name": "Reckon Australia — Official site",
+            "source_domain": "reckon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 50.4,
+            "supported_websites": {},
+            "evidence_found": "Official AU site highlighting local data hosting, payroll (STP) and compliance for Australian businesses.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+            "source_name": "Sage Business Cloud Accounting — Australia",
+            "source_domain": "sage.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 43.2,
+            "supported_websites": {},
+            "evidence_found": "Sage AU product pages for cloud accounting and guidance for Australian customers.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.zoho.com/au/books/",
+            "source_name": "Zoho Books — Australia",
+            "source_domain": "zoho.com",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 36,
+            "supported_websites": {},
+            "evidence_found": "Official AU Zoho Books page (AU-specific domain) with product details for Australian businesses.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.saasu.com/",
+            "source_name": "Saasu — official site",
+            "source_domain": "saasu.com",
+            "inferred_source_type": "official_site",
+            "appearances": 5,
+            "weighted_score": 33.8,
+            "supported_websites": {},
+            "evidence_found": "Homepage explicitly positions Saasu as online accounting 'made in Australia' for small business.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://quickbooks.intuit.com/au/pricing/",
+            "source_name": "QuickBooks Australia — Product content",
+            "source_domain": "quickbooks.intuit.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 30.2,
+            "supported_websites": {},
+            "evidence_found": "AU pricing and product tier details for Australian small businesses.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.myob.com/au/about",
+            "source_name": "About MYOB (Australia)",
+            "source_domain": "myob.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 22.7,
+            "supported_websites": {},
+            "evidence_found": "Company background and Australian market focus.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.sage.com/en-au/company/",
+            "source_name": "Sage Australia — company page",
+            "source_domain": "sage.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 19.4,
+            "supported_websites": {},
+            "evidence_found": "Regional information showing Sage's presence and product offerings in Australia.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.xero.com/au/accounting-software/",
+            "source_name": "Xero AU – About / product pages",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "Detailed AU product description, app integrations and Australian-focused resources.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.xero.com/au/accounting-software/connect-your-bank/",
+            "source_name": "Xero AU — bank feeds / features",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "AU-specific guidance on bank feeds, reconciliation and ATO FAQs for Australian customers.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.xero.com/au/accounting-software/submit-gst-returns/",
+            "source_name": "Xero AU — GST & BAS product page",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "Describes GST tracking, BAS preparation and direct BAS lodgement to the ATO from Xero (AU product page).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.xero.com/au/pricing-plans/",
+            "source_name": "Xero — Pricing & Plans (Australia)",
+            "source_domain": "xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "Official Australia pricing page and AU-specific plan details (mentions GST/BAS and payroll capabilities).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.freshbooks.com/en-au/",
+            "source_name": "FreshBooks — Australia site",
+            "source_domain": "freshbooks.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 16.2,
+            "supported_websites": {},
+            "evidence_found": "FreshBooks Australia landing pages and feature descriptions aimed at AU small businesses.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://apps.xero.com/au",
+            "source_name": "Xero App Store (AU)",
+            "source_domain": "apps.xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 12.6,
+            "supported_websites": {},
+            "evidence_found": "Xero AU app marketplace showing integrations for Australian businesses.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://apps.xero.com/au/",
+            "source_name": "Xero AU app store / resources",
+            "source_domain": "apps.xero.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 12.6,
+            "supported_websites": {},
+            "evidence_found": "AU App Store listing and AU-targeted app listings and partner ecosystem.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.netsuite.com.au/",
+            "source_name": "NetSuite Australia — Official site",
+            "source_domain": "netsuite.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 9.6,
+            "supported_websites": {},
+            "evidence_found": "NetSuite AU site and APAC collateral referencing Australia-specific features and compliance.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.reckon.com/au/accounting/",
+            "source_name": "Reckon – product & info pages (AU)",
+            "source_domain": "reckon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 8.8,
+            "supported_websites": {},
+            "evidence_found": "Details on accounting, payroll and migration offers aimed at Australian customers.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.reckon.com/au/llm-info/",
+            "source_name": "Reckon company information / AU fact sheet",
+            "source_domain": "reckon.com",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 8.8,
+            "supported_websites": {},
+            "evidence_found": "Company information explaining Reckon's Australian roots and product positioning for AU customers.",
+            "supported_websites_count": 1
+          }
+        ]
+      },
+      "recommendations": {
+        "source_type_priority": [
+          {
+            "source_type": "official_site",
+            "weighted_score": 639.9,
+            "recommendation": "Strengthen category fit, entity clarity, location signals, and crawlable product/service detail on the main site."
+          },
+          {
+            "source_type": "unknown",
+            "weighted_score": 20.6,
+            "recommendation": "Increase presence on this source type where category buyers already validate providers."
+          }
+        ],
+        "highest_value_external_sources": [
+          {
+            "source_domain": "reckon.com.au",
+            "inferred_source_type": "unknown",
+            "weighted_score": 7.1,
+            "supported_websites_count": 1,
+            "recommendation": "Treat reckon.com.au as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "books.zoho.com.au",
+            "inferred_source_type": "unknown",
+            "weighted_score": 5,
+            "supported_websites_count": 1,
+            "recommendation": "Treat books.zoho.com.au as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "docs.oracle.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 2.6,
+            "supported_websites_count": 1,
+            "recommendation": "Treat docs.oracle.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "oracle.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 1.8,
+            "supported_websites_count": 1,
+            "recommendation": "Treat oracle.com as a discovery-supporting source and improve presence there where possible."
+          }
+        ]
+      }
+    },
+    {
+      "category": "cleaning services",
+      "source_file": "cleaning-services-top10-scan.json",
+      "generated_at": "2026-06-28T22:49:02.877Z",
+      "requested_model": "gpt-5-mini",
+      "canonical_candidates": [
+        {
+          "canonical_rank": 1,
+          "name": "Jim's Cleaning (Jim's Group)",
+          "website": "https://jimscleaning.com.au/local/nsw/sydney/",
+          "appearance_count": 5,
+          "average_rank": 1,
+          "source_count": 10,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Jim's Cleaning — Sydney location page",
+              "source_domain": "jimscleaning.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://jimscleaning.com.au/local/nsw/sydney/",
+              "influence": "high",
+              "evidence_found": "Official Jim's Cleaning Sydney local page listing services, contact phone number and local franchise information.",
+              "candidate_rank": 1,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Jim's Cleaning — Sydney local page",
+              "source_domain": "jimscleaning.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://jimscleaning.com.au/local/nsw/sydney/",
+              "influence": "high",
+              "evidence_found": "Official Jim’s Cleaning Sydney local listing showing services and contact for Sydney franchisees.",
+              "candidate_rank": 1,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Jim’s Group – article on Jim’s Cleaning (official Jim’s site)",
+              "source_domain": "jims.net",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://jims.net/how-jims-cleaning-became-australias-largest-cleaning-franchise-haydar-hussein-and-joel-kleber/",
+              "influence": "high",
+              "evidence_found": "Explains Jim’s Cleaning as the largest cleaning franchise in Australia with divisional services and national coverage (franchise model covering Sydney).",
+              "candidate_rank": 1,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Jim’s Cleaning — official Jim’s Group page",
+              "source_domain": "jims.net",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://jims.net/cleaning/",
+              "influence": "high",
+              "evidence_found": "Official Jim’s Group cleaning page showing national services and Sydney coverage.",
+              "candidate_rank": 1,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Jim’s Cleaning (division)",
+              "source_domain": "jims.net",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://jims.net/cleaning/",
+              "influence": "high",
+              "evidence_found": "Division page describing Jim’s Cleaning services and franchise coverage across Australia including home and commercial cleaning.",
+              "candidate_rank": 1,
+              "prompt_variation": 5
+            }
+          ]
+        },
+        {
+          "canonical_rank": 2,
+          "name": "Fantastic Services / Fantastic Cleaners (Australia)",
+          "website": "https://fantasticservicesgroup.com.au/cleaning-services/",
+          "appearance_count": 5,
+          "average_rank": 2.8,
+          "source_count": 9,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Fantastic Services Group — Cleaning Services (Australia)",
+              "source_domain": "fantasticservicesgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://fantasticservicesgroup.com.au/cleaning-services/",
+              "influence": "high",
+              "evidence_found": "Australia site listing cleaning services and Sydney coverage.",
+              "candidate_rank": 2,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Fantastic Services Australia – Cleaning Services",
+              "source_domain": "fantasticservicesgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://fantasticservicesgroup.com.au/cleaning-services/",
+              "influence": "high",
+              "evidence_found": "Australian cleaning services page describing domestic and commercial cleaning offerings in Australia (Australia-specific site).",
+              "candidate_rank": 2,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Fantastic Services Australia — Sydney cleaning services",
+              "source_domain": "fantasticservicesgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://fantasticservicesgroup.com.au/cleaning-services/sydney/",
+              "influence": "high",
+              "evidence_found": "Official Sydney service page describing domestic and commercial cleaning options and booking information.",
+              "candidate_rank": 3,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Fantastic Services Australia — Sydney cleaning page",
+              "source_domain": "fantasticservicesgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://fantasticservicesgroup.com.au/cleaning-services/sydney/",
+              "influence": "high",
+              "evidence_found": "Australian group site with explicit Sydney cleaning services and local contact email (Sydney@…).",
+              "candidate_rank": 3,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Fantastic Services Group – Sydney pages (official Australia site)",
+              "source_domain": "fantasticservicesgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://fantasticservicesgroup.com.au/sydney/central-coast/",
+              "influence": "high",
+              "evidence_found": "Australian site pages showing local Sydney/Central Coast service listings (carpet, oven, window cleaning etc.) and booking/contact info.",
+              "candidate_rank": 4,
+              "prompt_variation": 3
+            }
+          ]
+        },
+        {
+          "canonical_rank": 3,
+          "name": "Clean Group (Clean‑Group)",
+          "website": "https://www.clean-group.com.au/sydney/",
+          "appearance_count": 3,
+          "average_rank": 6,
+          "source_count": 5,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Clean Group — Sydney page",
+              "source_domain": "clean-group.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.clean-group.com.au/sydney/",
+              "influence": "high",
+              "evidence_found": "Official Sydney page listing ISO certifications, services and contact details for Sydney operations.",
+              "candidate_rank": 7,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Clean Group — commercial cleaning services",
+              "source_domain": "clean-group.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.clean-group.com.au/cleaning-services/",
+              "influence": "high",
+              "evidence_found": "Official service pages describing ISO certifications and Sydney commercial/residential services.",
+              "candidate_rank": 7,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Clean Group — press release (Sydney service expansion)",
+              "source_domain": "0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com/EINPresswire-696454593-clean-group-introduces-24-7-commercial-cleaning-services-in-sydney-1.pdf",
+              "influence": "medium",
+              "evidence_found": "Press announcement describing Clean Group’s commercial cleaning rollout and Sydney service offerings.",
+              "candidate_rank": 4,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Clean Group — ISO/capability documents on official site",
+              "source_domain": "clean-group.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.clean-group.com.au/wp-content/uploads/2026/03/australian-cleaning-industry-snapshot-2026.pdf",
+              "influence": "medium",
+              "evidence_found": "Capability and industry snapshot documents hosted on official domain supporting scale and Sydney focus.",
+              "candidate_rank": 7,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Clean Group — Sydney local page",
+              "source_domain": "clean-group.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.clean-group.com.au/sydney/",
+              "influence": "medium",
+              "evidence_found": "Sydney-specific landing page with contact and service details.",
+              "candidate_rank": 7,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 4,
+          "name": "Spotless / Spotless Group",
+          "website": "https://spotless.com/",
+          "appearance_count": 2,
+          "average_rank": 2.5,
+          "source_count": 4,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Spotless (corporate facilities services)",
+              "source_domain": "spotless.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://spotless.com/",
+              "influence": "high",
+              "evidence_found": "Corporate site describing integrated facilities services (cleaning, maintenance) operating in Australia including Sydney.",
+              "candidate_rank": 2,
+              "prompt_variation": 2
+            },
+            {
+              "source_name": "Spotless — official site (integrated facilities services)",
+              "source_domain": "spotless.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://spotless.com/",
+              "influence": "high",
+              "evidence_found": "Corporate site describing integrated cleaning/facility services in Australia, including healthcare and commercial cleaning.",
+              "candidate_rank": 3,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Spotless capability / sector PDFs",
+              "source_domain": "spotless.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://spotless.com/Content/cms/media/pdfs/Healthcare.pdf",
+              "influence": "medium",
+              "evidence_found": "Sector materials and capability statements confirming Spotless capability in Australia.",
+              "candidate_rank": 3,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Spotless Group — Glass & exterior services (Sydney)",
+              "source_domain": "spotlessgroup.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.spotlessgroup.com.au/",
+              "influence": "medium",
+              "evidence_found": "Spotless Group Glass & Exterior Services page highlighting residential and commercial cleaning work in Sydney.",
+              "candidate_rank": 2,
+              "prompt_variation": 2
+            }
+          ]
+        },
+        {
+          "canonical_rank": 5,
+          "name": "Jani‑King Australia",
+          "website": "https://janiking.com.au/",
+          "appearance_count": 2,
+          "average_rank": 4,
+          "source_count": 4,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Jani‑King Australia – official website (homepage)",
+              "source_domain": "janiking.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://janiking.com.au/",
+              "influence": "high",
+              "evidence_found": "Australian homepage describing national commercial cleaning services and franchise network; lists Sydney presence.",
+              "candidate_rank": 3,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Jani‑King Australia — official site",
+              "source_domain": "janiking.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://janiking.com.au/",
+              "influence": "high",
+              "evidence_found": "Australian Jani‑King site describing national/commercial services and Sydney coverage.",
+              "candidate_rank": 5,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Jani‑King – Commercial Cleaning Sydney page",
+              "source_domain": "janiking.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://janiking.com.au/sydney/",
+              "influence": "medium",
+              "evidence_found": "Local Sydney page describing services and suitability for Sydney commercial customers.",
+              "candidate_rank": 3,
+              "prompt_variation": 3
+            },
+            {
+              "source_name": "Jani‑King — commercial cleaning services page",
+              "source_domain": "janiking.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://janiking.com.au/services/commercial-cleaning/",
+              "influence": "medium",
+              "evidence_found": "Service page outlining commercial cleaning offerings relevant to Sydney businesses.",
+              "candidate_rank": 5,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 6,
+          "name": "Cleanin (Cleanin.com.au)",
+          "website": "https://cleanin.com.au/",
+          "appearance_count": 2,
+          "average_rank": 4.5,
+          "source_count": 2,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Cleanin – Commercial Cleaning Services in Greater Sydney",
+              "source_domain": "cleanin.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://cleanin.com.au/",
+              "influence": "high",
+              "evidence_found": "Homepage/service copy positioning Cleanin as a commercial cleaning provider for Greater Sydney.",
+              "candidate_rank": 3,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "Cleanin — official site (Greater Sydney commercial cleaning)",
+              "source_domain": "cleanin.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://cleanin.com.au/",
+              "influence": "high",
+              "evidence_found": "Website describes commercial cleaning service offerings for Greater Sydney and industry-specific cleaning plans.",
+              "candidate_rank": 6,
+              "prompt_variation": 2
+            }
+          ]
+        },
+        {
+          "canonical_rank": 7,
+          "name": "AMC Commercial Cleaning",
+          "website": "https://www.amcclean.com.au/",
+          "appearance_count": 2,
+          "average_rank": 5,
+          "source_count": 4,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "AMC Commercial Cleaning — homepage",
+              "source_domain": "amcclean.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.amcclean.com.au/",
+              "influence": "high",
+              "evidence_found": "Corporate homepage and service listings showing national operations including Sydney.",
+              "candidate_rank": 4,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "AMC Commercial Cleaning — official site (about)",
+              "source_domain": "amcclean.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.amcclean.com.au/about-amc/",
+              "influence": "high",
+              "evidence_found": "About page describing national presence and Sydney service coverage.",
+              "candidate_rank": 6,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "AMC — Sydney-specific page",
+              "source_domain": "amcclean.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.amcclean.com.au/nsw/sydney/",
+              "influence": "medium",
+              "evidence_found": "Sydney page describing local capability and services (office, retail, medical cleaning).",
+              "candidate_rank": 4,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "AMC — services and regional pages",
+              "source_domain": "amcclean.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.amcclean.com.au/cleaning-services/",
+              "influence": "medium",
+              "evidence_found": "Services pages showing commercial cleaning offerings and city coverage including Sydney.",
+              "candidate_rank": 6,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 8,
+          "name": "ISS Australia (ISS Facility Services)",
+          "website": "https://au.issworld.com/",
+          "appearance_count": 2,
+          "average_rank": 5,
+          "source_count": 4,
+          "source_types": [
+            "official_site",
+            "unknown"
+          ],
+          "top_sources": [
+            {
+              "source_name": "ISS Australia — local site",
+              "source_domain": "au.issworld.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://au.issworld.com/",
+              "influence": "high",
+              "evidence_found": "ISS Australia site describing cleaning and facility services for Australian clients (Sydney included).",
+              "candidate_rank": 4,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "ISS Australia — official Australia site (cleaning services)",
+              "source_domain": "au.issworld.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.au.issworld.com/",
+              "influence": "high",
+              "evidence_found": "Australian ISS site describing cleaning as a core service and references to local teams and governance in Australia.",
+              "candidate_rank": 6,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "ISS (global) — corporate background",
+              "source_domain": "issworld.com",
+              "source_type": "unknown",
+              "inferred_source_type": "unknown",
+              "source_url": "https://www.issworld.com/",
+              "influence": "medium",
+              "evidence_found": "Corporate pages confirming ISS global facility services and Australian operations.",
+              "candidate_rank": 4,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "ISS — cleaning service description (Australia)",
+              "source_domain": "au.issworld.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.au.issworld.com/what-we-do/single-services/cleaning",
+              "influence": "medium",
+              "evidence_found": "Service page describing cleaning delivery model and Australian operations and clients.",
+              "candidate_rank": 6,
+              "prompt_variation": 1
+            }
+          ]
+        },
+        {
+          "canonical_rank": 9,
+          "name": "Maid2Match",
+          "website": "https://www.maid2match.com.au/cleaners-sydney/",
+          "appearance_count": 2,
+          "average_rank": 5.5,
+          "source_count": 4,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "Maid2Match — Cleaners Sydney service page",
+              "source_domain": "maid2match.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.maid2match.com.au/cleaners-sydney/",
+              "influence": "high",
+              "evidence_found": "Sydney service page describing house, end‑of‑lease and specialised cleaning offerings in Sydney.",
+              "candidate_rank": 2,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Maid2Match — main site overview",
+              "source_domain": "maid2match.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.maid2match.com.au/",
+              "influence": "medium",
+              "evidence_found": "Company overview and national presence, plus policy documents (e.g., terms) on official domain.",
+              "candidate_rank": 2,
+              "prompt_variation": 1
+            },
+            {
+              "source_name": "Maid2Match — official site",
+              "source_domain": "maid2match.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.maid2match.com.au/",
+              "influence": "high",
+              "evidence_found": "Provider site describing Sydney/New South Wales coverage, services (house, NDIS, bond), and online booking/quote process.",
+              "candidate_rank": 9,
+              "prompt_variation": 4
+            },
+            {
+              "source_name": "Maid2Match — NDIS cleaning page",
+              "source_domain": "maid2match.com.au",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.maid2match.com.au/ndis-cleaning/",
+              "influence": "medium",
+              "evidence_found": "Shows NDIS registration and service delivery details relevant to Sydney clients.",
+              "candidate_rank": 9,
+              "prompt_variation": 4
+            }
+          ]
+        },
+        {
+          "canonical_rank": 10,
+          "name": "SpotShift Cleaning (Sydney-focused)",
+          "website": "https://www.spotshiftcleaning.com/",
+          "appearance_count": 2,
+          "average_rank": 6.5,
+          "source_count": 2,
+          "source_types": [
+            "official_site"
+          ],
+          "top_sources": [
+            {
+              "source_name": "SpotShift Cleaning – Home/End of Lease (Sydney)",
+              "source_domain": "spotshiftcleaning.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.spotshiftcleaning.com/",
+              "influence": "high",
+              "evidence_found": "Homepage copy: 'Sydney's Top‑Rated End of Lease & Move‑In Cleaning Experts', plus statement of Sydney suburb coverage and bond-back guarantee.",
+              "candidate_rank": 5,
+              "prompt_variation": 5
+            },
+            {
+              "source_name": "SpotShift Cleaning – official website (end-of-lease service page)",
+              "source_domain": "spotshiftcleaning.com",
+              "source_type": "unknown",
+              "inferred_source_type": "official_site",
+              "source_url": "https://www.spotshiftcleaning.com/",
+              "influence": "high",
+              "evidence_found": "Homepage/service pages advertise end-of-lease cleaning, bond-back guarantee and Sydney-focused move-out cleaning services.",
+              "candidate_rank": 8,
+              "prompt_variation": 3
+            }
+          ]
+        }
+      ],
+      "common_sources": {
+        "by_domain": [
+          {
+            "key": "fantasticservicesgroup.com.au",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 7,
+            "weighted_score": 103.7,
+            "high_influence_count": 5,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Australia site listing cleaning services and Sydney coverage.",
+              "Australian cleaning services page describing domestic and commercial cleaning offerings in Australia (Australia-specific site).",
+              "Official Sydney service page describing domestic and commercial cleaning options and booking information."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "jims.net",
+            "source_domain": "jims.net",
+            "inferred_source_type": "official_site",
+            "appearances": 6,
+            "weighted_score": 89.3,
+            "high_influence_count": 3,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Explains Jim’s Cleaning as the largest cleaning franchise in Australia with divisional services and national coverage (franchise model covering Sydney).",
+              "Official Jim’s Group cleaning page showing national services and Sydney coverage.",
+              "Division page describing Jim’s Cleaning services and franchise coverage across Australia including home and commercial cleaning."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "jimscleaning.com.au",
+            "source_domain": "jimscleaning.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 58.7,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official Jim's Cleaning Sydney local page listing services, contact phone number and local franchise information.",
+              "Official Jim’s Cleaning Sydney local listing showing services and contact for Sydney franchisees.",
+              "Operations manual and corporate documentation hosted on the official domain supporting national franchise structure."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "clean-group.com.au",
+            "source_domain": "clean-group.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 38.1,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Official Sydney page listing ISO certifications, services and contact details for Sydney operations.",
+              "Official service pages describing ISO certifications and Sydney commercial/residential services.",
+              "Capability and industry snapshot documents hosted on official domain supporting scale and Sydney focus."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "janiking.com.au",
+            "source_domain": "janiking.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 24.5,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Australian homepage describing national commercial cleaning services and franchise network; lists Sydney presence.",
+              "Australian Jani‑King site describing national/commercial services and Sydney coverage.",
+              "Local Sydney page describing services and suitability for Sydney commercial customers."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "spotless.com",
+            "source_domain": "spotless.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 22.7,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Corporate site describing integrated facilities services (cleaning, maintenance) operating in Australia including Sydney.",
+              "Corporate site describing integrated cleaning/facility services in Australia, including healthcare and commercial cleaning.",
+              "Sector materials and capability statements confirming Spotless capability in Australia."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "amcclean.com.au",
+            "source_domain": "amcclean.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 16.3,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Corporate homepage and service listings showing national operations including Sydney.",
+              "About page describing national presence and Sydney service coverage.",
+              "Sydney page describing local capability and services (office, retail, medical cleaning)."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "cleanin.com.au",
+            "source_domain": "cleanin.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 12,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Homepage/service copy positioning Cleanin as a commercial cleaning provider for Greater Sydney.",
+              "Website describes commercial cleaning service offerings for Greater Sydney and industry-specific cleaning plans."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "business.fantasticservicesgroup.com.au",
+            "source_domain": "business.fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.3,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Business/medical cleaning pages showing capability for commercial contracts consistent with Sydney commercial needs."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "au.issworld.com",
+            "source_domain": "au.issworld.com",
+            "inferred_source_type": "official_site",
+            "appearances": 3,
+            "weighted_score": 9.7,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "ISS Australia site describing cleaning and facility services for Australian clients (Sydney included).",
+              "Australian ISS site describing cleaning as a core service and references to local teams and governance in Australia.",
+              "Service page describing cleaning delivery model and Australian operations and clients."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "fantasticcleaners.com.au",
+            "source_domain": "fantasticcleaners.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 9.1,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Service-level Sydney page listing domestic and commercial cleaning options in Sydney."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "maid2match.com.au",
+            "source_domain": "maid2match.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 4,
+            "weighted_score": 8.2,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Sydney service page describing house, end‑of‑lease and specialised cleaning offerings in Sydney.",
+              "Company overview and national presence, plus policy documents (e.g., terms) on official domain.",
+              "Provider site describing Sydney/New South Wales coverage, services (house, NDIS, bond), and online booking/quote process."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com",
+            "source_domain": "0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 6.3,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Press announcement describing Clean Group’s commercial cleaning rollout and Sydney service offerings."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "spotlessgroup.com.au",
+            "source_domain": "spotlessgroup.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 4.7,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Spotless Group Glass & Exterior Services page highlighting residential and commercial cleaning work in Sydney."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "spotshiftcleaning.com",
+            "source_domain": "spotshiftcleaning.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 2.4,
+            "high_influence_count": 2,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Homepage copy: 'Sydney's Top‑Rated End of Lease & Move‑In Cleaning Experts', plus statement of Sydney suburb coverage and bond-back guarantee.",
+              "Homepage/service pages advertise end-of-lease cleaning, bond-back guarantee and Sydney-focused move-out cleaning services."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          },
+          {
+            "key": "issworld.com",
+            "source_domain": "issworld.com",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 2,
+            "high_influence_count": 0,
+            "supported_categories": {},
+            "supported_websites": {},
+            "sample_evidence": [
+              "Corporate pages confirming ISS global facility services and Australian operations."
+            ],
+            "supported_categories_count": 1,
+            "supported_websites_count": 1
+          }
+        ],
+        "by_type": [
+          {
+            "key": "official_site",
+            "appearances": 42,
+            "weighted_score": 376.7,
+            "high_influence_count": 26
+          },
+          {
+            "key": "unknown",
+            "appearances": 6,
+            "weighted_score": 52.8,
+            "high_influence_count": 0
+          }
+        ],
+        "by_url": [
+          {
+            "key": "https://jims.net/cleaning/",
+            "source_name": "Jim’s Cleaning — official Jim’s Group page",
+            "source_domain": "jims.net",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 36,
+            "supported_websites": {},
+            "evidence_found": "Official Jim’s Group cleaning page showing national services and Sydney coverage.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jimscleaning.com.au/local/nsw/sydney/",
+            "source_name": "Jim's Cleaning — Sydney location page",
+            "source_domain": "jimscleaning.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 36,
+            "supported_websites": {},
+            "evidence_found": "Official Jim's Cleaning Sydney local page listing services, contact phone number and local franchise information.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticservicesgroup.com.au/cleaning-services/",
+            "source_name": "Fantastic Services Group — Cleaning Services (Australia)",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 32.4,
+            "supported_websites": {},
+            "evidence_found": "Australia site listing cleaning services and Sydney coverage.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticservicesgroup.com.au/cleaning-services/sydney/",
+            "source_name": "Fantastic Services Australia — Sydney cleaning services",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 32.4,
+            "supported_websites": {},
+            "evidence_found": "Official Sydney service page describing domestic and commercial cleaning options and booking information.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.clean-group.com.au/sydney/",
+            "source_name": "Clean Group — Sydney page",
+            "source_domain": "clean-group.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 19,
+            "supported_websites": {},
+            "evidence_found": "Official Sydney page listing ISO certifications, services and contact details for Sydney operations.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jims.net/how-jims-cleaning-became-australias-largest-cleaning-franchise-haydar-hussein-and-joel-kleber/",
+            "source_name": "Jim’s Group – article on Jim’s Cleaning (official Jim’s site)",
+            "source_domain": "jims.net",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 18,
+            "supported_websites": {},
+            "evidence_found": "Explains Jim’s Cleaning as the largest cleaning franchise in Australia with divisional services and national coverage (franchise model covering Sydney).",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://spotless.com/",
+            "source_name": "Spotless (corporate facilities services)",
+            "source_domain": "spotless.com",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 16.8,
+            "supported_websites": {},
+            "evidence_found": "Corporate site describing integrated facilities services (cleaning, maintenance) operating in Australia including Sydney.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticservicesgroup.com.au/sydney/central-coast/",
+            "source_name": "Fantastic Services Group – Sydney pages (official Australia site)",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 16.2,
+            "supported_websites": {},
+            "evidence_found": "Australian site pages showing local Sydney/Central Coast service listings (carpet, oven, window cleaning etc.) and booking/contact info.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://janiking.com.au/",
+            "source_name": "Jani‑King Australia – official website (homepage)",
+            "source_domain": "janiking.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 14.4,
+            "supported_websites": {},
+            "evidence_found": "Australian homepage describing national commercial cleaning services and franchise network; lists Sydney presence.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jims.net/meet-our-franchisors/",
+            "source_name": "Jim’s Group franchisor profile pages",
+            "source_domain": "jims.net",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 12.6,
+            "supported_websites": {},
+            "evidence_found": "Pages describing Jim’s Cleaning division, divisional franchisors and services backing the brand claim and coverage.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jims.net/services/",
+            "source_name": "Jim’s Group – services list",
+            "source_domain": "jims.net",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 12.6,
+            "supported_websites": {},
+            "evidence_found": "Company services index listing Jim’s Cleaning among nationwide services, demonstrating national/Sydney availability.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jimscleaning.com.au/wp-content/uploads/2023/03/Jims-Cleaning-Operations-Manual-V3.01.pdf",
+            "source_name": "Jim's Cleaning operations manual (official domain)",
+            "source_domain": "jimscleaning.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 12.6,
+            "supported_websites": {},
+            "evidence_found": "Operations manual and corporate documentation hosted on the official domain supporting national franchise structure.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://cleanin.com.au/",
+            "source_name": "Cleanin – Commercial Cleaning Services in Greater Sydney",
+            "source_domain": "cleanin.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 2,
+            "weighted_score": 12,
+            "supported_websites": {},
+            "evidence_found": "Homepage/service copy positioning Cleanin as a commercial cleaning provider for Greater Sydney.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://business.fantasticservicesgroup.com.au/medical-cleaning-services/",
+            "source_name": "Fantastic Services – medical/ business cleaning (AU)",
+            "source_domain": "business.fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.3,
+            "supported_websites": {},
+            "evidence_found": "Business/medical cleaning pages showing capability for commercial contracts consistent with Sydney commercial needs.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticservicesgroup.com.au/",
+            "source_name": "Fantastic Services Australia — main services overview",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.3,
+            "supported_websites": {},
+            "evidence_found": "Corporate site showing national operations and range of property services offered in Australia.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticservicesgroup.com.au/sydney/carpet-cleaning-sutherland/",
+            "source_name": "Fantastic Services – Sydney carpet & window cleaning (local service pages)",
+            "source_domain": "fantasticservicesgroup.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.3,
+            "supported_websites": {},
+            "evidence_found": "Local service pages demonstrating Sydney-area operations and typical household service offerings.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://www.clean-group.com.au/cleaning-services/",
+            "source_name": "Clean Group — commercial cleaning services",
+            "source_domain": "clean-group.com.au",
+            "inferred_source_type": "official_site",
+            "appearances": 1,
+            "weighted_score": 11.2,
+            "supported_websites": {},
+            "evidence_found": "Official service pages describing ISO certifications and Sydney commercial/residential services.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jims.net/",
+            "source_name": "Jim’s Group (corporate franchisor)",
+            "source_domain": "jims.net",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 10.1,
+            "supported_websites": {},
+            "evidence_found": "Jim’s Group corporate site confirming Jim’s Cleaning as a national franchise division.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://jimscleaning.com.au/services",
+            "source_name": "Jim’s Cleaning (operations / services)",
+            "source_domain": "jimscleaning.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 10.1,
+            "supported_websites": {},
+            "evidence_found": "Jim’s Cleaning operations and services pages and operations manual describing cleaning divisions and offerings.",
+            "supported_websites_count": 1
+          },
+          {
+            "key": "https://fantasticcleaners.com.au/sydney/",
+            "source_name": "Fantastic Cleaners — Sydney service page",
+            "source_domain": "fantasticcleaners.com.au",
+            "inferred_source_type": "unknown",
+            "appearances": 1,
+            "weighted_score": 9.1,
+            "supported_websites": {},
+            "evidence_found": "Service-level Sydney page listing domestic and commercial cleaning options in Sydney.",
+            "supported_websites_count": 1
+          }
+        ]
+      },
+      "recommendations": {
+        "source_type_priority": [
+          {
+            "source_type": "official_site",
+            "weighted_score": 376.7,
+            "recommendation": "Strengthen category fit, entity clarity, location signals, and crawlable product/service detail on the main site."
+          },
+          {
+            "source_type": "unknown",
+            "weighted_score": 52.8,
+            "recommendation": "Increase presence on this source type where category buyers already validate providers."
+          }
+        ],
+        "highest_value_external_sources": [
+          {
+            "source_domain": "fantasticcleaners.com.au",
+            "inferred_source_type": "unknown",
+            "weighted_score": 9.1,
+            "supported_websites_count": 1,
+            "recommendation": "Treat fantasticcleaners.com.au as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 6.3,
+            "supported_websites_count": 1,
+            "recommendation": "Treat 0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "spotlessgroup.com.au",
+            "inferred_source_type": "unknown",
+            "weighted_score": 4.7,
+            "supported_websites_count": 1,
+            "recommendation": "Treat spotlessgroup.com.au as a discovery-supporting source and improve presence there where possible."
+          },
+          {
+            "source_domain": "issworld.com",
+            "inferred_source_type": "unknown",
+            "weighted_score": 2,
+            "supported_websites_count": 1,
+            "recommendation": "Treat issworld.com as a discovery-supporting source and improve presence there where possible."
+          }
+        ]
+      }
+    }
+  ],
+  "cross_category_summary": {
+    "common_domains_across_categories": [],
+    "source_type_priority_across_categories": [
+      {
+        "source_type": "official_site",
+        "total_appearances": 158,
+        "total_weighted_score": 1532.7,
+        "categories": [
+          "visitor management system",
+          "accounting software",
+          "cleaning services"
+        ]
+      },
+      {
+        "source_type": "unknown",
+        "total_appearances": 26,
+        "total_weighted_score": 173,
+        "categories": [
+          "visitor management system",
+          "accounting software",
+          "cleaning services"
+        ]
+      }
+    ]
+  }
+}

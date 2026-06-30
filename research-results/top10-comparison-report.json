@@ -1,0 +1,849 @@
+{
+  "generated_at": "2026-06-28T22:53:44.014Z",
+  "model": "gpt-5-mini",
+  "datasets": [
+    {
+      "category": "visitor_management_system",
+      "category_key": "visitor_management_system",
+      "source_file": "visitor-management-top10-scan.json",
+      "generated_at": "2026-06-28T22:05:41.555Z",
+      "requested_model": "gpt-5-mini",
+      "raw_count": 10,
+      "merged_count": 9,
+      "merged_brands": [
+        {
+          "brand_key": "proxyclick",
+          "display_name": "Proxyclick (Eptura Visitor)",
+          "canonical_website": "https://eptura.com/proxyclick/",
+          "merged_from": [
+            {
+              "rank": 5,
+              "name": "Proxyclick (Eptura Visitor)",
+              "website": "https://eptura.com/proxyclick/",
+              "discoverability_score": 46,
+              "rankability_score": 80.3
+            },
+            {
+              "rank": 8,
+              "name": "Proxyclick (now Eptura Visitor / Proxyclick)",
+              "website": "https://www.proxyclick.com",
+              "discoverability_score": 35.9,
+              "rankability_score": 77.6
+            }
+          ]
+        }
+      ],
+      "score_alignment": {
+        "discoverability_spearman": -1,
+        "rankability_spearman": -0.167,
+        "stronger_driver": "discoverability",
+        "interpretation": "Returned order is better explained by discoverability than by rankability."
+      },
+      "top_vs_bottom_gap": {
+        "discoverability_top_5_avg": 63.1,
+        "discoverability_rank_6_to_10_avg": 38.9,
+        "discoverability_gap": 24.2,
+        "rankability_top_5_avg": 78.9,
+        "rankability_rank_6_to_10_avg": 76.3,
+        "rankability_gap": 2.6
+      },
+      "notable_outliers": [
+        {
+          "rank": 4,
+          "name": "WhosOnLocation (OnLocation / MRI OnLocation)",
+          "website": "https://www.whosonlocation.com",
+          "discoverability_score": 58.2,
+          "rankability_score": 79.3,
+          "gap": 21.1,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 5,
+          "name": "Proxyclick (Eptura Visitor)",
+          "website": "https://eptura.com/proxyclick/",
+          "discoverability_score": 46,
+          "rankability_score": 78.9,
+          "gap": 32.9,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 6,
+          "name": "Traction Guest",
+          "website": "https://www.tractionguest.com",
+          "discoverability_score": 43.7,
+          "rankability_score": 83.2,
+          "gap": 39.5,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 7,
+          "name": "Sign In App",
+          "website": "https://signinapp.com",
+          "discoverability_score": 38.8,
+          "rankability_score": 84.6,
+          "gap": 45.8,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 8,
+          "name": "VisitUs (VisitUs Reception)",
+          "website": "https://visit-us.com/",
+          "discoverability_score": 36.8,
+          "rankability_score": 77.2,
+          "gap": 40.4,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 9,
+          "name": "ScanIn (ScanIn.com.au)",
+          "website": "https://scanin.com.au",
+          "discoverability_score": 36.2,
+          "rankability_score": 60.1,
+          "gap": 23.9,
+          "note": "Rankability is much stronger than discovery presence."
+        }
+      ],
+      "merged_ranking_table": [
+        {
+          "brand_key": "sine.co",
+          "rank": 1,
+          "name": "Sine (Sine by Honeywell)",
+          "website": "https://www.sine.co",
+          "domain": "sine.co",
+          "discoverability_score": 73,
+          "rankability_score": 79.2,
+          "appearance_count": 5,
+          "average_rank": 1.2,
+          "merged_from": [
+            {
+              "rank": 1,
+              "name": "Sine (Sine by Honeywell)",
+              "website": "https://www.sine.co",
+              "discoverability_score": 73,
+              "rankability_score": 79.2
+            }
+          ]
+        },
+        {
+          "brand_key": "swipedon.com",
+          "rank": 2,
+          "name": "SwipedOn (includes Sign In App merger)",
+          "website": "https://www.swipedon.com",
+          "domain": "swipedon.com",
+          "discoverability_score": 70.6,
+          "rankability_score": 73.3,
+          "appearance_count": 5,
+          "average_rank": 2.2,
+          "merged_from": [
+            {
+              "rank": 2,
+              "name": "SwipedOn (includes Sign In App merger)",
+              "website": "https://www.swipedon.com",
+              "discoverability_score": 70.6,
+              "rankability_score": 73.3
+            }
+          ]
+        },
+        {
+          "brand_key": "envoy.com",
+          "rank": 3,
+          "name": "Envoy",
+          "website": "https://www.envoy.com",
+          "domain": "envoy.com",
+          "discoverability_score": 67.6,
+          "rankability_score": 83.8,
+          "appearance_count": 5,
+          "average_rank": 3.8,
+          "merged_from": [
+            {
+              "rank": 3,
+              "name": "Envoy",
+              "website": "https://www.envoy.com",
+              "discoverability_score": 67.6,
+              "rankability_score": 83.8
+            }
+          ]
+        },
+        {
+          "brand_key": "whosonlocation.com",
+          "rank": 4,
+          "name": "WhosOnLocation (OnLocation / MRI OnLocation)",
+          "website": "https://www.whosonlocation.com",
+          "domain": "whosonlocation.com",
+          "discoverability_score": 58.2,
+          "rankability_score": 79.3,
+          "appearance_count": 4,
+          "average_rank": 3.8,
+          "merged_from": [
+            {
+              "rank": 4,
+              "name": "WhosOnLocation (OnLocation / MRI OnLocation)",
+              "website": "https://www.whosonlocation.com",
+              "discoverability_score": 58.2,
+              "rankability_score": 79.3
+            }
+          ]
+        },
+        {
+          "brand_key": "proxyclick",
+          "rank": 5,
+          "name": "Proxyclick (Eptura Visitor)",
+          "website": "https://eptura.com/proxyclick/",
+          "domain": "eptura.com",
+          "discoverability_score": 46,
+          "rankability_score": 78.9,
+          "appearance_count": 3,
+          "average_rank": 5.4,
+          "merged_from": [
+            {
+              "rank": 5,
+              "name": "Proxyclick (Eptura Visitor)",
+              "website": "https://eptura.com/proxyclick/",
+              "discoverability_score": 46,
+              "rankability_score": 80.3
+            },
+            {
+              "rank": 8,
+              "name": "Proxyclick (now Eptura Visitor / Proxyclick)",
+              "website": "https://www.proxyclick.com",
+              "discoverability_score": 35.9,
+              "rankability_score": 77.6
+            }
+          ]
+        },
+        {
+          "brand_key": "tractionguest.com",
+          "rank": 6,
+          "name": "Traction Guest",
+          "website": "https://www.tractionguest.com",
+          "domain": "tractionguest.com",
+          "discoverability_score": 43.7,
+          "rankability_score": 83.2,
+          "appearance_count": 3,
+          "average_rank": 6.3,
+          "merged_from": [
+            {
+              "rank": 6,
+              "name": "Traction Guest",
+              "website": "https://www.tractionguest.com",
+              "discoverability_score": 43.7,
+              "rankability_score": 83.2
+            }
+          ]
+        },
+        {
+          "brand_key": "signinapp.com",
+          "rank": 7,
+          "name": "Sign In App",
+          "website": "https://signinapp.com",
+          "domain": "signinapp.com",
+          "discoverability_score": 38.8,
+          "rankability_score": 84.6,
+          "appearance_count": 2,
+          "average_rank": 4.5,
+          "merged_from": [
+            {
+              "rank": 7,
+              "name": "Sign In App",
+              "website": "https://signinapp.com",
+              "discoverability_score": 38.8,
+              "rankability_score": 84.6
+            }
+          ]
+        },
+        {
+          "brand_key": "visit-us.com",
+          "rank": 8,
+          "name": "VisitUs (VisitUs Reception)",
+          "website": "https://visit-us.com/",
+          "domain": "visit-us.com",
+          "discoverability_score": 36.8,
+          "rankability_score": 77.2,
+          "appearance_count": 2,
+          "average_rank": 5.5,
+          "merged_from": [
+            {
+              "rank": 9,
+              "name": "VisitUs (VisitUs Reception)",
+              "website": "https://visit-us.com/",
+              "discoverability_score": 36.8,
+              "rankability_score": 77.2
+            }
+          ]
+        },
+        {
+          "brand_key": "scanin.com.au",
+          "rank": 9,
+          "name": "ScanIn (ScanIn.com.au)",
+          "website": "https://scanin.com.au",
+          "domain": "scanin.com.au",
+          "discoverability_score": 36.2,
+          "rankability_score": 60.1,
+          "appearance_count": 2,
+          "average_rank": 6,
+          "merged_from": [
+            {
+              "rank": 10,
+              "name": "ScanIn (ScanIn.com.au)",
+              "website": "https://scanin.com.au",
+              "discoverability_score": 36.2,
+              "rankability_score": 60.1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category": "accounting software",
+      "category_key": "accounting_software",
+      "source_file": "accounting-software-top10-scan.json",
+      "generated_at": "2026-06-28T22:37:09.285Z",
+      "requested_model": "gpt-5-mini",
+      "raw_count": 10,
+      "merged_count": 10,
+      "merged_brands": [],
+      "score_alignment": {
+        "discoverability_spearman": -1,
+        "rankability_spearman": -0.564,
+        "stronger_driver": "discoverability",
+        "interpretation": "Returned order is better explained by discoverability than by rankability."
+      },
+      "top_vs_bottom_gap": {
+        "discoverability_top_5_avg": 69,
+        "discoverability_rank_6_to_10_avg": 55.3,
+        "discoverability_gap": 13.7,
+        "rankability_top_5_avg": 78.6,
+        "rankability_rank_6_to_10_avg": 74.9,
+        "rankability_gap": 3.7
+      },
+      "notable_outliers": [
+        {
+          "rank": 9,
+          "name": "Oracle NetSuite (Australia)",
+          "website": "https://www.netsuite.com.au/",
+          "discoverability_score": 50,
+          "rankability_score": 81.2,
+          "gap": 31.2,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 10,
+          "name": "Wave (Wave Financial)",
+          "website": "https://www.waveapps.com/",
+          "discoverability_score": 46.6,
+          "rankability_score": 66.8,
+          "gap": 20.2,
+          "note": "Rankability is much stronger than discovery presence."
+        }
+      ],
+      "merged_ranking_table": [
+        {
+          "brand_key": "xero.com",
+          "rank": 1,
+          "name": "Xero (AU)",
+          "website": "https://www.xero.com/au/",
+          "domain": "xero.com",
+          "discoverability_score": 73.4,
+          "rankability_score": 85.8,
+          "appearance_count": 5,
+          "average_rank": 1,
+          "merged_from": [
+            {
+              "rank": 1,
+              "name": "Xero (AU)",
+              "website": "https://www.xero.com/au/",
+              "discoverability_score": 73.4,
+              "rankability_score": 85.8
+            }
+          ]
+        },
+        {
+          "brand_key": "myob.com",
+          "rank": 2,
+          "name": "MYOB",
+          "website": "https://www.myob.com/au",
+          "domain": "myob.com",
+          "discoverability_score": 70.9,
+          "rankability_score": 79.2,
+          "appearance_count": 5,
+          "average_rank": 2,
+          "merged_from": [
+            {
+              "rank": 2,
+              "name": "MYOB",
+              "website": "https://www.myob.com/au",
+              "discoverability_score": 70.9,
+              "rankability_score": 79.2
+            }
+          ]
+        },
+        {
+          "brand_key": "quickbooks.intuit.com",
+          "rank": 3,
+          "name": "QuickBooks Online (Intuit) — Australia",
+          "website": "https://quickbooks.intuit.com/au/",
+          "domain": "quickbooks.intuit.com",
+          "discoverability_score": 69.1,
+          "rankability_score": 82.9,
+          "appearance_count": 5,
+          "average_rank": 3,
+          "merged_from": [
+            {
+              "rank": 3,
+              "name": "QuickBooks Online (Intuit) — Australia",
+              "website": "https://quickbooks.intuit.com/au/",
+              "discoverability_score": 69.1,
+              "rankability_score": 82.9
+            }
+          ]
+        },
+        {
+          "brand_key": "reckon.com",
+          "rank": 4,
+          "name": "Reckon",
+          "website": "https://www.reckon.com/au/",
+          "domain": "reckon.com",
+          "discoverability_score": 66.8,
+          "rankability_score": 71.9,
+          "appearance_count": 5,
+          "average_rank": 4,
+          "merged_from": [
+            {
+              "rank": 4,
+              "name": "Reckon",
+              "website": "https://www.reckon.com/au/",
+              "discoverability_score": 66.8,
+              "rankability_score": 71.9
+            }
+          ]
+        },
+        {
+          "brand_key": "sage.com",
+          "rank": 5,
+          "name": "Sage (Sage Business Cloud Accounting) — Australia",
+          "website": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+          "domain": "sage.com",
+          "discoverability_score": 64.8,
+          "rankability_score": 73.2,
+          "appearance_count": 5,
+          "average_rank": 5,
+          "merged_from": [
+            {
+              "rank": 5,
+              "name": "Sage (Sage Business Cloud Accounting) — Australia",
+              "website": "https://www.sage.com/en-au/sage-business-cloud/accounting/",
+              "discoverability_score": 64.8,
+              "rankability_score": 73.2
+            }
+          ]
+        },
+        {
+          "brand_key": "zoho.com",
+          "rank": 6,
+          "name": "Zoho Books (Australia)",
+          "website": "https://www.zoho.com/au/books/",
+          "domain": "zoho.com",
+          "discoverability_score": 62.9,
+          "rankability_score": 81.8,
+          "appearance_count": 5,
+          "average_rank": 6.2,
+          "merged_from": [
+            {
+              "rank": 6,
+              "name": "Zoho Books (Australia)",
+              "website": "https://www.zoho.com/au/books/",
+              "discoverability_score": 62.9,
+              "rankability_score": 81.8
+            }
+          ]
+        },
+        {
+          "brand_key": "saasu.com",
+          "rank": 7,
+          "name": "Saasu",
+          "website": "https://www.saasu.com/",
+          "domain": "saasu.com",
+          "discoverability_score": 59,
+          "rankability_score": 69,
+          "appearance_count": 5,
+          "average_rank": 7.8,
+          "merged_from": [
+            {
+              "rank": 7,
+              "name": "Saasu",
+              "website": "https://www.saasu.com/",
+              "discoverability_score": 59,
+              "rankability_score": 69
+            }
+          ]
+        },
+        {
+          "brand_key": "freshbooks.com",
+          "rank": 8,
+          "name": "FreshBooks (Australia)",
+          "website": "https://www.freshbooks.com/en-au/",
+          "domain": "freshbooks.com",
+          "discoverability_score": 57.9,
+          "rankability_score": 75.6,
+          "appearance_count": 5,
+          "average_rank": 8.4,
+          "merged_from": [
+            {
+              "rank": 8,
+              "name": "FreshBooks (Australia)",
+              "website": "https://www.freshbooks.com/en-au/",
+              "discoverability_score": 57.9,
+              "rankability_score": 75.6
+            }
+          ]
+        },
+        {
+          "brand_key": "netsuite.com.au",
+          "rank": 9,
+          "name": "Oracle NetSuite (Australia)",
+          "website": "https://www.netsuite.com.au/",
+          "domain": "netsuite.com.au",
+          "discoverability_score": 50,
+          "rankability_score": 81.2,
+          "appearance_count": 4,
+          "average_rank": 8,
+          "merged_from": [
+            {
+              "rank": 9,
+              "name": "Oracle NetSuite (Australia)",
+              "website": "https://www.netsuite.com.au/",
+              "discoverability_score": 50,
+              "rankability_score": 81.2
+            }
+          ]
+        },
+        {
+          "brand_key": "waveapps.com",
+          "rank": 10,
+          "name": "Wave (Wave Financial)",
+          "website": "https://www.waveapps.com/",
+          "domain": "waveapps.com",
+          "discoverability_score": 46.6,
+          "rankability_score": 66.8,
+          "appearance_count": 4,
+          "average_rank": 9.5,
+          "merged_from": [
+            {
+              "rank": 10,
+              "name": "Wave (Wave Financial)",
+              "website": "https://www.waveapps.com/",
+              "discoverability_score": 46.6,
+              "rankability_score": 66.8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category": "cleaning services",
+      "category_key": "cleaning_services",
+      "source_file": "cleaning-services-top10-scan.json",
+      "generated_at": "2026-06-28T22:49:02.877Z",
+      "requested_model": "gpt-5-mini",
+      "raw_count": 10,
+      "merged_count": 9,
+      "merged_brands": [
+        {
+          "brand_key": "jims_cleaning",
+          "display_name": "Jim's Cleaning (Jim's Group)",
+          "canonical_website": "https://jims.net",
+          "merged_from": [
+            {
+              "rank": 2,
+              "name": "Jim's Cleaning (Jim's Group)",
+              "website": "https://jims.net",
+              "discoverability_score": 54.8,
+              "rankability_score": 67.8
+            },
+            {
+              "rank": 4,
+              "name": "Jim's Cleaning (Jim's Group)",
+              "website": "https://jimscleaning.com.au/local/nsw/sydney/",
+              "discoverability_score": 45.8,
+              "rankability_score": 74.7
+            }
+          ]
+        }
+      ],
+      "score_alignment": {
+        "discoverability_spearman": -0.979,
+        "rankability_spearman": -0.1,
+        "stronger_driver": "discoverability",
+        "interpretation": "Returned order is better explained by discoverability than by rankability."
+      },
+      "top_vs_bottom_gap": {
+        "discoverability_top_5_avg": 50.3,
+        "discoverability_rank_6_to_10_avg": 38.1,
+        "discoverability_gap": 12.2,
+        "rankability_top_5_avg": 74.7,
+        "rankability_rank_6_to_10_avg": 74.9,
+        "rankability_gap": -0.2
+      },
+      "notable_outliers": [
+        {
+          "rank": 3,
+          "name": "Clean Group",
+          "website": "https://www.clean-group.com.au/sydney/",
+          "discoverability_score": 44.8,
+          "rankability_score": 85.3,
+          "gap": 40.5,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 4,
+          "name": "Spotless / Spotless Group",
+          "website": "https://spotless.com/",
+          "discoverability_score": 42.8,
+          "rankability_score": 63.3,
+          "gap": 20.5,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 5,
+          "name": "Jani‑King Australia",
+          "website": "https://janiking.com.au/",
+          "discoverability_score": 39.8,
+          "rankability_score": 73.6,
+          "gap": 33.8,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 6,
+          "name": "Cleanin (Commercial Cleaning Greater Sydney)",
+          "website": "https://cleanin.com.au/",
+          "discoverability_score": 39.9,
+          "rankability_score": 69.8,
+          "gap": 29.9,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 7,
+          "name": "AMC Commercial Cleaning",
+          "website": "https://www.amcclean.com.au/",
+          "discoverability_score": 37.8,
+          "rankability_score": 78.8,
+          "gap": 41,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 8,
+          "name": "ISS Facility Services Australia (ISS Australia)",
+          "website": "https://www.au.issworld.com/",
+          "discoverability_score": 37.8,
+          "rankability_score": 77.3,
+          "gap": 39.5,
+          "note": "Rankability is much stronger than discovery presence."
+        },
+        {
+          "rank": 9,
+          "name": "Maid2Match",
+          "website": "https://www.maid2match.com.au/cleaners-sydney/",
+          "discoverability_score": 36.8,
+          "rankability_score": 73.7,
+          "gap": 36.9,
+          "note": "Rankability is much stronger than discovery presence."
+        }
+      ],
+      "merged_ranking_table": [
+        {
+          "brand_key": "fantasticservicesgroup.com.au",
+          "rank": 1,
+          "name": "Fantastic Services (Fantastic Services Australia)",
+          "website": "https://fantasticservicesgroup.com.au/cleaning-services/sydney/",
+          "domain": "fantasticservicesgroup.com.au",
+          "discoverability_score": 69.2,
+          "rankability_score": 80.1,
+          "appearance_count": 5,
+          "average_rank": 2.8,
+          "merged_from": [
+            {
+              "rank": 1,
+              "name": "Fantastic Services (Fantastic Services Australia)",
+              "website": "https://fantasticservicesgroup.com.au/cleaning-services/sydney/",
+              "discoverability_score": 69.2,
+              "rankability_score": 80.1
+            }
+          ]
+        },
+        {
+          "brand_key": "jims_cleaning",
+          "rank": 2,
+          "name": "Jim's Cleaning (Jim's Group)",
+          "website": "https://jims.net",
+          "domain": "jims.net",
+          "discoverability_score": 54.8,
+          "rankability_score": 71.3,
+          "appearance_count": 3,
+          "average_rank": 1,
+          "merged_from": [
+            {
+              "rank": 2,
+              "name": "Jim's Cleaning (Jim's Group)",
+              "website": "https://jims.net",
+              "discoverability_score": 54.8,
+              "rankability_score": 67.8
+            },
+            {
+              "rank": 4,
+              "name": "Jim's Cleaning (Jim's Group)",
+              "website": "https://jimscleaning.com.au/local/nsw/sydney/",
+              "discoverability_score": 45.8,
+              "rankability_score": 74.7
+            }
+          ]
+        },
+        {
+          "brand_key": "clean-group.com.au",
+          "rank": 3,
+          "name": "Clean Group",
+          "website": "https://www.clean-group.com.au/sydney/",
+          "domain": "clean-group.com.au",
+          "discoverability_score": 44.8,
+          "rankability_score": 85.3,
+          "appearance_count": 3,
+          "average_rank": 6,
+          "merged_from": [
+            {
+              "rank": 3,
+              "name": "Clean Group",
+              "website": "https://www.clean-group.com.au/sydney/",
+              "discoverability_score": 44.8,
+              "rankability_score": 85.3
+            }
+          ]
+        },
+        {
+          "brand_key": "spotless.com",
+          "rank": 4,
+          "name": "Spotless / Spotless Group",
+          "website": "https://spotless.com/",
+          "domain": "spotless.com",
+          "discoverability_score": 42.8,
+          "rankability_score": 63.3,
+          "appearance_count": 2,
+          "average_rank": 2.5,
+          "merged_from": [
+            {
+              "rank": 5,
+              "name": "Spotless / Spotless Group",
+              "website": "https://spotless.com/",
+              "discoverability_score": 42.8,
+              "rankability_score": 63.3
+            }
+          ]
+        },
+        {
+          "brand_key": "janiking.com.au",
+          "rank": 5,
+          "name": "Jani‑King Australia",
+          "website": "https://janiking.com.au/",
+          "domain": "janiking.com.au",
+          "discoverability_score": 39.8,
+          "rankability_score": 73.6,
+          "appearance_count": 2,
+          "average_rank": 4,
+          "merged_from": [
+            {
+              "rank": 6,
+              "name": "Jani‑King Australia",
+              "website": "https://janiking.com.au/",
+              "discoverability_score": 39.8,
+              "rankability_score": 73.6
+            }
+          ]
+        },
+        {
+          "brand_key": "cleanin.com.au",
+          "rank": 6,
+          "name": "Cleanin (Commercial Cleaning Greater Sydney)",
+          "website": "https://cleanin.com.au/",
+          "domain": "cleanin.com.au",
+          "discoverability_score": 39.9,
+          "rankability_score": 69.8,
+          "appearance_count": 2,
+          "average_rank": 4.5,
+          "merged_from": [
+            {
+              "rank": 7,
+              "name": "Cleanin (Commercial Cleaning Greater Sydney)",
+              "website": "https://cleanin.com.au/",
+              "discoverability_score": 39.9,
+              "rankability_score": 69.8
+            }
+          ]
+        },
+        {
+          "brand_key": "amcclean.com.au",
+          "rank": 7,
+          "name": "AMC Commercial Cleaning",
+          "website": "https://www.amcclean.com.au/",
+          "domain": "amcclean.com.au",
+          "discoverability_score": 37.8,
+          "rankability_score": 78.8,
+          "appearance_count": 2,
+          "average_rank": 5,
+          "merged_from": [
+            {
+              "rank": 8,
+              "name": "AMC Commercial Cleaning",
+              "website": "https://www.amcclean.com.au/",
+              "discoverability_score": 37.8,
+              "rankability_score": 78.8
+            }
+          ]
+        },
+        {
+          "brand_key": "au.issworld.com",
+          "rank": 8,
+          "name": "ISS Facility Services Australia (ISS Australia)",
+          "website": "https://www.au.issworld.com/",
+          "domain": "au.issworld.com",
+          "discoverability_score": 37.8,
+          "rankability_score": 77.3,
+          "appearance_count": 2,
+          "average_rank": 5,
+          "merged_from": [
+            {
+              "rank": 9,
+              "name": "ISS Facility Services Australia (ISS Australia)",
+              "website": "https://www.au.issworld.com/",
+              "discoverability_score": 37.8,
+              "rankability_score": 77.3
+            }
+          ]
+        },
+        {
+          "brand_key": "maid2match.com.au",
+          "rank": 9,
+          "name": "Maid2Match",
+          "website": "https://www.maid2match.com.au/cleaners-sydney/",
+          "domain": "maid2match.com.au",
+          "discoverability_score": 36.8,
+          "rankability_score": 73.7,
+          "appearance_count": 2,
+          "average_rank": 5.5,
+          "merged_from": [
+            {
+              "rank": 10,
+              "name": "Maid2Match",
+              "website": "https://www.maid2match.com.au/cleaners-sydney/",
+              "discoverability_score": 36.8,
+              "rankability_score": 73.7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "overall_conclusions": [
+    "Primary driver by category: visitor_management_system: discoverability; accounting software: discoverability; cleaning services: discoverability.",
+    "Across these three categories, returned order is more often explained by discoverability than by rankability.",
+    "Local-service results were the noisiest: cleaning services had a discoverability gap of 12.2 points, while the rankability gap was -0.2 points.",
+    "Software categories showed a cleaner pattern: high-frequency discovery was usually a stronger predictor of returned order, while rankability helped explain which discovered candidates looked strongest once surfaced."
+  ]
+}

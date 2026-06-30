@@ -1,0 +1,86 @@
+SITE INTENT PHASE 1 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Build the foundation of the SiteIntent app.
+- Match the customer dashboard framework, layout language, and visual feel of ConversionBooster’s product app.
+- Keep the system local-first with Ollama as the initial LLM backend.
+
+Primary Outcome
+- A working app shell with shared dashboard layout, sidebar navigation, responsive behavior, and global styling.
+- A stable base for the rest of the product phases.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- The ConversionBoosterExample reference app at `/Users/jarvis/Documents/GitHub/ConversionBoosterExample`
+- The dashboard structure in that app, especially:
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/app/layout.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/dashboard-shell.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/app-sidebar.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/components/dashboard-nav.tsx`
+  - `/Users/jarvis/Documents/GitHub/ConversionBoosterExample/apps/product-web/app/globals.css`
+
+Build requirements
+- Use the same overall app framework pattern as ConversionBooster’s product app.
+- Preserve a polished customer dashboard feel instead of inventing a new visual language.
+- Use a local Ollama abstraction so later phases can call it without rewriting the app structure.
+- Keep the implementation simple enough that it can run locally before any Cloudflare deployment work.
+
+Implementation order
+1. Confirm the intended app structure.
+2. Create or mirror the app shell components.
+3. Set up dashboard navigation groups for SiteIntent sections.
+4. Build the responsive sidebar and main content layout.
+5. Apply the dashboard visual system in global CSS.
+6. Add an Ollama client abstraction and placeholder interface.
+7. Add placeholder routes or screens for the core sections.
+
+Detailed instructions
+- Create a root app layout that owns fonts, metadata, theme provider wiring, and global styles.
+- Create a dashboard shell component that handles:
+  - sidebar layout on desktop
+  - mobile header behavior
+  - content width and spacing
+  - a clean fixed shell similar to ConversionBooster
+- Create a sidebar component with section groups for:
+  - Dashboard overview
+  - Projects
+  - Pages
+  - Competitors
+  - Category model
+  - Target intent model
+  - Recommendations
+  - Scan history
+  - Settings
+- Use the same interaction patterns as the reference app:
+  - active item highlighting
+  - mobile sidebar dismissal after navigation
+  - a compact brand area at the top
+- Match the reference styling approach:
+  - light, warm dashboard background
+  - soft borders and cards
+  - rounded containers
+  - restrained orange/accent usage instead of purple or generic blue
+- Add a local LLM adapter module that clearly separates:
+  - model selection
+  - prompt execution
+  - response parsing
+  - error handling
+- Keep the Ollama interface behind a small wrapper so we can swap the provider later without rewriting callers.
+
+Deliverables
+- App shell implemented.
+- Sidebar and nav scaffolding implemented.
+- Dashboard style tokens and base CSS in place.
+- Ollama abstraction stub created.
+- Placeholder pages/routes created for the main sections.
+
+Verification
+- The app renders on desktop and mobile.
+- Sidebar navigation works and does not break layout.
+- The main content area feels visually consistent with ConversionBooster.
+- There is a clean place to plug in Ollama calls later.
+
+Definition of done
+- The dashboard framework is usable as the base for every other phase.
+- No major dashboard layout work should be needed in later phases unless a specific feature requires it.

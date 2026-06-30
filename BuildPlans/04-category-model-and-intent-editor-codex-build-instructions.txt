@@ -1,0 +1,70 @@
+SITE INTENT PHASE 4 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Turn page and competitor analysis into a shared category model.
+- Let the user edit the target intent model so the product can optimize for real positioning, not a guess.
+
+Primary Outcome
+- The app can explain the site’s category, the expected concepts in that category, and the current intended positioning target.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- The analysis output from Phase 3.
+- The reference dashboard components in `/Users/jarvis/Documents/GitHub/ConversionBoosterExample` that present structured insights cleanly.
+
+Build requirements
+- Competitors must be analyzed independently.
+- The category model must exclude differentiators, industry-specific positioning, and pricing strategies.
+- The target intent model must be user-editable.
+- Metrics should be understandable, not overly academic.
+
+Implementation order
+1. Aggregate analysis from the site and competitors.
+2. Produce the shared category model.
+3. Build the target intent editor.
+4. Compute metrics.
+5. Present the metrics in the dashboard UI.
+
+Detailed instructions
+- Build competitor analysis outputs that capture:
+  - audience
+  - outcomes
+  - positioning
+  - differentiators
+- Build the category model around:
+  - category
+  - customer
+  - problem
+  - expected concepts
+  - expected outcomes
+- Build the editable target intent model so the user can:
+  - change category
+  - lock concepts
+  - remove concepts
+  - add concepts
+- Add metric calculation logic for:
+  - Intent Alignment
+  - Clarity
+  - Understanding Confidence
+  - Intent Score
+  - Focus Score
+  - Context Contribution Score
+  - Context Dependency Score
+  - Isolation Risk
+- Present the category and target model in a UI that matches the overall dashboard style.
+
+Deliverables
+- Category model generator.
+- Competitor analysis views or panels.
+- Editable target intent model UI.
+- Metric computation layer.
+- Helpful explanations for the user.
+
+Verification
+- The user can inspect and edit the intent target.
+- The category model stays focused on shared understanding, not differentiators.
+- Metrics update when the target model changes.
+
+Definition of done
+- The app can describe what the website communicates and what it should communicate instead.

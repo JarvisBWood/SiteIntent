@@ -1,0 +1,153 @@
+SiteIntent Scoring Metrics
+
+SiteIntent calculates three primary scores. Each score is made up of
+individual criteria, where every criterion is scored from 0 to 100 by
+the AI. The application then applies the configured weightings to
+calculate the final score.
+
+The scoring engine should own the weightings so they can be adjusted
+over time without changing the AI prompts.
+
+------------------------------------------------------------------------
+
+🎯 Intent Clarity
+
+Question: Can AI clearly understand what this business does?
+
+  Criterion                     Weight
+  --------------------------- --------
+  Category clarity                 30%
+  Audience clarity                 20%
+  Product / Service clarity        20%
+  Problem clarity                  15%
+  Outcome clarity                  10%
+  Messaging clarity                 5%
+
+Each criterion is scored independently from 0 to 100.
+
+The AI should also provide evidence explaining the score.
+
+------------------------------------------------------------------------
+
+🧩 Intent Consistency
+
+Question: Do all important pages reinforce the same intent?
+
+  Criterion                     Weight
+  --------------------------- --------
+  Homepage alignment               25%
+  Key page alignment               35%
+  Supporting page alignment        20%
+  Terminology consistency          20%
+
+Each criterion is scored independently from 0 to 100.
+
+The AI should also provide evidence explaining the score.
+
+------------------------------------------------------------------------
+
+📚 Topic Coverage
+
+Question: Has the website covered the information AI expects for this
+category?
+
+Expected topics are determined by analysing the user’s website alongside
+competitors.
+
+  Criterion                     Weight
+  --------------------------- --------
+  Core topics covered              45%
+  Supporting topics covered        25%
+  Depth of coverage                30%
+
+Each criterion is scored independently from 0 to 100.
+
+The AI should also provide evidence explaining the score.
+
+------------------------------------------------------------------------
+
+General Rules
+
+-   Every criterion returns a score between 0 and 100.
+-   The scoring engine applies the configured weightings to calculate
+    the final score.
+-   Every score must include supporting evidence extracted from the
+    website.
+-   Weightings should be configurable rather than hard-coded.
+-   Only the three primary scores are displayed on the dashboard:
+    -   Intent Clarity
+    -   Intent Consistency
+    -   Topic Coverage
+
+
+Example JSON returned from the Scan of the website data:
+
+{
+  "intent_clarity": {
+    "score": 89,
+    "criteria": {
+      "category_clarity": {
+        "score": 95,
+        "evidence": "The homepage clearly identifies the business as AI school report writing software."
+      },
+      "audience_clarity": {
+        "score": 92,
+        "evidence": "Teachers are consistently referenced throughout the homepage and features."
+      },
+      "product_service_clarity": {
+        "score": 98,
+        "evidence": "The primary product is clearly described."
+      },
+      "problem_clarity": {
+        "score": 72,
+        "evidence": "The site implies time savings but doesn't consistently describe the pain points."
+      },
+      "outcome_clarity": {
+        "score": 85,
+        "evidence": "The desired outcome of producing better reports faster is clear."
+      },
+      "messaging_clarity": {
+        "score": 82,
+        "evidence": "Most pages reinforce the same messaging with minor inconsistencies."
+      }
+    }
+  },
+  "intent_consistency": {
+    "score": 86,
+    "criteria": {
+      "homepage_alignment": {
+        "score": 100,
+        "evidence": "The homepage strongly reinforces the primary intent."
+      },
+      "key_page_alignment": {
+        "score": 90,
+        "evidence": "Features and pricing pages reinforce the same positioning."
+      },
+      "supporting_page_alignment": {
+        "score": 75,
+        "evidence": "Some blog articles are only loosely related to the core topic."
+      },
+      "terminology_consistency": {
+        "score": 80,
+        "evidence": "Most terminology is consistent with occasional variations."
+      }
+    }
+  },
+  "topic_coverage": {
+    "score": 74,
+    "criteria": {
+      "core_topics_covered": {
+        "score": 95,
+        "evidence": "The essential topics are well covered."
+      },
+      "supporting_topics_covered": {
+        "score": 62,
+        "evidence": "Several expected supporting topics are missing."
+      },
+      "depth_of_coverage": {
+        "score": 70,
+        "evidence": "Topics are introduced but some lack sufficient detail."
+      }
+    }
+  }
+}

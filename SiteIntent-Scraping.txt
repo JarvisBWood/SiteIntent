@@ -1,0 +1,128 @@
+SiteIntent Scraping
+
+Crawling Process
+This should be 100% scripted and not rely on AI for this to save on costs.
+
+1. Scrape the homepage and identify all directly linked internal pages.
+2. Exclude obvious low-value pages (Terms, Privacy, Legal, Login, Cart, Sign Up, Get Started).
+3. For each remaining page:
+    * Extract the main text content from the HTML.
+    * Preserve the page title, meta title, meta description, H1 and all headings.
+4. Save all extracted page data to the database as a website crawl snapshot.
+
+Storage
+
+Implement persistent storage for website crawl snapshots.
+
+Each crawl should create:
+
+* One website_scan record.
+* One website_scan_page record for every included page.
+
+Each page should store:
+
+* URL
+* Normalised URL
+* Page title
+* Meta title
+* Meta description
+* H1
+* Headings
+* Extracted main text
+* Word count
+* Content hash
+* HTTP status
+* Crawl depth
+* Inclusion flag
+* Exclusion reason
+* Scrape timestamp
+
+Scoring should never scrape the live website directly. It should load the stored website_scan_page records for the selected website_scan and build the scoring context from the saved page content.
+
+Example website_scan
+
+{
+  "id": "scan_01JX8Q8Y3M3K6WJ4YB8F2N1D5A",
+  "website_id": "website_01JX8Q2V8P4R7L9Z2M6N1A3C4B",
+  "status": "completed",
+  "homepage_url": "https://reportwizard.com.au",
+  "scan_depth": 1,
+  "started_at": "2026-06-26T10:15:22Z",
+  "completed_at": "2026-06-26T10:16:41Z",
+  "pages_found": 18,
+  "pages_excluded": 4,
+  "pages_scored": 14,
+  "excluded_page_types": [
+    "privacy",
+    "terms",
+    "login",
+    "signup"
+  ],
+  "total_word_count": 28476,
+  "total_characters": 193584,
+  "scoring_status": "pending",
+  "created_at": "2026-06-26T10:16:41Z"
+}
+
+Example website_scan_page
+
+{
+  "url": "https://example.com/features",
+  "normalized_url": "https://example.com/features",
+  "page_title": "Features",
+  "meta_title": "AI School Report Writer Features",
+  "meta_description": "Create school reports faster with AI.",
+  "headings": [
+    { "level": "h1", "text": "AI Report Writing Features" },
+    { "level": "h2", "text": "Save hours writing reports" }
+  ],
+  "main_text": "Clean extracted page text...",
+  "word_count": 1240,
+  "content_hash": "sha256..."
+  "include_in_scoring": true,
+  "exclusion_reason": ""
+}
+
+
+
+Recommended flow
+
+1. Scripted scrape
+
+The scraper should handle:
+
+* homepage fetch
+* internal link discovery
+* URL normalisation
+* exclusion filtering
+* HTTP status checks
+* HTML parsing
+* main text extraction
+* title/meta/headings extraction
+* word count
+* content hash
+* database save
+
+
+2. Scripted page filtering
+
+Start with rules:
+Exclude:
+- /privacy
+- /terms
+- /legal
+- /login
+- /cart
+- /checkout
+- /signup
+- /sign-up
+- /get-started
+- /account
+- /admin
+- /wp-login
+- file downloads
+- images
+- duplicate URLs
+- anchors
+
+Still save the filtered out pages as AI will then analyse the scrape to see which pages to use for context.

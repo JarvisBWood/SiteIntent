@@ -1,0 +1,39 @@
+SiteIntent Build Phase 3: Crawling and Local LLM Analysis
+
+Goal
+- Build the analysis pipeline that discovers pages, extracts content, and runs local Ollama inference.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Store the raw and merged outputs from each pass.
+
+Scope
+- Discovery from:
+  - robots.txt
+  - sitemap.xml
+  - llms.txt
+  - internal links
+- Maximum crawl limit of 100 pages.
+- Page extraction and metadata collection.
+- Page type detection.
+- Local analysis passes:
+  - Pass A
+  - Pass B
+  - Pass C when outputs are unstable
+- Confidence and stability scoring.
+- Persist scan timestamps and raw JSON outputs.
+
+Planned Sections
+- Crawl pipeline
+- Page processing
+- LLM inference orchestration
+- Analysis storage
+
+Deliverables
+- A deterministic crawler pipeline.
+- Ollama integration for page-level analysis.
+- A stored page output shape that matches the product spec.
+- Background job structure for repeat scans.
+
+Acceptance Criteria
+- A scan can discover pages, analyze them, and write results without manual intervention.
+- The same page can be re-run later with preserved history.
+- The app records enough detail to compare unstable vs stable outputs.

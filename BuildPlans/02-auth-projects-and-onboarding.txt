@@ -1,0 +1,34 @@
+SiteIntent Build Phase 2: Auth, Projects, and Onboarding
+
+Goal
+- Let a user create an account, create a project, and start the first scan.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Capture the minimum onboarding inputs from the spec.
+
+Scope
+- Authentication and session handling.
+- Project creation and project switching.
+- Onboarding form for:
+  - Website URL
+  - Up to 3 competitor URLs
+  - Scan depth
+  - Include sitemap toggle
+  - Include llms.txt toggle
+- First-run state, empty states, and setup progress UI.
+
+Planned Sections
+- Create account
+- Create project
+- Start scan
+- Onboarding status
+
+Deliverables
+- Working signup/sign-in flow.
+- Project storage and active-project selection.
+- Onboarding UI that matches the dashboard style.
+- Validation for the required website URL and optional competitor URLs.
+
+Acceptance Criteria
+- A new user can get from sign-in to a project record with one URL entered.
+- The onboarding screen clearly shows what will be scanned and what is optional.
+- The app gracefully handles users who have not created a project yet.

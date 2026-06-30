@@ -1,0 +1,498 @@
+{
+  "generated_at": "2026-06-28T23:02:42.830Z",
+  "requested_model": "gpt-5-mini",
+  "fallback_model": "gpt-5.4-mini",
+  "categories": [
+    {
+      "category": "visitor management system",
+      "source_file": "visitor-management-top10-scan.json",
+      "summary": "Across the top-10 visitor-management sites the strongest external discovery signals are software review marketplaces, comparison directories, integration/marketplace listings, and community forums. Those domains produce high-authority pages (product profiles, comparisons, verified reviews, integration listings and partner pages) that search engines and AI models commonly use to build category knowledge and surface vendor names. Below are the most influential external source domains, why they matter for AI discovery, and which of the provided top-10 sites each source likely supported.",
+      "source_audit": [
+        {
+          "source_name": "G2",
+          "source_domain": "g2.com",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "G2 hosts product profiles, verified user reviews, product comparisons and competitor lists that summarize capabilities, ratings and market signals (review volume, sentiment). AI models and search engines frequently scrape and index G2 pages for software-category signals and vendor-to-vendor comparisons, so presence and ranking on G2 make a vendor more likely to appear in AI-generated lists and answers.",
+          "supported_websites": [
+            "Sine (Sine by Honeywell)",
+            "SwipedOn (includes Sign In App merger)",
+            "Envoy",
+            "WhosOnLocation (OnLocation / MRI OnLocation)",
+            "Proxyclick (Eptura Visitor)",
+            "Traction Guest",
+            "Sign In App",
+            "Proxyclick (now Eptura Visitor / Proxyclick)",
+            "VisitUs (VisitUs Reception)"
+          ],
+          "example_source_urls": [
+            "https://www.g2.com/sellers/envoy",
+            "https://www.g2.com/products/swipedon/reviews",
+            "https://www.g2.com/products/visitus-reception/reviews",
+            "https://www.g2.com/products/traction/reviews",
+            "https://www.g2.com/products/sine-by-honeywell/competitors/alternatives"
+          ]
+        },
+        {
+          "source_name": "Capterra (and Gartner Digital Markets family)",
+          "source_domain": "capterra.com",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "Capterra provides product pages, verified reviews, side‑by‑side feature lists and Shortlist placements that are heavily indexed for software-buying queries. Many procurement and comparison pages (and AI agents) rely on Capterra metadata and review counts when ranking or identifying category leaders.",
+          "supported_websites": [
+            "Proxyclick (Eptura Visitor)",
+            "Sign In App",
+            "WhosOnLocation (OnLocation / MRI OnLocation)",
+            "VisitUs (VisitUs Reception)",
+            "Sine (Sine by Honeywell)"
+          ],
+          "example_source_urls": [
+            "https://www.capterra.com/p/117329/Proxyclick/",
+            "https://www.capterra.com/p/162584/Sign-In-App/",
+            "https://www.capterra.com/p/142980/WhosOnLocation/",
+            "https://www.capterra.com/p/164461/VisitUs-Reception/"
+          ]
+        },
+        {
+          "source_name": "GetApp / Software Advice (Gartner Digital Markets)",
+          "source_domain": "getapp.com",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "GetApp and Software Advice provide additional product profiles, comparisons and reviewer summaries that reinforce signals from G2/Capterra. They often appear in ’best of’ lists and comparator pages that AI systems use to compile vendor sets for the category.",
+          "supported_websites": [
+            "Envoy",
+            "Sine (Sine by Honeywell)",
+            "VisitUs (VisitUs Reception)"
+          ],
+          "example_source_urls": [
+            "https://www.getapp.com/operations-management-software/a/envoy/",
+            "https://www.getapp.com/operations-management-software/a/honeywell-forge-visitor-management/",
+            "https://www.getapp.co.uk/software/115847/visitus-reception"
+          ]
+        },
+        {
+          "source_name": "Microsoft AppSource / Vendor integration marketplaces",
+          "source_domain": "appsource.microsoft.com (and vendor integrations pages)",
+          "source_type": "marketplace",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Integration listings and marketplace entries (AppSource, vendor integration directories) signal enterprise relevance and ecosystem fit (Slack, Teams, Outlook, Meraki, Gallagher, etc.). AI and comparison tools use these pages to infer product maturity and common integrations — raising discoverability for integrator‑friendly vendors.",
+          "supported_websites": [
+            "Envoy",
+            "Sine (Sine by Honeywell)"
+          ],
+          "example_source_urls": [
+            "https://appsource.microsoft.com/en-us/product/Office365/WA200000198",
+            "https://envoy.com/integrations",
+            "https://products.security.gallagher.com/security/au/en_AU/products/integrations/other/envoy-integration/p/C12981"
+          ]
+        },
+        {
+          "source_name": "Industry directories & research sites (GoodFirms, ITQlick, SaaSHub, TopBusinessSoftware)",
+          "source_domain": "goodfirms.co / itqlick.com / saashub.com / topbusinesssoftware.com",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "These aggregator and research sites publish product pages, scorecards and editorial comparisons that are frequently crawled and used to seed AI recommendation datasets. They often repackage review platform data and add editorial context, helping smaller vendors (VisitUs, Traction Guest) surface in category summaries.",
+          "supported_websites": [
+            "VisitUs (VisitUs Reception)",
+            "Traction Guest",
+            "Sine (Sine by Honeywell)"
+          ],
+          "example_source_urls": [
+            "https://www.itqlick.com/visitus-reception",
+            "https://www.goodfirms.co/software/visitus-reception",
+            "https://topbusinesssoftware.com/categories/meeting-room-booking-system/with-zapier-integration/"
+          ]
+        },
+        {
+          "source_name": "Community forums & Q&A (Reddit, sysadmin/facilities threads)",
+          "source_domain": "reddit.com",
+          "source_type": "forum",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Practical peer discussions (sysadmin, facilities, security subreddits) mention real deployments, pros/cons and integration anecdotes. AI systems and training crawlers use forum chatter to learn which vendors are recommended in real‑world contexts — boosting vendors commonly named in operational threads (Envoy, Sine, SwipedOn, VisitUs).",
+          "supported_websites": [
+            "Envoy",
+            "Sine (Sine by Honeywell)",
+            "SwipedOn (includes Sign In App merger)",
+            "VisitUs (VisitUs Reception)"
+          ],
+          "example_source_urls": [
+            "https://www.reddit.com/r/meraki/comments/xvkvvf/",
+            "https://www.reddit.com/r/sysadmin/comments/1oepsxb/what_visitor_management_system_are_you_guys_using/",
+            "https://www.reddit.com/r/FacilityManagement/comments/1gc0c12/visitor_sign_in_out/"
+          ]
+        },
+        {
+          "source_name": "Vendor partner & security integrator pages (Gallagher, Meraki, Rhombus, integrations docs)",
+          "source_domain": "rhombus.com / gallagher.com / vendor integration docs",
+          "source_type": "official_site",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Partner pages and integration documentation (security/access control vendors, camera/meraki integration docs) show enterprise deployments and compatibility. These pages are high‑trust signals used by procurement and technical searches, helping vendors with integration breadth (Envoy, Proxyclick) stand out.",
+          "supported_websites": [
+            "Envoy",
+            "Proxyclick (Eptura Visitor)",
+            "WhosOnLocation (OnLocation / MRI OnLocation)"
+          ],
+          "example_source_urls": [
+            "https://rhombus.com/integrations/envoy/",
+            "https://s3.amazonaws.com/compatibilitymatrix/CCURE9000MatrixDocuments/Envoy/Advanced%20Details/Envoy_Datasheet_v2.7%20-%20v3.0.pdf",
+            "https://www.capterra.com/p/117329/Proxyclick/"
+          ]
+        },
+        {
+          "source_name": "Local / national review & business directories (ProductReview.au, Scamadviser, Allbiz)",
+          "source_domain": "productreview.com.au / scamadviser.com / allbiz.ca",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "Local review and business listing sites boost visibility for regionally focused vendors (ScanIn — Australia) and provide trust signals for smaller domains. These sites are often used by regional users and get crawled into datasets used by AI models for country‑specific recommendations.",
+          "supported_websites": [
+            "ScanIn (ScanIn.com.au)",
+            "SwipedOn (includes Sign In App merger)"
+          ],
+          "example_source_urls": [
+            "https://www.scamadviser.com/check-website/scanin.com.au",
+            "https://www.allbiz.ca/swipedon-613-704-0739",
+            "https://www.productreview.com.au/"
+          ]
+        },
+        {
+          "source_name": "Press/editorial roundups and hybrid-work guides (PCMag/Tech blogs / specialist blogs)",
+          "source_domain": "pcmag.com / tech blogs / specialist workplace-security blogs",
+          "source_type": "editorial_media",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "Editorial roundups and hybrid‑work guides (occasionally listing visitor management vendors or integrations) give contextual, trusted mentions and comparative commentary. AI agents use these mentions to corroborate product positioning when creating human‑readable recommendations.",
+          "supported_websites": [
+            "Envoy",
+            "Sine (Sine by Honeywell)",
+            "Traction Guest"
+          ],
+          "example_source_urls": [
+            "https://blog.asa.team/hybrid-working-tools-and-apps-a-practical-guide-to-choosing-desk-booking-collaboration-security-software/",
+            "https://www.pcmag.com/ (example editorial pages)"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "accounting software",
+      "source_file": "accounting-software-top10-scan.json",
+      "summary": "Most discoverability for ‘accounting software (Australia)’ is driven by mainstream B2B review platforms (Capterra, G2, GetApp/Software Advice), local consumer-review and comparison sites (ProductReview, Canstar/Canstar Blue, Finder/merchant comparison sites), broad tech editorial reviews (TechRadar and similar buying-guides), platform/partner directories (Xero App Store, vendor partner/advisor directories), Google Business/Maps presence, and active forums (Reddit). These external domains surface vendor pages, reviews, comparison lists and editorial recommendations that AI systems commonly use as signals — especially when many independent reviews, comparison articles and directory entries converge on the same vendor names.",
+      "source_audit": [
+        {
+          "source_name": "Capterra",
+          "source_domain": "capterra.com / capterra.com.au",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "Capterra aggregates thousands of verified user reviews, feature lists and comparisons that rank and shortlist accounting software — a primary signal for AI models and comparison engines. Its localized (.au) pages increase visibility for Australian queries and it appears on vendor marketing pages as a trust badge, further reinforcing relevance signals.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Reckon - https://www.reckon.com/au/",
+            "Sage (Sage Business Cloud Accounting) — Australia - https://www.sage.com/en-au/sage-business-cloud/accounting/",
+            "Zoho Books (Australia) - https://www.zoho.com/au/books/",
+            "FreshBooks (Australia) - https://www.freshbooks.com/en-au/",
+            "Oracle NetSuite (Australia) - https://www.netsuite.com.au/",
+            "Wave (Wave Financial) - https://www.waveapps.com/"
+          ],
+          "example_source_urls": [
+            "https://www.capterra.com/p/120109/Xero/",
+            "https://www.capterra.com.au/software/141374/quickbooks-online",
+            "https://www.capterra.com/compare/120109-204823/Xero-vs-QuickBooks-Premier"
+          ]
+        },
+        {
+          "source_name": "G2",
+          "source_domain": "g2.com",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "G2 is a leading business-software review platform used by procurement teams and frequently scraped by search engines and AI indexers; vendor pages, verified reviews and ‘best of’ lists there strongly influence ranking and recommendations, and G2’s consolidation/acquisitions make it a central repository (G2/Capterra/GetApp family).",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "Sage (Sage Business Cloud Accounting) — Australia - https://www.sage.com/en-au/sage-business-cloud/accounting/",
+            "Zoho Books (Australia) - https://www.zoho.com/au/books/",
+            "FreshBooks (Australia) - https://www.freshbooks.com/en-au/",
+            "Wave (Wave Financial) - https://www.waveapps.com/",
+            "Oracle NetSuite (Australia) - https://www.netsuite.com.au/"
+          ],
+          "example_source_urls": [
+            "https://www.g2.com/products/xero/reviews",
+            "https://www.g2.com/products/quickbooks-online/reviews",
+            "https://www.g2.com/sellers/xero-390f429b-8d4b-4170-a85d-f071f0cc536d"
+          ]
+        },
+        {
+          "source_name": "GetApp / Software Advice",
+          "source_domain": "getapp.com.au / getapp.com / softwareadvice.com",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "GetApp (and Software Advice) operate country-specific listings and comparison pages used by small businesses to shortlist software. These directories combine feature matrices, user reviews and category rankings — strong structured signals for AI discovery and for driving organic traffic to vendor sites.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Reckon - https://www.reckon.com/au/",
+            "Zoho Books (Australia) - https://www.zoho.com/au/books/",
+            "Saasu - https://www.saasu.com/",
+            "Wave (Wave Financial) - https://www.waveapps.com/"
+          ],
+          "example_source_urls": [
+            "https://www.getapp.com.au/software/1671/xero",
+            "https://www.getapp.com.au/software/141374/quickbooks-online",
+            "https://www.getapp.com.au/"
+          ]
+        },
+        {
+          "source_name": "ProductReview (Australia)",
+          "source_domain": "productreview.com.au",
+          "source_type": "review_platform",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "ProductReview is Australia’s largest consumer opinion site; many Australian small business owners consult it for real-world reviews and ratings. Local sentiment and high review volumes (Xero, MYOB, QuickBooks pages) are valuable regional signals for AI models and local search ranking.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Reckon - https://www.reckon.com/au/"
+          ],
+          "example_source_urls": [
+            "https://www.productreview.com.au/listings/xero",
+            "https://www.productreview.com.au/listings/myob",
+            "https://www.productreview.com.au/listings/quickbooks"
+          ]
+        },
+        {
+          "source_name": "Tech editorial & buying guides (TechRadar, PCMag-style reviews, local review blogs)",
+          "source_domain": "techradar.com and regional comparison blogs (e.g. stackpick.com.au, merchantcompare.com.au)",
+          "source_type": "editorial_media",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Authoritative editorial reviews and ‘best of’ roundups explain differences between vendors, are frequently re-published and linked to by other sites, and rank well in search results. AI systems use these as signal-rich sources for features, pros/cons and overall rankings — particularly for new entrants like FreshBooks, Zoho Books and Wave.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Zoho Books (Australia) - https://www.zoho.com/au/books/",
+            "FreshBooks (Australia) - https://www.freshbooks.com/en-au/",
+            "Wave (Wave Financial) - https://www.waveapps.com/"
+          ],
+          "example_source_urls": [
+            "https://www.techradar.com/best/accounting-software-small-business",
+            "https://stackpick.com.au/best-accounting-software-australia/",
+            "https://merchantcompare.com.au/compare/accounting-software"
+          ]
+        },
+        {
+          "source_name": "Finder & consumer-comparison sites / Canstar Blue",
+          "source_domain": "finder.com.au / canstarblue.com.au",
+          "source_type": "editorial_media",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Australian comparison sites and consumer-rating bodies (Finder, Canstar Blue) run local evaluations and awards; their ‘best accounting software’ lists and awards (Canstar ratings) are widely cited by vendors and help boost local discoverability and trust signals for AIs and search engines.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Sage (Sage Business Cloud Accounting) — Australia - https://www.sage.com/en-au/sage-business-cloud/accounting/"
+          ],
+          "example_source_urls": [
+            "https://www.canstarblue.com.au/stores-services/accounting-software/",
+            "https://www.finder.com/au/best-accounting-software"
+          ]
+        },
+        {
+          "source_name": "Vendor partner & app stores (Xero App Store, NetSuite Solution Provider listings)",
+          "source_domain": "apps.xero.com / netsuite.com.au partner directories",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Platform app stores and advisor/partner directories (Xero Advisors, NetSuite partners) create a web of endorsed integrations and partner pages that increase link density around a vendor, surface use-cases and integrations, and act as discovery channels for accountants/bookkeepers searching for compatible tools.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "Oracle NetSuite (Australia) - https://www.netsuite.com.au/",
+            "Zoho Books (Australia) - https://www.zoho.com/au/books/",
+            "SaaSu - https://www.saasu.com/"
+          ],
+          "example_source_urls": [
+            "https://apps.xero.com/au/",
+            "https://www.netsuite.com/portal/partners.shtml",
+            "https://www.xero.com/au/advisors/"
+          ]
+        },
+        {
+          "source_name": "Google Business / Maps (local listings)",
+          "source_domain": "google.com / google.com/maps",
+          "source_type": "google_business_profile",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Google Business Profiles and Maps entries for vendor offices (Xero, MYOB, Reckon, NetSuite regional offices) improve local relevance for Australia-specific queries and are frequently used by models and search indexers to validate company presence and contact information.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "Reckon - https://www.reckon.com/au/",
+            "Oracle NetSuite (Australia) - https://www.netsuite.com.au/"
+          ],
+          "example_source_urls": [
+            "https://www.xero.com/hk/about/offices/ (links to Google Maps)",
+            "https://www.myob.com/au",
+            "https://www.localbusinessguide.com.au/find/MYOB%2BAUSTRALIA/"
+          ]
+        },
+        {
+          "source_name": "Forums and community (Reddit, specialised accounting forums)",
+          "source_domain": "reddit.com and industry community forums",
+          "source_type": "forum",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "Developer, small-business and accountant conversations (Reddit threads, community Q&A) provide qualitative, real-world feedback and direct comparisons. While lower volume than structured review sites, forum mentions can be influential for niche queries and long-tail discovery by AI models.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/",
+            "Reckon - https://www.reckon.com/au/"
+          ],
+          "example_source_urls": [
+            "https://www.reddit.com/r/AustralianAccounting/comments/",
+            "https://www.reddit.com/r/xero/comments/1ug1r3m/removed/"
+          ]
+        },
+        {
+          "source_name": "Canstar / awards & professional body guidance (CPA Australia, accounting association reports)",
+          "source_domain": "canstar.com.au / cpaaustralia.com.au",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "Awards, star-ratings and professional-body buyer guides (Canstar, CPA Australia) are authoritative references that vendors cite and that aggregated indexes use for credibility signals. They help explain market leadership (e.g., Xero/MYOB mentions) in AI training data and in curated vendor lists.",
+          "supported_websites": [
+            "Xero (AU) - https://www.xero.com/au/",
+            "MYOB - https://www.myob.com/au",
+            "QuickBooks Online (Intuit) — Australia - https://quickbooks.intuit.com/au/"
+          ],
+          "example_source_urls": [
+            "https://www.canstarblue.com.au/stores-services/accounting-software/",
+            "https://www.cpaaustralia.com.au/-/media/project/cpa/intheblack/documents/document/ebooks/inthe-black-ebook-softwarerightfit.pdf"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "cleaning services",
+      "source_file": "cleaning-services-top10-scan.json",
+      "summary": "For Cleaning Services in Sydney the strongest external discovery signals for the top 10 sites were: Google Business Profile / Maps (broad, high‑impact presence for all providers), consumer review platforms (ProductReview.com.au, Oneflare) and local aggregator/editorial directories (CleaningSearch, press/SEO listings, HelpNearby). LinkedIn/company pages and industry press releases/aggregator pages also contributed. These non-official sources supply structured location, review and trust signals that AI ranking/recommendation systems commonly use to surface local service providers.",
+      "source_audit": [
+        {
+          "source_name": "Google Business Profile / Google Maps",
+          "source_domain": "google.com / maps.google.com",
+          "source_type": "google_business_profile",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "Google Business Profile (Maps) is the primary local discovery signal for service searches — it provides address/service-area, star rating, recent reviews and photos that AIs and search/ranking models use to identify local cleaning providers. Evidence of active GBPs or Google reviews appears for multiple firms (Fantastic Services, Clean Group and others) and the companies themselves surface 'check our Google reviews' wording on their sites. ([cleaningsearch.com.au](https://cleaningsearch.com.au/companies/fantastic-services-sydney?utm_source=openai))",
+          "supported_websites": [
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Jim's Cleaning (Jim's Group) - jims.net / jimscleaning.com.au",
+            "Clean Group - clean-group.com.au",
+            "Spotless (Spotless Group) - spotless.com",
+            "Jani‑King Australia - janiking.com.au",
+            "Cleanin - cleanin.com.au",
+            "AMC Commercial Cleaning - amcclean.com.au",
+            "ISS Facility Services Australia - au.issworld.com",
+            "Maid2Match - maid2match.com.au"
+          ],
+          "example_source_urls": [
+            "https://cleaningsearch.com.au/companies/fantastic-services-sydney (evidence of Google Business Profile / Google reviews for Fantastic Services).",
+            "https://www.clean-group.com.au/sydney/ (Clean Group references Google/Google reviews).",
+            "https://jimscleaning.com.au/ (Jim's Cleaning operations manual and location pages referencing Google presence)."
+          ]
+        },
+        {
+          "source_name": "ProductReview.com.au (consumer review aggregator)",
+          "source_domain": "productreview.com.au",
+          "source_type": "review_platform",
+          "influence_on_discovery": "high",
+          "why_it_helped_discovery": "ProductReview is a widely-used Australian consumer reviews platform; AI systems and recommendation engines often draw on ProductReview ratings and review text to gauge customer sentiment and trustworthiness. Maid2Match and other house-cleaning brands are listed and reviewed there (Maid2Match shows many reviews and an overall rating). This raises visibility and provides independent review signals. ([productreview.com.au](https://www.productreview.com.au/listings/maid2match?utm_source=openai))",
+          "supported_websites": [
+            "Maid2Match - maid2match.com.au",
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Jim's Cleaning - jims.net / jimscleaning.com.au"
+          ],
+          "example_source_urls": [
+            "https://www.productreview.com.au/listings/maid2match (Maid2Match reviews & rating).",
+            "https://maid2match.com.au/what-to-expect-when-you-hire-a-cleaner-for-the-first-time/ (Maid2Match references ProductReview/Trustpilot on its site)."
+          ]
+        },
+        {
+          "source_name": "Oneflare (marketplace / local services marketplace)",
+          "source_domain": "oneflare.com.au",
+          "source_type": "marketplace",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Oneflare is a local services marketplace that lists cleaning companies, collects bookings/reviews and surfaces vendor profiles for demand-side queries. Clean Group appears in Oneflare office-cleaning lists and uses Oneflare reviews in its credibility claims; marketplaces like Oneflare feed both direct referral traffic and secondary citation signals used by AI rankers. ([assets.oneflare.com.au](https://assets.oneflare.com.au/office-cleaning/nsw/cremorne-point?utm_source=openai))",
+          "supported_websites": [
+            "Clean Group - clean-group.com.au",
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Jim's Cleaning - jims.net / jimscleaning.com.au"
+          ],
+          "example_source_urls": [
+            "https://assets.oneflare.com.au/office-cleaning/nsw/cremorne-point (Oneflare listings referencing Clean Group).",
+            "https://www.clean-group.com.au/sydney/ (Clean Group references Oneflare / review badges)."
+          ]
+        },
+        {
+          "source_name": "Local aggregator / editorial directories (CleaningSearch, CommercialCleaning.au, HelpNearby)",
+          "source_domain": "cleaningsearch.com.au / commercialcleaning.au / helpnearby.com.au",
+          "source_type": "editorial_media",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Niche aggregators and editorial directories focused on cleaning/contractors (CleaningSearch, CommercialCleaning.au) publish company profiles, compare services and syndicate Google reviews — these pages are picked up by AI models as topical authority and local-match signals. CleaningSearch explicitly lists Fantastic Services and syncs Google reviews; CommercialCleaning.au and HelpNearby similarly surface local company profiles. ([cleaningsearch.com.au](https://cleaningsearch.com.au/companies/fantastic-services-sydney?utm_source=openai))",
+          "supported_websites": [
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Clean Group - clean-group.com.au",
+            "Maid2Match - maid2match.com.au",
+            "Jim's Cleaning - jims.net / jimscleaning.com.au"
+          ],
+          "example_source_urls": [
+            "https://cleaningsearch.com.au/companies/fantastic-services-sydney (CleaningSearch profile for Fantastic Services).",
+            "https://commercialcleaning.au/commercial-cleaning-services-sydney/avalon-nsw/ (CommercialCleaning.au referencing Clean Group).",
+            "https://www.helpnearby.com.au/%40fantastic-services-sydney (HelpNearby listing referencing Fantastic Services and Google rating)."
+          ]
+        },
+        {
+          "source_name": "Press releases / regional SEO listings and news aggregation (PressAdvantage, local PR feeds)",
+          "source_domain": "pressadvantage.com / EINPresswire / press feed aggregators",
+          "source_type": "editorial_media",
+          "influence_on_discovery": "medium",
+          "why_it_helped_discovery": "Press releases and syndicated local PR create additional third‑party pages and anchor-text backlinks tied to brand + service terms. Clean Group and similar providers publish press items that are picked up across aggregator networks, increasing the number of distinct discovery signals and citations used by AI rankers. ([pressadvantage.com](https://pressadvantage.com/story/57068-clean-group-sydney-s-deep-cleaning-services-have-nothing-but-5-star-reviews?utm_source=openai))",
+          "supported_websites": [
+            "Clean Group - clean-group.com.au",
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Maid2Match - maid2match.com.au"
+          ],
+          "example_source_urls": [
+            "https://pressadvantage.com/story/57068-clean-group-sydney-s-deep-cleaning-services-have-nothing-but-5-star-reviews (press piece referencing Clean Group).",
+            "https://0e190a550a8c4c8c4b93-fcd009c875a5577fd4fe2f5b7e3bf4eb.ssl.cf2.rackcdn.com/EINPresswire-696454593-clean-group-introduces-24-7-commercial-cleaning-services-in-sydney-1.pdf (syndicated press PDF for Clean Group)."
+          ]
+        },
+        {
+          "source_name": "LinkedIn / company pages (non-official social / business directory)",
+          "source_domain": "linkedin.com",
+          "source_type": "social",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "LinkedIn company pages and business social profiles reinforce brand signals (company description, locations, employee count) and are commonly scraped by aggregators and knowledge graphs used by recommendation models. Fantastic Services and others have LinkedIn presence that supports corporate identity signals. ([linkedin.com](https://www.linkedin.com/company/fantasticservicesau/?utm_source=openai))",
+          "supported_websites": [
+            "Fantastic Services - fantasticservicesgroup.com.au",
+            "Jim's Cleaning (Jim's Group) - jims.net"
+          ],
+          "example_source_urls": [
+            "https://www.linkedin.com/company/fantasticservicesau/ (Fantastic Services LinkedIn page)."
+          ]
+        },
+        {
+          "source_name": "ProvenExpert / niche review sites and business directories",
+          "source_domain": "provenexpert.com / commercial platforms",
+          "source_type": "industry_directory",
+          "influence_on_discovery": "low",
+          "why_it_helped_discovery": "Smaller review/experience platforms (ProvenExpert and similar) collect client testimonials and ratings that add more corroborating review signals; Clean Group is present on such platforms and references aggregated reviews on its site. These additional corroborating signals help AI models de‑risk and rank companies for local queries. ([provenexpert.com](https://www.provenexpert.com/en-us/clean-group1/?utm_source=openai))",
+          "supported_websites": [
+            "Clean Group - clean-group.com.au",
+            "Fantastic Services - fantasticservicesgroup.com.au"
+          ],
+          "example_source_urls": [
+            "https://www.provenexpert.com/en-us/clean-group1/ (ProvenExpert profile for Clean Group).",
+            "https://commercialcleaning.au/commercial-cleaning-services-sydney/toongabbie-nsw/ (Commercial cleaning aggregator referencing Clean Group)."
+          ]
+        }
+      ]
+    }
+  ]
+}

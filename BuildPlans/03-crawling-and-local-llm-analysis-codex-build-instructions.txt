@@ -1,0 +1,79 @@
+SITE INTENT PHASE 3 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Build the crawling and local analysis pipeline.
+- Turn a website into structured page-level outputs using Ollama.
+
+Primary Outcome
+- The app can discover pages, analyze them locally, and store raw and merged outputs with timestamps and confidence data.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- The site crawling, discovery, and worker patterns in `/Users/jarvis/Documents/GitHub/ConversionBoosterExample` if the repo already contains them.
+- Any local runtime or queue conventions in the repo that can support background work.
+
+Build requirements
+- Discovery must include:
+  - robots.txt
+  - sitemap.xml
+  - llms.txt
+  - internal link crawling
+- Hard cap crawl depth at 100 pages.
+- Each page should be processed independently.
+- Store both raw model outputs and merged/stable outputs.
+- Use local Ollama as the default analysis runtime.
+
+Implementation order
+1. Build the crawl discovery pipeline.
+2. Build page extraction and normalization.
+3. Build the local inference wrapper.
+4. Run Pass A and Pass B for each page.
+5. Compare outputs and decide whether to merge or escalate to Pass C.
+6. Persist the results and timestamps.
+
+Detailed instructions
+- Create a clean crawl pipeline that can discover and queue pages from the project website.
+- For each page, extract:
+  - clean text content
+  - page type
+  - internal links
+  - metadata
+- Implement the page output schema exactly as the spec describes:
+  - url
+  - page_type
+  - intent
+  - audience
+  - product
+  - supporting_signals
+  - weakening_signals
+  - confidence
+  - stability
+  - timestamp
+- Run two local analysis passes per page:
+  - Pass A
+  - Pass B
+- Compare the fields that matter:
+  - intent
+  - audience
+  - product
+  - confidence
+- If the result is stable, merge it.
+- If it is unstable, run Pass C and preserve the reason for the fallback.
+- Make the storage model support later scan comparisons and history views.
+
+Deliverables
+- Crawl/discovery service.
+- Page extraction pipeline.
+- Local Ollama analysis wrapper.
+- Page output persistence.
+- Stable/unstable analysis handling.
+
+Verification
+- A scan can start from a URL and discover valid internal pages.
+- The pipeline stops at the configured cap.
+- Page outputs are stored with enough context to compare later scans.
+- Failed analysis does not destroy prior data.
+
+Definition of done
+- The app can generate structured page analysis data from a website using local LLMs.

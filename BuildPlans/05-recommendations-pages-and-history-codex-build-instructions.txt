@@ -1,0 +1,71 @@
+SITE INTENT PHASE 5 CODEx BUILD INSTRUCTIONS
+
+Purpose
+- Build the daily-use dashboard surfaces.
+- Make recommendations, page detail, and scan history useful and repeatable.
+
+Primary Outcome
+- A user can review the site, inspect pages, act on recommendations, and compare scans over time.
+
+What to study first
+- `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt`
+- `site-intent-v1-product-specification.txt`
+- The conversion-style dashboard list/detail patterns in `/Users/jarvis/Documents/GitHub/ConversionBoosterExample`.
+- The reference recommendations and page explorer flows in `/Users/jarvis/Documents/GitHub/ConversionBoosterExample` if you need interaction ideas.
+
+Build requirements
+- Recommendations must only be one of:
+  - CHANGE
+  - REMOVE
+  - ADD
+- Pages view must surface the most important page-level information first.
+- Page detail should show summary, raw JSON, history, and recommendations.
+- Scan history should show what changed between runs, not just a list of timestamps.
+
+Implementation order
+1. Build the dashboard overview.
+2. Build the pages screen.
+3. Build the recommendation views.
+4. Build the page detail view.
+5. Build the scan history comparison view.
+6. Connect all views to stored analysis data.
+
+Detailed instructions
+- Create the dashboard overview with the top-level information from the spec:
+  - Website Intent
+  - Alignment
+  - Confidence
+  - Category Model
+  - Differentiators
+  - Actions
+- Build the pages screen as a table or list with columns:
+  - URL
+  - Intent
+  - Contribution
+  - Confidence
+  - Updated
+- Build the page detail view with:
+  - summary
+  - raw JSON
+  - history
+  - recommendations
+- Build recommendation components so they stay tightly scoped to the three allowed action types.
+- Build scan history so the user can compare:
+  - changed content
+  - alignment delta
+  - confidence delta
+
+Deliverables
+- Dashboard overview page.
+- Pages list.
+- Recommendation cards or tables.
+- Page detail view.
+- Scan history view.
+
+Verification
+- The user can find the important pages quickly.
+- Recommendations are specific and actionable.
+- History makes progress measurable.
+
+Definition of done
+- The app’s main working surfaces are fully usable for review and iteration.

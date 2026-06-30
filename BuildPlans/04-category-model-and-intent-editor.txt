@@ -1,0 +1,40 @@
+SiteIntent Build Phase 4: Category Model and Intent Editor
+
+Goal
+- Turn page and competitor analysis into a shared category model.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Give the user control over the target intent model.
+
+Scope
+- Independent competitor analysis.
+- Category model generation from the site and competitors.
+- Editable target intent model with:
+  - category changes
+  - locked concepts
+  - removable concepts
+  - addable concepts
+- Core metric calculations:
+  - Intent Alignment
+  - Clarity
+  - Understanding Confidence
+  - Intent Score
+  - Focus Score
+  - Context Contribution Score
+  - Context Dependency Score
+  - Isolation Risk
+
+Planned Sections
+- Competitor analysis
+- Category model
+- Target intent model
+- Metrics
+
+Deliverables
+- A structured model layer for the category and intent concepts.
+- UI for reviewing and editing the target intent model.
+- Metric cards or panels that explain the current state plainly.
+
+Acceptance Criteria
+- The user can inspect the generated category model and change the optimization target.
+- The app can show how the current site differs from the intended positioning.
+- The metric output is understandable enough to guide content changes.

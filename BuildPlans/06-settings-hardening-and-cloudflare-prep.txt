@@ -1,0 +1,30 @@
+SiteIntent Build Phase 6: Settings, Hardening, and Cloudflare Prep
+
+Goal
+- Finish the user-facing settings and operational controls.
+- Always read `/Users/jarvis/Documents/GitHub/SiteIntent/Brand-Guidelines.txt` before building this phase.
+- Prepare the app for a later Cloudflare hosting migration without forcing it now.
+
+Scope
+- Settings section.
+- Scan rerun controls.
+- Data retention and project configuration.
+- UX polish, loading states, and error handling.
+- Tests for the crawl and analysis pipeline.
+- Deployment-readiness review for Cloudflare.
+
+Planned Sections
+- Settings
+- Scan controls
+- System polish
+
+Deliverables
+- A complete settings page with the core project controls.
+- Better empty states and loading states across the app.
+- Validation and regression coverage for the analysis pipeline.
+- A clear handoff path from local Ollama to future Cloudflare deployment work.
+
+Acceptance Criteria
+- Settings are complete enough for day-to-day use.
+- The app feels stable and coherent across its main screens.
+- Nothing in the architecture blocks a future Cloudflare rollout.

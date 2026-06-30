@@ -1,0 +1,88 @@
+SITE INTENT — BRAND GUIDELINES V1
+
+BRAND POSITIONING
+
+Site Intent helps people understand what their website actually
+communicates.
+
+The product analyses websites, extracts intent, compares positioning,
+and recommends changes that improve clarity while preserving
+differentiation.
+
+Site Intent is: - Analytical - Intelligent - Calm - Premium -
+Trustworthy - Structured
+
+Site Intent is not: - Loud - Neon - Playful - Futuristic for the sake of
+it - Generic AI purple - SEO spam energy
+
+BRAND FEEL
+
+Keywords: Signal Clarity Understanding Precision Confidence
+Interpretation
+
+VISUAL DIRECTION
+
+Primary Style: Deep Slate + Electric Cyan
+
+Overall feeling: Professional software Modern dashboard High information
+density Low visual noise
+
+COLOUR SYSTEM
+
+Background: #0B1220 Primary Surface: #111827 Secondary Surface: #1F2937
+
+Borders: #334155 #475569
+
+TEXT
+
+Primary: #F8FAFC Secondary: #CBD5E1 Muted: #94A3B8 Disabled: #64748B
+
+PRIMARY ACCENT
+
+#14B8A6 Hover: #0D9488 Pressed: #0F766E
+
+SECONDARY ACCENT
+
+#38BDF8 Hover: #0EA5E9 Pressed: #0284C7
+
+SEMANTIC
+
+Success: #22C55E Warning: #F59E0B Danger: #EF4444 Info: #38BDF8
+
+SCORE COLOURS
+
+Intent Alignment: Cyan Differentiation: Purple Confidence: Emerald
+Context: Indigo
+
+DASHBOARD
+
+Top: Website Intent Alignment Confidence
+
+Middle: Category Model Differentiators Context Contribution
+
+Bottom: Actions
+
+NAVIGATION
+
+Dashboard Pages Competitors Category Model Recommendations Scan History
+Settings
+
+CARD DESIGN
+
+Radius: 12px Padding: 24px Minimal shadows Visible borders
+
+TYPOGRAPHY
+
+Strong headings Readable body Bold metrics
+
+BUTTONS
+
+Primary: Filled cyan Secondary: Outline Danger: Red outline
+
+BRAND PRINCIPLE
+
+Measure understanding. Measure alignment. Preserve differentiation.
+
+TAGLINE
+
+See what your website actually communicates.
