@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, LogIn, Sparkles } from "lucide-react";
+import { LoaderCircle, LogIn, ShieldCheck } from "lucide-react";
 
 import { useSiteIntent } from "@/components/site-intent-provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { hydrated, session, signIn } = useSiteIntent();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (hydrated && session) {
@@ -17,39 +21,63 @@ export default function LoginPage() {
     }
   }, [hydrated, router, session]);
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    const result = await signIn(email, password);
+    if (!result.ok) {
+      setError(result.error);
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="auth-shell">
       <section className="auth-card">
         <div className="eyebrow">
-          <Sparkles size={14} />
-          Local access
+          <ShieldCheck size={14} />
+          Dashboard access
         </div>
-        <h1 className="page-title">Login</h1>
+        <h1 className="page-title">Sign in</h1>
         <p className="page-copy">
-          We&apos;ll keep this simple for now. Use a local session to explore the product shell, add a website,
-          and tune the app before wiring in Google auth later.
+          Use the dashboard admin credentials configured for this environment.
         </p>
-        <div className="hero-actions">
-          <button className="button button--primary" type="button" onClick={() => signIn("Local user")}>
-            Continue locally
-            <LogIn size={16} />
-          </button>
-          <Link className="button button--secondary" href="/dashboard">
-            Skip to dashboard
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
 
-      <section className="card">
-        <h2 className="card__title">Why this exists</h2>
-        <p className="card__copy">
-          It gives you a no-friction way to move through the app while you shape the onboarding and product
-          flows. No Google setup is required yet.
-        </p>
-        <div className="section-note" style={{ marginTop: 16 }}>
-          Once real auth lands, this route can be swapped out without changing the dashboard shell.
-        </div>
+        <form className="setup-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span className="field__label">Email</span>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <label className="field">
+            <span className="field__label">Password</span>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          {error ? <div className="field__error">{error}</div> : null}
+
+          <div className="setup-actions">
+            <button className="button button--primary" type="submit" disabled={submitting}>
+              {submitting ? "Signing in..." : "Sign in"}
+              {submitting ? <LoaderCircle className="spin" size={16} /> : <LogIn size={16} />}
+            </button>
+          </div>
+        </form>
       </section>
     </div>
   );

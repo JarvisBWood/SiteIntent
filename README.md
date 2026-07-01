@@ -12,6 +12,66 @@ The product currently centers on three outputs:
 AI Search Score = (Rankability x 0.4) + (Discoverability x 0.6)
 ```
 
+## Cloudflare Workers Deployment
+
+The dashboard is prepared to run on Cloudflare Workers through OpenNext and to use Cloudflare D1 as its hosted database. Local `npm run dev` still uses the local SQLite fallback for offline testing.
+
+Production target:
+
+- Worker name: `siteintent-dashboard`
+- Dashboard domain: `dash.aisearchauditor.com`
+- Public website domain: `aisearchauditor.com`
+- D1 database name: `siteintent-dashboard-prod`
+
+### Required Cloudflare Setup
+
+1. Log in with Wrangler:
+
+```bash
+npx wrangler login
+```
+
+2. Create the D1 database and copy the returned `database_id` into `wrangler.jsonc`:
+
+```bash
+npx wrangler d1 create siteintent-dashboard-prod
+```
+
+3. Apply the remote D1 migration:
+
+```bash
+npm run db:migrate:remote
+```
+
+4. Add these Worker secrets in Cloudflare:
+
+```txt
+OPENAI_API_KEY
+DASH_ADMIN_EMAIL
+DASH_ADMIN_PASSWORD
+SESSION_SECRET
+```
+
+5. In Cloudflare Workers & Pages, connect the GitHub repo `JarvisBWood/SiteIntent` to the Worker, use `main` as the production branch, and set the build command to:
+
+```bash
+npm run cf:build
+```
+
+6. Add the Worker custom domain `dash.aisearchauditor.com`. Do not attach this Worker to the apex domain.
+
+### Local Cloudflare Preview
+
+Create a local `.dev.vars` from `.dev.vars.example`, then run:
+
+```bash
+npm run db:migrate:local
+npm run cf:build
+npm run cf:preview
+```
+
+The preview runs at `http://localhost:8787` with a local D1 database.
+
 ## Scan Overview
 
 The main flow lives in [lib/scan/run-scan.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/scan/run-scan.ts).

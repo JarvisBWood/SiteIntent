@@ -7,7 +7,7 @@ import { ArrowRight, PlayCircle, ScanLine, Sparkles } from "lucide-react";
 import { ProjectSetupModal } from "@/components/project-setup-modal";
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
-import type { ProjectOverviewReport } from "@/lib/sqlite-queries";
+import type { ProjectOverviewReport } from "@/lib/reports";
 
 export default function DashboardPage() {
   const {

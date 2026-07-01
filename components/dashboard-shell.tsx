@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { LogIn, Menu } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { getDashboardActiveTitle } from "@/components/dashboard-nav";
@@ -13,12 +13,19 @@ import siteLogo from "../Si-Logo.png";
 
 export function DashboardShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { hydrated, projects, activeProjectId } = useSiteIntent();
+  const { hydrated, session, projects, activeProjectId } = useSiteIntent();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (hydrated && !session) {
+      router.replace("/login");
+    }
+  }, [hydrated, router, session]);
 
   const activeTitle = getDashboardActiveTitle(pathname);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null;
@@ -45,8 +52,8 @@ export function DashboardShell({ children }: Readonly<{ children: React.ReactNod
               <LogIn size={16} />
             </Link>
           </header>
-          {!hydrated ? <div className="section-note">Loading local workspace...</div> : null}
-          {children}
+          {!hydrated ? <div className="section-note">Loading workspace...</div> : null}
+          {hydrated && !session ? <div className="section-note">Redirecting to sign in...</div> : children}
         </div>
       </div>
     </div>

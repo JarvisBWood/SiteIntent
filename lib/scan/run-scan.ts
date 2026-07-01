@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
+import { loadAppState } from "@/lib/app-state";
 import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
 import { isOpenAIModelName } from "@/lib/llm/provider";
-import { ensureSqliteState } from "@/lib/sqlite-state";
 import {
   buildCategoryModel,
   buildCompetitorAnalyses,
@@ -449,7 +449,7 @@ async function runCompetitorOnlyScan(
     }
   });
   const emitProgress = (event: ScanProgressEvent) => options?.onProgress?.(event);
-  const persistedState = ensureSqliteState();
+  const persistedState = await loadAppState();
   const baseScan = persistedState.scanRuns.find((scan) => scan.projectId === request.projectId) ?? null;
 
   if (!baseScan || !baseScan.pages.length) {

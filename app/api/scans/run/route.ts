@@ -1,22 +1,21 @@
-import fs from "node:fs";
-import path from "node:path";
 import { NextResponse } from "next/server";
 
+import { isAuthError, requireRequestSession } from "@/lib/auth";
+import { getCloudflareEnv, isCloudflareRuntime } from "@/lib/cloudflare-runtime";
+import {
+  persistCompletedScan,
+  persistScanRunSnapshot,
+  updateScanProgress
+} from "@/lib/app-state";
 import { logScanEvent, toErrorDetails } from "@/lib/scan/logging";
 import { runProjectScan } from "@/lib/scan/run-scan";
-import {
-  persistCompletedScanInSqlite,
-  persistScanRunSnapshotInSqlite,
-  updateScanProgressInSqlite
-} from "@/lib/sqlite-state";
 import type { ProjectScanRequest } from "@/lib/site-state";
 import type { ScanProgressEvent } from "@/lib/scan/types";
 
-export const runtime = "nodejs";
-
 export async function POST(request: Request) {
   try {
-    hydrateEnvFromDotEnv();
+    await requireRequestSession();
+    applyCloudflareEnvToProcess();
     const body = (await request.json()) as ProjectScanRequest;
 
     if (!body.projectId || !body.websiteUrl) {
@@ -31,8 +30,8 @@ export async function POST(request: Request) {
       competitorUrls: Array.isArray(body.competitorUrls) ? body.competitorUrls : [],
       scanMode: body.scanMode ?? "full",
       scanDepth: Number.isFinite(body.scanDepth) ? body.scanDepth : 1,
-      pageAnalysisModel: typeof body.pageAnalysisModel === "string" ? body.pageAnalysisModel : undefined,
-      scoringModel: typeof body.scoringModel === "string" ? body.scoringModel : undefined,
+      pageAnalysisModel: isCloudflareRuntime() ? undefined : typeof body.pageAnalysisModel === "string" ? body.pageAnalysisModel : undefined,
+      scoringModel: isCloudflareRuntime() ? undefined : typeof body.scoringModel === "string" ? body.scoringModel : undefined,
       targetIntentModel: body.targetIntentModel
     };
 
@@ -83,16 +82,16 @@ export async function POST(request: Request) {
             });
             const scan = await runProjectScan(payload, {
               onProgress(progress: ScanProgressEvent) {
-                updateScanProgressInSqlite(payload.projectId, progress);
+                void updateScanProgress(payload.projectId, progress);
                 send({ type: "progress", progress });
               },
               onScanSnapshot(scanSnapshot) {
-                persistScanRunSnapshotInSqlite(scanSnapshot);
+                void persistScanRunSnapshot(scanSnapshot);
               }
             });
 
-            persistCompletedScanInSqlite(scan);
-            updateScanProgressInSqlite(payload.projectId, null);
+            await persistCompletedScan(scan);
+            await updateScanProgress(payload.projectId, null);
             logScanEvent({
               level: "info",
               event: "scan_request_completed",
@@ -115,7 +114,7 @@ export async function POST(request: Request) {
             restoreEnv();
           }
         } catch (error) {
-          updateScanProgressInSqlite(payload.projectId, null);
+          void updateScanProgress(payload.projectId, null);
           logScanEvent({
             level: "error",
             event: "scan_request_failed",
@@ -142,6 +141,10 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
+    if (isAuthError(error)) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Unable to run the scan."
@@ -151,8 +154,31 @@ export async function POST(request: Request) {
   }
 }
 
+function applyCloudflareEnvToProcess() {
+  const env = getCloudflareEnv();
+  if (!env) {
+    return;
+  }
+
+  const keys = [
+    "OPENAI_API_KEY",
+    "SITEINTENT_PAGE_ANALYSIS_MODEL",
+    "SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL",
+    "SITEINTENT_DISCOVERABILITY_LOCAL_MODEL",
+    "SITEINTENT_RANKABILITY_LOCAL_MODEL",
+    "SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL"
+  ] as const;
+
+  for (const key of keys) {
+    const value = env[key];
+    if (typeof value === "string" && value.trim()) {
+      process.env[key] = value;
+    }
+  }
+}
+
 function applyRequestLocalModels(pageAnalysisModel?: string, scoringModel?: string) {
-  if (!pageAnalysisModel?.trim() && !scoringModel?.trim()) {
+  if (isCloudflareRuntime() || (!pageAnalysisModel?.trim() && !scoringModel?.trim())) {
     return () => {};
   }
 
@@ -184,38 +210,4 @@ function applyRequestLocalModels(pageAnalysisModel?: string, scoringModel?: stri
       }
     }
   };
-}
-
-function hydrateEnvFromDotEnv() {
-  const envPath = path.join(process.cwd(), ".env");
-  if (!fs.existsSync(envPath)) {
-    return;
-  }
-
-  const content = fs.readFileSync(envPath, "utf8");
-  for (const rawLine of content.split(/\r?\n/g)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) {
-      continue;
-    }
-
-    const separatorIndex = line.indexOf("=");
-    if (separatorIndex <= 0) {
-      continue;
-    }
-
-    const key = line.slice(0, separatorIndex).trim();
-    let value = line.slice(separatorIndex + 1).trim();
-
-    if (
-      (value.startsWith("\"") && value.endsWith("\"")) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
-  }
 }

@@ -1,8 +1,11 @@
 .DS_Store
 .next/
+.open-next/
+.wrangler/
 node_modules/
 *.tsbuildinfo
 .env
+.dev.vars
 .env.txt
 .env.local
 .env.development.local

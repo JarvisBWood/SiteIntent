@@ -14,6 +14,8 @@ import type {
 export type { AnalysisPassName, AnalysisPassResult, PageOutput, PageScanRecord, ProjectScanRequest, ProjectScanRun, WebsiteScan, WebsiteScanPage };
 
 export type SiteIntentSession = {
+  id?: string;
+  email?: string;
   displayName: string;
   signedInAt: string;
 };

@@ -5,7 +5,7 @@ import { BarChart3, PlayCircle, ScanLine } from "lucide-react";
 
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
-import type { ProjectCompetitorReport } from "@/lib/sqlite-queries";
+import type { ProjectCompetitorReport } from "@/lib/reports";
 import { shortenDisplayUrl } from "@/lib/site-state";
 
 export default function CompetitorsPage() {

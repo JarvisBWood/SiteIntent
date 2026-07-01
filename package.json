@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare deploy",
+    "db:migrate:local": "wrangler d1 migrations apply siteintent-dashboard-prod --local",
+    "db:migrate:remote": "wrangler d1 migrations apply siteintent-dashboard-prod --remote",
     "research:category-top10": "node scripts/run-category-top10-scan.mjs",
     "research:discovery-sources": "node scripts/analyze-discovery-sources.mjs",
     "research:discovery-source-audit": "node scripts/run-discovery-source-audit.mjs",
@@ -17,6 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
     "better-sqlite3": "^12.11.1",
     "lucide-react": "^0.577.0",
     "next": "^16.2.9",
@@ -25,10 +31,12 @@
     "react-dom": "19.1.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260701.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "wrangler": "^4.106.0"
   }
 }

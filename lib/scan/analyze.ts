@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 
+import { getCloudflareEnv, isCloudflareRuntime } from "@/lib/cloudflare-runtime";
 import { createOllamaClient } from "@/lib/llm";
 import { isOpenAIModelName } from "@/lib/llm/provider";
 import type {
@@ -184,6 +185,10 @@ async function runOpenAiPass(
 }
 
 function getPageAnalysisModel() {
+  if (isCloudflareRuntime()) {
+    return getCloudflareEnv()?.SITEINTENT_PAGE_ANALYSIS_MODEL || process.env.SITEINTENT_PAGE_ANALYSIS_MODEL || "gpt-5-mini";
+  }
+
   return process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
 }
 

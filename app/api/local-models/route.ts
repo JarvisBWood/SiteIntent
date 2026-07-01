@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+import { isCloudflareRuntime } from "@/lib/cloudflare-runtime";
 
 export async function GET() {
   try {
+    if (isCloudflareRuntime()) {
+      return NextResponse.json({
+        models: [],
+        error: "Local Ollama models are available only in offline local development."
+      });
+    }
+
     const baseUrl = (process.env.OLLAMA_HOST ?? "http://127.0.0.1:11434").replace(/\/+$/, "");
     const response = await fetch(`${baseUrl}/api/tags`, {
       headers: {

@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { ensureSqliteState, saveStateToSqlite } from "@/lib/sqlite-state";
+import { isAuthError, requireRequestSession } from "@/lib/auth";
+import { loadAppState, saveAppState } from "@/lib/app-state";
 import type { SiteIntentSessionState } from "@/lib/site-state";
-
-export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    return NextResponse.json({ state: ensureSqliteState() });
+    const session = await requireRequestSession();
+    const state = await loadAppState();
+    return NextResponse.json({ state: { ...state, session } });
   } catch (error) {
+    if (isAuthError(error)) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to load state." },
       { status: 500 }
@@ -18,15 +23,20 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const session = await requireRequestSession();
     const body = (await request.json()) as { state?: SiteIntentSessionState };
     if (!body.state) {
       return NextResponse.json({ error: "State payload is required." }, { status: 400 });
     }
 
-    const persistedState = ensureSqliteState();
-    saveStateToSqlite(mergeStateWithPersistedScans(body.state, persistedState));
+    const persistedState = await loadAppState();
+    await saveAppState(mergeStateWithPersistedScans({ ...body.state, session: null }, persistedState));
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isAuthError(error)) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to save state." },
       { status: 500 }

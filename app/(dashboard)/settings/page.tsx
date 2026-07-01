@@ -30,6 +30,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("websites");
   const [editingTargetProjectId, setEditingTargetProjectId] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [localModelsAvailable, setLocalModelsAvailable] = useState(true);
   const { projects, activeProjectId, selectProject, deleteProject, preferences, updatePreferences } = useSiteIntent();
 
   useEffect(() => {
@@ -50,11 +51,13 @@ export default function SettingsPage() {
           return;
         }
         setAvailableModels(Array.isArray(payload.models) ? payload.models : []);
+        setLocalModelsAvailable(!payload.error);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
         setAvailableModels([]);
+        setLocalModelsAvailable(false);
       }
     }
 
@@ -70,7 +73,7 @@ export default function SettingsPage() {
           System
         </div>
         <h1 className="page-title">Settings</h1>
-        <p className="page-copy">Manage local workspace preferences and the websites saved in this browser.</p>
+        <p className="page-copy">Manage dashboard preferences and saved websites.</p>
         <div className="settings-tabs" role="tablist" aria-label="Settings sections">
           {SETTINGS_TABS.map((tab) => (
             <button
@@ -94,7 +97,7 @@ export default function SettingsPage() {
               <h2 className="card__title">Current websites</h2>
               <p className="card__copy">
                 {projects.length
-                  ? `${projects.length} website${projects.length === 1 ? "" : "s"} saved locally.`
+                  ? `${projects.length} website${projects.length === 1 ? "" : "s"} saved.`
                   : "No websites have been created yet."}
               </p>
             </div>
@@ -235,7 +238,7 @@ export default function SettingsPage() {
                   value={preferences.pageAnalysisModel}
                   onChange={(event) => updatePreferences({ pageAnalysisModel: event.target.value })}
                 >
-                {renderModelOptions(availableModels, preferences.pageAnalysisModel).map((group) => (
+                {renderModelOptions(availableModels, preferences.pageAnalysisModel, localModelsAvailable).map((group) => (
                   <optgroup key={group.label} label={group.label}>
                     {group.options.map((model) => (
                       <option key={model.value} value={model.value}>
@@ -254,7 +257,7 @@ export default function SettingsPage() {
                   value={preferences.scoringModel}
                   onChange={(event) => updatePreferences({ scoringModel: event.target.value })}
                 >
-                {renderModelOptions(availableModels, preferences.scoringModel).map((group) => (
+                {renderModelOptions(availableModels, preferences.scoringModel, localModelsAvailable).map((group) => (
                   <optgroup key={group.label} label={group.label}>
                     {group.options.map((model) => (
                       <option key={model.value} value={model.value}>
@@ -272,7 +275,7 @@ export default function SettingsPage() {
   );
 }
 
-function renderModelOptions(availableModels: string[], selectedModel: string) {
+function renderModelOptions(availableModels: string[], selectedModel: string, localModelsAvailable: boolean) {
   const localModels = [...new Set(availableModels)].sort();
   const localOptions = (localModels.length ? localModels : ["llama3.1:8b", "qwen2.5:14b"]).map((model) => ({
     value: model,
@@ -284,15 +287,19 @@ function renderModelOptions(availableModels: string[], selectedModel: string) {
       ? [{ value: selectedModel, label: `${formatModelLabel(selectedModel)} - $0.00` }, ...OPENAI_MODELS]
       : OPENAI_MODELS;
   return [
-    {
-      label: "Local models",
-      options:
-        selectedIsOpenAI || !selectedModel.trim()
-          ? localOptions
-          : localOptions.some((model) => model.value === selectedModel)
-            ? localOptions
-            : [{ value: selectedModel, label: `${selectedModel} - local` }, ...localOptions]
-    },
+    ...(localModelsAvailable
+      ? [
+          {
+            label: "Local models",
+            options:
+              selectedIsOpenAI || !selectedModel.trim()
+                ? localOptions
+                : localOptions.some((model) => model.value === selectedModel)
+                  ? localOptions
+                  : [{ value: selectedModel, label: `${selectedModel} - local` }, ...localOptions]
+          }
+        ]
+      : []),
     {
       label: "OpenAI API models",
       options: openAIOptions

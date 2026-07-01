@@ -57,8 +57,8 @@ type PinnedScanToast = {
 
 type SiteIntentContextValue = SiteIntentSessionState & {
   hydrated: boolean;
-  signIn: (displayName?: string) => void;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+  signOut: () => Promise<void>;
   createProject: (draft: SiteIntentProjectDraft) => SiteIntentProject;
   deleteProject: (projectId: string) => void;
   deleteCompetitor: (projectId: string, competitorIndex: number) => void;
@@ -85,7 +85,7 @@ type SiteIntentContextValue = SiteIntentSessionState & {
   conceptDelta: ReturnType<typeof summarizeConceptDelta> | null;
   isScanning: boolean;
   lastScanError: string | null;
-      scanProgressByProject: ScanProgressByProject;
+  scanProgressByProject: ScanProgressByProject;
   preferences: AppPreferences;
   updatePreferences: (next: Partial<AppPreferences>) => void;
 };
@@ -208,6 +208,15 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           }
         });
 
+        if (response.status === 401) {
+          if (!cancelled) {
+            setState(createEmptyState());
+            setScanProgressByProject({});
+            router.replace("/login");
+          }
+          return;
+        }
+
         if (!response.ok) {
           throw new Error("Unable to load persisted state.");
         }
@@ -242,7 +251,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -261,6 +270,11 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         signal: controller.signal
       })
         .then((response) => {
+          if (response.status === 401) {
+            router.replace("/login");
+            return;
+          }
+
           if (!response.ok) {
             throw new Error("Unable to save the latest state to SQLite.");
           }
@@ -269,7 +283,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           if (error instanceof DOMException && error.name === "AbortError") {
             return;
           }
-          setLastScanError("Unable to save the latest state to SQLite.");
+          setLastScanError("Unable to save the latest state.");
         });
     }, 150);
 
@@ -277,7 +291,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [hydrated, scanProgressByProject, state]);
+  }, [hydrated, router, scanProgressByProject, state]);
 
   async function saveStateImmediately(nextState: SiteIntentSessionState) {
     try {
@@ -295,11 +309,16 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         })
       });
 
+      if (response.status === 401) {
+        router.replace("/login");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Unable to save the latest state to SQLite.");
       }
     } catch {
-      setLastScanError("Unable to save the latest state to SQLite.");
+      setLastScanError("Unable to save the latest state.");
     }
   }
 
@@ -627,19 +646,39 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           return nextState;
         });
       },
-      signIn(displayName = "Local user") {
-        const session: SiteIntentSession = {
-          displayName,
-          signedInAt: new Date().toISOString()
-        };
+      async signIn(email, password) {
+        try {
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json"
+            },
+            body: JSON.stringify({ email, password })
+          });
+          const payload = (await response.json().catch(() => null)) as { session?: SiteIntentSession; error?: string } | null;
+          if (!response.ok || !payload?.session) {
+            return { ok: false, error: payload?.error ?? "Unable to sign in." };
+          }
 
-        setState((current) => ({
-          ...current,
-          session
-        }));
-        router.push(state.projects.length ? "/dashboard" : "/setup");
+          const stateResponse = await fetch("/api/state", {
+            headers: { Accept: "application/json" }
+          });
+          const statePayload = (await stateResponse.json().catch(() => null)) as { state?: Partial<SiteIntentSessionState> } | null;
+          const normalized = normalizeLoadedState(statePayload?.state ?? { session: payload.session });
+          setState(normalized);
+          setScanProgressByProject(normalized.scanProgressByProject);
+          router.push(normalized.projects.length ? "/dashboard" : "/setup");
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : "Unable to sign in." };
+        }
       },
-      signOut() {
+      async signOut() {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: { Accept: "application/json" }
+        }).catch(() => {});
         setState(createEmptyState());
         router.push("/login");
       },
