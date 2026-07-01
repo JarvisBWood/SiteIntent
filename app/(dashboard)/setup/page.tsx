@@ -11,26 +11,29 @@ export default function SetupPage() {
 
   return (
     <div className="page-shell">
-      <section className="page-hero">
-        <div className="eyebrow">
-          <Sparkles size={14} />
-          Create project
+      <div className="page-header-inline">
+        <div className="page-header-inline__content">
+          <div className="eyebrow">
+            <Sparkles size={14} />
+            Create project
+          </div>
+          <h1 className="page-title">Start your first project</h1>
+          <p className="page-copy">
+            Add the website you want to understand. We&apos;ll start by scoring your website first, then move on to the top five competitors in
+            the background. The default crawl depth of 1 covers the homepage and directly linked internal pages.
+          </p>
         </div>
-        <h1 className="page-title">Start your first project</h1>
-        <p className="page-copy">
-          Add the website you want to understand. We&apos;ll start by scoring your website first, then move on to the top five competitors in
-          the background. The default crawl depth of 1 covers the homepage and directly linked internal pages.
-        </p>
-        <div className="hero-actions">
+        <div className="page-header-inline__actions">
           <Link className="button button--secondary" href="/dashboard">
             Back to dashboard
             <ArrowRight size={16} />
           </Link>
-          <div className="section-note">
-            {session ? `Signed in as ${session.displayName}.` : "You can continue locally without full auth."}
-          </div>
         </div>
-      </section>
+      </div>
+
+      <div className="section-note">
+        {session ? `Signed in as ${session.displayName}.` : "You can continue locally without full auth."}
+      </div>
 
       <section className="card">
         <div className="card__header">

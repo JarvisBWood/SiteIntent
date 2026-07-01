@@ -1,5 +1,6 @@
 import { buildCategoryModel, type CategoryModel, type CompetitorAnalysis, type TargetIntentModel } from "@/lib/models";
 import { DISCOVERABILITY_FACTORS } from "@/lib/discoverability/types";
+import { normalizeDiscoverabilityScorecard } from "@/lib/discoverability/score-site";
 import {
   buildRecommendations,
   buildScanComparison,
@@ -64,6 +65,11 @@ export type CompetitorReportEntry = {
   displayUrl: string;
   faviconUrl: string | null;
   analysis: CompetitorAnalysis | null;
+  aiSearchScore: number | null;
+  rankabilityScore: number | null;
+  discoverabilityScore: number | null;
+  competitorConfidence: number | null;
+  competitorReasoning: string | null;
   discoveredRank: number | null;
   appearanceCount: number;
   averageRank: number | null;
@@ -72,6 +78,7 @@ export type CompetitorReportEntry = {
   topReasons: string[];
   sourceDomains: string[];
   sourceTypes: string[];
+  sourceEvidence: NonNullable<CompetitorAnalysis["sourceEvidence"]>;
 };
 
 export type ProjectCompetitorReport = {
@@ -95,6 +102,11 @@ export type ProjectOverviewReport = {
   aiSearchScore: number | null;
   rankabilityScore: number | null;
   discoverabilityScore: number | null;
+  competitorBenchmarks: {
+    aiSearchScore: ScoreBenchmark | null;
+    rankabilityScore: ScoreBenchmark | null;
+    discoverabilityScore: ScoreBenchmark | null;
+  };
   rankabilityBreakdown: Array<{
     id: string;
     label: string;
@@ -103,6 +115,7 @@ export type ProjectOverviewReport = {
     weight: number;
     weightedContribution: number;
     evidence: string;
+    bestCompetitor: ScoreBenchmark | null;
   }>;
   discoverabilityBreakdown: Array<{
     id: string;
@@ -112,11 +125,19 @@ export type ProjectOverviewReport = {
     weight: number;
     weightedContribution: number;
     evidence: string;
+    bestCompetitor: ScoreBenchmark | null;
   }>;
   summary: {
     rankability: string | null;
     discoverability: string | null;
   };
+};
+
+export type ScoreBenchmark = {
+  competitorName: string;
+  competitorUrl: string;
+  competitorFaviconUrl: string | null;
+  score: number;
 };
 
 export type ProjectRecommendationsReport = {
@@ -191,7 +212,12 @@ export function getProjectCompetitorReport(projectId: string): ProjectCompetitor
 
   const discoverabilityCandidates = latestScan?.discoverability?.aggregatedCandidates ?? [];
 
-  const competitors = project.competitorUrls.slice(0, 5).map((url, index) => {
+  const competitorUrls = uniqueStrings([
+    ...project.competitorUrls,
+    ...(latestScan?.competitorAnalyses?.map((analysis) => analysis.url) ?? [])
+  ]).slice(0, 5);
+
+  const competitors = competitorUrls.map((url, index) => {
     const domain = normalizeDomain(url);
     const candidate = discoverabilityCandidates.find((item) => normalizeDomain(item.website) === domain) ?? null;
     const analysis =
@@ -201,17 +227,39 @@ export function getProjectCompetitorReport(projectId: string): ProjectCompetitor
 
     return {
       url,
-      displayUrl: project.competitorDisplayUrls[index] ?? shortenDisplayUrl(url),
-      faviconUrl: project.competitorFaviconUrls[index] ?? null,
+      displayUrl:
+        project.competitorDisplayUrls[project.competitorUrls.findIndex((value) => normalizeDomain(value) === domain)] ??
+        shortenDisplayUrl(url),
+      faviconUrl: project.competitorFaviconUrls[project.competitorUrls.findIndex((value) => normalizeDomain(value) === domain)] ?? null,
       analysis,
+      aiSearchScore: analysis?.aiSearchScore ?? null,
+      rankabilityScore: analysis?.rankabilityScore ?? null,
+      discoverabilityScore: analysis?.discoverabilityScore ?? null,
+      competitorConfidence: analysis?.competitorConfidence ?? null,
+      competitorReasoning: analysis?.competitorReasoning ?? null,
       discoveredRank: candidate?.bestRank ?? null,
       appearanceCount: candidate?.appearanceCount ?? 0,
       averageRank: candidate?.averageRank ?? null,
       bestRank: candidate?.bestRank ?? null,
-      supportingPromptVariations: candidate?.supportingPromptVariations ?? [],
-      topReasons: candidate?.reasons.slice(0, 3) ?? [],
-      sourceDomains: uniqueStrings(candidate?.sources.map((source) => source.sourceDomain) ?? []).slice(0, 6),
-      sourceTypes: uniqueStrings(candidate?.sources.map((source) => source.sourceType) ?? []).slice(0, 6)
+      supportingPromptVariations: candidate?.supportingPromptVariations ?? analysis?.supportingPromptVariations ?? [],
+      topReasons: candidate?.reasons.slice(0, 3) ?? analysis?.discoveryReasons?.slice(0, 3) ?? [],
+      sourceDomains: candidate
+        ? uniqueStrings(candidate.sources.map((source) => source.sourceDomain)).slice(0, 6)
+        : analysis?.sourceDomains ?? [],
+      sourceTypes: candidate
+        ? uniqueStrings(candidate.sources.map((source) => source.sourceType)).slice(0, 6)
+        : analysis?.sourceTypes ?? [],
+      sourceEvidence:
+        candidate
+          ? candidate.sources.slice(0, 12).map((source) => ({
+              sourceName: source.sourceName,
+              sourceDomain: source.sourceDomain,
+              sourceType: source.sourceType,
+              sourceUrl: source.sourceUrl,
+              influence: source.influence,
+              evidenceFound: source.evidenceFound
+            }))
+          : analysis?.sourceEvidence ?? []
     } satisfies CompetitorReportEntry;
   });
 
@@ -233,6 +281,7 @@ export function getProjectOverviewReport(projectId: string): ProjectOverviewRepo
   }
 
   const latestScan = getLatestHydratedScan(projectId);
+  const competitorAnalyses = getResolvedCompetitorAnalyses(project, latestScan);
   const rankabilityBreakdown = latestScan?.rankability
     ? RANKABILITY_FACTORS.map((factor) => {
         const score = latestScan.rankability?.factorScores[factor.id];
@@ -243,7 +292,8 @@ export function getProjectOverviewReport(projectId: string): ProjectOverviewRepo
           score: score?.score ?? 0,
           weight: factor.weight,
           weightedContribution: score?.weightedContribution ?? 0,
-          evidence: score?.evidence ?? ""
+          evidence: score?.evidence ?? "",
+          bestCompetitor: getBestCompetitorFactorBenchmark(competitorAnalyses, project, "rankabilityFactorScores", factor.id)
         };
       })
     : [];
@@ -257,12 +307,23 @@ export function getProjectOverviewReport(projectId: string): ProjectOverviewRepo
           score: score?.score ?? 0,
           weight: factor.weight,
           weightedContribution: score?.weightedContribution ?? 0,
-          evidence: score?.evidence ?? ""
+          evidence: score?.evidence ?? "",
+          bestCompetitor: getBestCompetitorFactorBenchmark(competitorAnalyses, project, "discoverabilityFactorScores", factor.id)
         };
       })
     : [];
   const rankabilityScore = latestScan?.rankability?.weightedTotalScore ?? null;
   const discoverabilityScore = latestScan?.discoverability?.discoverabilityScore ?? null;
+  const competitorBenchmarks = {
+    aiSearchScore: getBestCompetitorBenchmark(
+      competitorAnalyses,
+      project,
+      rankabilityScore == null || discoverabilityScore == null ? null : roundOne(rankabilityScore * 0.4 + discoverabilityScore * 0.6),
+      "aiSearchScore"
+    ),
+    rankabilityScore: getBestCompetitorBenchmark(competitorAnalyses, project, rankabilityScore, "rankabilityScore"),
+    discoverabilityScore: getBestCompetitorBenchmark(competitorAnalyses, project, discoverabilityScore, "discoverabilityScore")
+  };
 
   return {
     projectId: project.id,
@@ -278,6 +339,7 @@ export function getProjectOverviewReport(projectId: string): ProjectOverviewRepo
         : roundOne(rankabilityScore * 0.4 + discoverabilityScore * 0.6),
     rankabilityScore,
     discoverabilityScore,
+    competitorBenchmarks,
     rankabilityBreakdown,
     discoverabilityBreakdown,
     summary: {
@@ -440,13 +502,17 @@ function getScanPagesByIds(scanIds: string[]) {
 function hydrateStoredScan(storedScan: StoredScanRow, websiteScanPages: ProjectScanRun["websiteScanPages"]): ProjectScanRun {
   return {
     ...storedScan,
+    discoverability: normalizeDiscoverabilityScorecard(storedScan.discoverability) ?? storedScan.discoverability,
     websiteScanPages,
     pages: getIncludedPageRecords({ websiteScanPages })
   };
 }
 
 function getResolvedCompetitorAnalyses(project: SiteIntentProject, latestScan: ProjectScanRun | null): CompetitorAnalysis[] {
-  return project.competitorUrls
+  return uniqueStrings([
+    ...project.competitorUrls,
+    ...(latestScan?.competitorAnalyses?.map((item) => item.url) ?? [])
+  ])
     .map((url) => {
       return (
         project.competitorAnalysesByUrl[url] ??
@@ -455,6 +521,73 @@ function getResolvedCompetitorAnalyses(project: SiteIntentProject, latestScan: P
       );
     })
     .filter((item): item is CompetitorAnalysis => Boolean(item));
+}
+
+function getBestCompetitorBenchmark(
+  competitorAnalyses: CompetitorAnalysis[],
+  project: SiteIntentProject,
+  targetScore: number | null,
+  metric: "aiSearchScore" | "rankabilityScore" | "discoverabilityScore"
+): ScoreBenchmark | null {
+  const candidates = competitorAnalyses
+    .map((analysis) => ({
+      analysis,
+      score: analysis[metric]
+    }))
+    .filter((entry): entry is { analysis: CompetitorAnalysis; score: number } => typeof entry.score === "number");
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  const best = candidates.reduce((currentBest, entry) => (entry.score > currentBest.score ? entry : currentBest));
+  const competitorUrl = best.analysis.url;
+  const competitorIndex = project.competitorUrls.findIndex((url) => normalizeDomain(url) === normalizeDomain(competitorUrl));
+  const competitorName = getHostnameOnlyLabel(competitorUrl);
+  const competitorFaviconUrl =
+    (competitorIndex >= 0 ? project.competitorFaviconUrls[competitorIndex] : null) ?? null;
+
+  return {
+    competitorName,
+    competitorUrl,
+    competitorFaviconUrl,
+    score: best.score
+  };
+}
+
+function getBestCompetitorFactorBenchmark(
+  competitorAnalyses: CompetitorAnalysis[],
+  project: SiteIntentProject,
+  metric: "rankabilityFactorScores" | "discoverabilityFactorScores",
+  factorId: string
+): ScoreBenchmark | null {
+  const candidates = competitorAnalyses
+    .map((analysis) => {
+      const score = analysis[metric]?.[factorId];
+      return {
+        analysis,
+        score
+      };
+    })
+    .filter((entry): entry is { analysis: CompetitorAnalysis; score: number } => typeof entry.score === "number");
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  const best = candidates.reduce((currentBest, entry) => (entry.score > currentBest.score ? entry : currentBest));
+  const competitorUrl = best.analysis.url;
+  const competitorIndex = project.competitorUrls.findIndex((url) => normalizeDomain(url) === normalizeDomain(competitorUrl));
+  const competitorName = getHostnameOnlyLabel(competitorUrl);
+  const competitorFaviconUrl =
+    (competitorIndex >= 0 ? project.competitorFaviconUrls[competitorIndex] : null) ?? null;
+
+  return {
+    competitorName,
+    competitorUrl,
+    competitorFaviconUrl,
+    score: best.score
+  };
 }
 
 function summarizeScanRun(run: ProjectScanRun): ScanRunSummary {
@@ -486,6 +619,14 @@ function normalizeDomain(value: string) {
     return new URL(value).hostname.replace(/^www\./i, "").toLowerCase();
   } catch {
     return value.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/.*$/, "").toLowerCase();
+  }
+}
+
+function getHostnameOnlyLabel(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./i, "");
+  } catch {
+    return normalizeDomain(value);
   }
 }
 

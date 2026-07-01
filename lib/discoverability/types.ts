@@ -1,47 +1,30 @@
-export const DISCOVERABILITY_SCORING_PROFILE_ID = "discoverability_v1";
+export const DISCOVERABILITY_SCORING_PROFILE_ID = "discoverability_v2";
 export const DISCOVERABILITY_TOP_N = 10;
 export const DISCOVERABILITY_PROMPT_COUNT = 5;
 
 export const DISCOVERABILITY_FACTORS = [
   {
-    id: "appearance_rate",
-    label: "Appearance Rate",
-    description: "How often the target domain appears across repeated discovery prompts.",
-    weight: 30
-  },
-  {
-    id: "average_discovered_rank",
-    label: "Average Discovered Rank",
-    description: "How high the target ranks when it does appear.",
+    id: "search_result_presence",
+    label: "Search Result Presence",
+    description: "Whether explicit search-result or SERP evidence helped AI become aware of the website.",
     weight: 20
-  },
-  {
-    id: "prompt_resilience",
-    label: "Prompt Resilience",
-    description: "Whether the target appears across different prompt phrasings.",
-    weight: 15
   },
   {
     id: "source_path_diversity",
     label: "Source Path Diversity",
     description: "How broadly the target website is covered across the source types AI appears to use for category discovery.",
-    weight: 10
+    weight: 25
   },
   {
     id: "third_party_source_strength",
     label: "Third-Party Source Strength",
     description: "How well the target website is represented on the highest-value external discovery sources in the category.",
-    weight: 15
-  },
-  {
-    id: "entity_match_clarity",
-    label: "Entity Match Clarity",
-    description: "How clearly the model connects the domain to the category, geography, and buyer intent.",
-    weight: 10
+    weight: 25
   }
 ] as const;
 
 export const DISCOVERY_SOURCE_TYPES = [
+  "search_engine_result",
   "official_site",
   "review_platform",
   "google_business_profile",
@@ -83,7 +66,6 @@ export type DiscoveryRun = {
     appeared: boolean;
     rank: number | null;
     reasonFoundOrMissed: string;
-    entityMatchClarityScore: number;
     supportingSources: DiscoverySource[];
   };
   commonSources: DiscoverySource[];
@@ -177,3 +159,5 @@ export type DiscoverabilityScorecard = {
 export const DISCOVERABILITY_WEIGHTS: Record<DiscoverabilityFactorId, number> = Object.fromEntries(
   DISCOVERABILITY_FACTORS.map((factor) => [factor.id, factor.weight])
 ) as Record<DiscoverabilityFactorId, number>;
+
+export const DISCOVERABILITY_WEIGHT_TOTAL = DISCOVERABILITY_FACTORS.reduce((sum, factor) => sum + factor.weight, 0);

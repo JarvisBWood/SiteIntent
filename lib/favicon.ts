@@ -18,7 +18,16 @@ export async function fetchWebsiteFavicon(websiteUrl: string): Promise<string | 
       }
     }
 
-    return await probeDefaultFavicon(origin);
+    return (await probeDefaultFavicon(origin)) ?? buildFallbackFaviconServiceUrl(websiteUrl);
+  } catch {
+    return buildFallbackFaviconServiceUrl(websiteUrl);
+  }
+}
+
+export function buildFallbackFaviconServiceUrl(websiteUrl: string) {
+  try {
+    const hostname = new URL(websiteUrl).hostname;
+    return `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(hostname)}`;
   } catch {
     return null;
   }

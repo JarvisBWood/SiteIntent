@@ -23,7 +23,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "State payload is required." }, { status: 400 });
     }
 
-    saveStateToSqlite(body.state);
+    const persistedState = ensureSqliteState();
+    saveStateToSqlite(mergeStateWithPersistedScans(body.state, persistedState));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
@@ -31,4 +32,39 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function mergeStateWithPersistedScans(nextState: SiteIntentSessionState, persistedState: SiteIntentSessionState): SiteIntentSessionState {
+  const persistedScansById = new Map(persistedState.scanRuns.map((scan) => [scan.id, scan]));
+  const nextScansById = new Map(nextState.scanRuns.map((scan) => [scan.id, scan]));
+  const mergedScanRuns = nextState.scanRuns.map((scan) => {
+    const persisted = persistedScansById.get(scan.id);
+    if (!persisted) {
+      return scan;
+    }
+
+    return {
+      ...scan,
+      competitorAnalyses: scan.competitorAnalyses?.length ? scan.competitorAnalyses : persisted.competitorAnalyses,
+      rankability: scan.rankability ?? persisted.rankability,
+      discoverability: scan.discoverability ?? persisted.discoverability,
+      observedIntent: scan.observedIntent ?? persisted.observedIntent,
+      scoringError: scan.scoringError ?? persisted.scoringError
+    };
+  });
+
+  for (const persistedScan of persistedState.scanRuns) {
+    if (!nextScansById.has(persistedScan.id)) {
+      mergedScanRuns.push(persistedScan);
+    }
+  }
+
+  return {
+    ...nextState,
+    scanProgressByProject: {
+      ...persistedState.scanProgressByProject,
+      ...nextState.scanProgressByProject
+    },
+    scanRuns: mergedScanRuns
+  };
 }

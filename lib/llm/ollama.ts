@@ -17,9 +17,19 @@ type OllamaChatResponse = {
   error?: string;
 };
 
+type OllamaChatRequest = {
+  model: string;
+  messages: LLMRequest["messages"];
+  stream: false;
+  options?: {
+    temperature?: number;
+  };
+  format?: "json" | Record<string, unknown>;
+};
+
 export function createOllamaClient(options: OllamaClientOptions = {}) {
   const baseUrl = normalizeBaseUrl(options.baseUrl ?? process.env.OLLAMA_HOST ?? "http://127.0.0.1:11434");
-  const defaultModel = options.defaultModel ?? process.env.OLLAMA_MODEL ?? "llama3.1";
+  const defaultModel = options.defaultModel ?? process.env.OLLAMA_MODEL ?? "llama3.1:8b";
   const fetchImpl = options.fetchImpl ?? fetch;
   let availableModelsPromise: Promise<string[] | null> | null = null;
 
@@ -36,12 +46,7 @@ export function createOllamaClient(options: OllamaClientOptions = {}) {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            model,
-            messages: request.messages,
-            stream: false,
-            options: request.temperature === undefined ? undefined : { temperature: request.temperature }
-          })
+          body: JSON.stringify(buildOllamaRequest(model, request))
         });
 
         const raw = (await response.json()) as OllamaChatResponse;
@@ -59,7 +64,7 @@ export function createOllamaClient(options: OllamaClientOptions = {}) {
         return {
           ok: true,
           model,
-          content: normalizeResponse<T>(content, model, request.responseFormat),
+          content: normalizeResponse<T>(content, model, request.responseFormat, request.responseSchema),
           raw
         };
       } catch (error) {
@@ -71,7 +76,7 @@ export function createOllamaClient(options: OllamaClientOptions = {}) {
             raw: error.raw
           };
 
-          if (shouldTryAnotherModel(error.message)) {
+          if (shouldTryAnotherModel(error.message, request)) {
             continue;
           }
 
@@ -141,6 +146,23 @@ export function createOllamaClient(options: OllamaClientOptions = {}) {
   };
 }
 
+function buildOllamaRequest(model: string, request: LLMRequest): OllamaChatRequest {
+  const payload: OllamaChatRequest = {
+    model,
+    messages: request.messages,
+    stream: false,
+    options: request.temperature === undefined ? undefined : { temperature: request.temperature }
+  };
+
+  if (request.responseSchema) {
+    payload.format = request.responseSchema;
+  } else if (request.responseFormat === "json") {
+    payload.format = "json";
+  }
+
+  return payload;
+}
+
 function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.replace(/\/+$/, "");
 }
@@ -149,8 +171,13 @@ function extractOllamaContent(payload: OllamaChatResponse) {
   return payload.message?.content ?? payload.response ?? "";
 }
 
-function normalizeResponse<T>(content: string, model: string, responseFormat?: LLMRequest["responseFormat"]) {
-  if (responseFormat !== "json") {
+function normalizeResponse<T>(
+  content: string,
+  model: string,
+  responseFormat?: LLMRequest["responseFormat"],
+  responseSchema?: LLMRequest["responseSchema"]
+) {
+  if (responseFormat !== "json" && !responseSchema) {
       return content as T;
   }
 
@@ -164,8 +191,12 @@ function normalizeResponse<T>(content: string, model: string, responseFormat?: L
   }
 }
 
-function shouldTryAnotherModel(message: string) {
-  return /model .* not found|unknown model|no such model/i.test(message);
+function shouldTryAnotherModel(message: string, request: LLMRequest) {
+  if (/model .* not found|unknown model|no such model/i.test(message)) {
+    return true;
+  }
+
+  return Boolean((request.responseFormat === "json" || request.responseSchema) && /invalid json/i.test(message));
 }
 
 function uniqueModels(models: string[]) {

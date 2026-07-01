@@ -30,7 +30,9 @@ function initializeSchema(db: Database.Database) {
 
     CREATE TABLE IF NOT EXISTS app_ui_state (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      active_project_id TEXT
+      active_project_id TEXT,
+      preferences_json TEXT,
+      scan_progress_json TEXT
     );
 
     CREATE TABLE IF NOT EXISTS projects (
@@ -68,4 +70,15 @@ function initializeSchema(db: Database.Database) {
       FOREIGN KEY (scan_id) REFERENCES scan_runs(id) ON DELETE CASCADE
     );
   `);
+
+  const appUiStateColumns = db
+    .prepare("PRAGMA table_info(app_ui_state)")
+    .all() as Array<{ name: string }>;
+
+  if (!appUiStateColumns.some((column) => column.name === "preferences_json")) {
+    db.exec("ALTER TABLE app_ui_state ADD COLUMN preferences_json TEXT");
+  }
+  if (!appUiStateColumns.some((column) => column.name === "scan_progress_json")) {
+    db.exec("ALTER TABLE app_ui_state ADD COLUMN scan_progress_json TEXT");
+  }
 }

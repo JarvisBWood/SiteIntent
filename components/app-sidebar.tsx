@@ -8,6 +8,7 @@ import { ChevronDown, FolderKanban, LogOut, PanelLeftClose, Plus } from "lucide-
 
 import { DASHBOARD_NAV_GROUPS, isDashboardEntryActive } from "@/components/dashboard-nav";
 import { ProjectSetupModal } from "@/components/project-setup-modal";
+import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
 import siteLogo from "../Si-Logo.png";
 
@@ -54,9 +55,18 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                 onClick={() => setProjectMenuOpen((current) => !current)}
                 aria-expanded={projectMenuOpen}
               >
-                <div className="project-switcher__icon">
-                  <FolderKanban size={14} />
-                </div>
+                {activeProject ? (
+                  <SiteFavicon
+                    url={activeProject.websiteUrl}
+                    faviconUrl={activeProject.websiteFaviconUrl}
+                    alt={`${activeProject.name} favicon`}
+                    className="site-favicon site-favicon--small"
+                  />
+                ) : (
+                  <div className="project-switcher__icon">
+                    <FolderKanban size={14} />
+                  </div>
+                )}
                 <div className="project-switcher__copy">
                   <strong>{activeProject?.name ?? "Select website"}</strong>
                   <span>{activeProject?.websiteDisplayUrl ?? "Choose a website"}</span>
@@ -79,8 +89,16 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                           onClose();
                         }}
                       >
-                        <span>{project.name}</span>
-                        <small>{project.websiteDisplayUrl}</small>
+                        <SiteFavicon
+                          url={project.websiteUrl}
+                          faviconUrl={project.websiteFaviconUrl}
+                          alt={`${project.name} favicon`}
+                          className="site-favicon site-favicon--small"
+                        />
+                        <div className="project-switcher__copy">
+                          <span>{project.name}</span>
+                          <small>{project.websiteDisplayUrl}</small>
+                        </div>
                       </button>
                     );
                   })}

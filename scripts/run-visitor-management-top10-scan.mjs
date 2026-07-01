@@ -28,13 +28,11 @@ const WEB_SEARCH_TOOL = {
 };
 
 const DISCOVERY_WEIGHTS = {
-  appearance_rate: 30,
-  average_discovered_rank: 20,
-  prompt_resilience: 15,
-  source_path_diversity: 10,
-  third_party_source_strength: 15,
-  entity_match_clarity: 10
+  search_result_presence: 20,
+  source_path_diversity: 25,
+  third_party_source_strength: 25
 };
+const DISCOVERY_WEIGHT_TOTAL = Object.values(DISCOVERY_WEIGHTS).reduce((sum, weight) => sum + weight, 0);
 
 const QUESTION_TEMPLATES = [
   "What are the top 10 visitor management system websites or providers for an Australian business?",
@@ -166,7 +164,8 @@ for (let index = 0; index < QUESTION_TEMPLATES.length; index++) {
           "Return only JSON matching the schema.",
           "Return exactly 10 official provider websites.",
           "Do not return review sites, directories, or listicles as the main candidates.",
-          "For each candidate, include the source paths that helped justify inclusion."
+          "For each candidate, include the source paths that helped justify inclusion.",
+          "Use source_type search_engine_result when a search results page, SERP ranking, or search-result snippet helped identify a website."
         ].join(" ")
       },
       {
@@ -360,20 +359,14 @@ function aggregateCandidates(runs) {
   return [...byDomain.values()]
     .map((candidate) => {
       const averageRank = roundOne(candidate.ranks.reduce((sum, value) => sum + value, 0) / candidate.ranks.length);
-      const appearanceRate = roundOne((candidate.appearance_count / QUESTION_TEMPLATES.length) * 100);
-      const promptResilience = roundOne((new Set(candidate.prompt_variations).size / QUESTION_TEMPLATES.length) * 100);
       const uniqueSourceTypes = [...new Set(candidate.sources.map((source) => source.source_type))];
       const sourcePathDiversity = roundOne((Math.min(uniqueSourceTypes.length, 5) / 5) * 100);
       const thirdPartySourceStrength = roundOne(computeSourceStrength(candidate.sources));
-      const entityMatchClarity = roundOne(candidate.entity_scores.reduce((sum, value) => sum + value, 0) / candidate.entity_scores.length);
-      const averageDiscoveredRank = roundOne(((TOP_N + 1 - averageRank) / TOP_N) * 100);
+      const searchResultPresence = roundOne(computeSourceStrength(candidate.sources.filter(isSearchResultSource)));
       const discoverabilityFactors = {
-        appearance_rate: buildDiscoverabilityFactor(appearanceRate, DISCOVERY_WEIGHTS.appearance_rate),
-        average_discovered_rank: buildDiscoverabilityFactor(averageDiscoveredRank, DISCOVERY_WEIGHTS.average_discovered_rank),
-        prompt_resilience: buildDiscoverabilityFactor(promptResilience, DISCOVERY_WEIGHTS.prompt_resilience),
+        search_result_presence: buildDiscoverabilityFactor(searchResultPresence, DISCOVERY_WEIGHTS.search_result_presence),
         source_path_diversity: buildDiscoverabilityFactor(sourcePathDiversity, DISCOVERY_WEIGHTS.source_path_diversity),
-        third_party_source_strength: buildDiscoverabilityFactor(thirdPartySourceStrength, DISCOVERY_WEIGHTS.third_party_source_strength),
-        entity_match_clarity: buildDiscoverabilityFactor(entityMatchClarity, DISCOVERY_WEIGHTS.entity_match_clarity)
+        third_party_source_strength: buildDiscoverabilityFactor(thirdPartySourceStrength, DISCOVERY_WEIGHTS.third_party_source_strength)
       };
 
       return {
@@ -403,7 +396,7 @@ function buildDiscoverabilityFactor(score, weight) {
   return {
     score,
     weight,
-    weighted_contribution: roundOne(score * (weight / 100))
+    weighted_contribution: roundOne(score * (weight / DISCOVERY_WEIGHT_TOTAL))
   };
 }
 
@@ -417,6 +410,7 @@ function computeSourceStrength(sources) {
 
 function getSourceTypeWeight(sourceType) {
   switch (sourceType) {
+    case "search_engine_result":
     case "review_platform":
     case "google_business_profile":
     case "government_register":
@@ -462,7 +456,15 @@ function normalizeSources(value) {
 }
 
 function normalizeSourceType(value) {
-  switch (String(value || "")) {
+  const normalized = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  switch (normalized) {
+    case "search_engine_result":
+    case "search_result":
+    case "serp":
+    case "serp_result":
+    case "google_search_result":
+    case "bing_search_result":
+      return "search_engine_result";
     case "official_site":
     case "review_platform":
     case "google_business_profile":
@@ -472,10 +474,23 @@ function normalizeSourceType(value) {
     case "marketplace":
     case "forum":
     case "social":
-      return String(value);
+      return normalized;
     default:
       return "unknown";
   }
+}
+
+function isSearchResultSource(source) {
+  if (source.source_type === "search_engine_result") {
+    return true;
+  }
+
+  const text = [
+    source.source_name,
+    source.source_domain,
+    source.source_url
+  ].join(" ").toLowerCase();
+  return /\b(serp|search results page|search engine result|search engine results|google results|bing results|google search|bing search|search snippet|ranking result)\b/.test(text);
 }
 
 function dedupeSources(sources) {

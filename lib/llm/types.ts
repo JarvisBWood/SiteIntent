@@ -10,6 +10,7 @@ export type LLMRequest = {
   model?: string;
   temperature?: number;
   responseFormat?: "text" | "json";
+  responseSchema?: Record<string, unknown>;
 };
 
 export type LLMResponse<T = string> = {

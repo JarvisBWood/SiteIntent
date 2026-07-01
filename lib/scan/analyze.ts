@@ -1,9 +1,13 @@
+import OpenAI from "openai";
+
 import { createOllamaClient } from "@/lib/llm";
+import { isOpenAIModelName } from "@/lib/llm/provider";
 import type {
   AnalysisPassName,
   AnalysisPassResult,
   PageExtraction,
-  PageOutput
+  PageOutput,
+  PageScanRecord
 } from "@/lib/scan/types";
 
 type AnalysisContext = {
@@ -12,20 +16,69 @@ type AnalysisContext = {
   competitorUrls: string[];
 };
 
-const DEFAULT_MODEL = "llama3.1";
+type AnalyzedPageRecord = Omit<PageScanRecord, "discoverySources">;
 
-export async function analyzePage(page: PageExtraction, context: AnalysisContext) {
-  const client = createOllamaClient({ defaultModel: DEFAULT_MODEL });
+const PAGE_ANALYSIS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["intent", "audience", "product", "supporting_signals", "weakening_signals", "confidence"],
+  properties: {
+    intent: { type: "string" },
+    audience: { type: "string" },
+    product: { type: "string" },
+    supporting_signals: {
+      type: "array",
+      items: { type: "string" },
+      maxItems: 8
+    },
+    weakening_signals: {
+      type: "array",
+      items: { type: "string" },
+      maxItems: 8
+    },
+    confidence: { type: "number" }
+  }
+} as const;
 
-  const passA = await runPass("A", page, context, client);
-  const passB = await runPass("B", page, context, client);
+export async function analyzePage(page: PageExtraction, context: AnalysisContext): Promise<AnalyzedPageRecord> {
+  const model = getPageAnalysisModel();
+  if (isOpenAIModelName(model)) {
+    return analyzePageWithOpenAI(page, context, model);
+  }
+
+  const client = createOllamaClient({ defaultModel: model });
+
+  const passA = await runPass("A", page, context, client, model);
+  const passB = await runPass("B", page, context, client, model);
 
   const stable = isStable(passA.parsed, passB.parsed);
   if (stable) {
     return finalizeAnalysis(page, [passA, passB], "stable", null);
   }
 
-  const passC = await runPass("C", page, context, client, {
+  const passC = await runPass("C", page, context, client, model, {
+    focus: "Resolve the conflict and produce the best final single-page interpretation."
+  });
+
+  return finalizeAnalysis(page, [passA, passB, passC], "unstable", describeInstability(passA.parsed, passB.parsed, passC.parsed));
+}
+
+async function analyzePageWithOpenAI(page: PageExtraction, context: AnalysisContext, model: string): Promise<AnalyzedPageRecord> {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
+    return buildFallbackAnalysisRecord(page, context, "C", "OpenAI API key is not configured.");
+  }
+
+  const client = new OpenAI({ apiKey: openAiApiKey });
+  const passA = await runOpenAiPass("A", page, context, client, model, 0.2);
+  const passB = await runOpenAiPass("B", page, context, client, model, 0.35);
+
+  const stable = isStable(passA.parsed, passB.parsed);
+  if (stable) {
+    return finalizeAnalysis(page, [passA, passB], "stable", null);
+  }
+
+  const passC = await runOpenAiPass("C", page, context, client, model, 0.15, {
     focus: "Resolve the conflict and produce the best final single-page interpretation."
   });
 
@@ -37,12 +90,14 @@ async function runPass(
   page: PageExtraction,
   context: AnalysisContext,
   client: ReturnType<typeof createOllamaClient>,
+  model: string,
   extra: { focus?: string } = {}
 ): Promise<AnalysisPassResult> {
   const prompt = buildPrompt(pass, page, context, extra.focus);
   const result = await client.generate<Record<string, unknown>>({
-    model: DEFAULT_MODEL,
+    model,
     responseFormat: "json",
+    responseSchema: PAGE_ANALYSIS_SCHEMA,
     temperature: pass === "A" ? 0.2 : pass === "B" ? 0.35 : 0.15,
     messages: [
       {
@@ -80,12 +135,118 @@ async function runPass(
   };
 }
 
+async function runOpenAiPass(
+  pass: AnalysisPassName,
+  page: PageExtraction,
+  context: AnalysisContext,
+  client: OpenAI,
+  model: string,
+  temperature: number,
+  extra: { focus?: string } = {}
+): Promise<AnalysisPassResult> {
+  const prompt = buildPrompt(pass, page, context, extra.focus);
+  const response = await createOpenAiAnalysisResponse(client, {
+    model,
+    input: [
+      {
+        role: "system",
+        content:
+          "You are an analytical website intent model. Return only valid JSON matching the requested keys. " +
+          "Identify the actual product, audience, and outcome from the page content rather than generic website advice. " +
+          "Prefer concrete language like software category, user type, and job-to-be-done. " +
+          "Be concise, specific, and grounded in the page content."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    tools: [],
+    temperature,
+    text: {
+      format: {
+        type: "json_schema",
+        name: "siteintent_page_analysis",
+        strict: true,
+        schema: PAGE_ANALYSIS_SCHEMA
+      }
+    }
+  });
+
+  const parsed = parseResponseJson(response);
+  return {
+    pass,
+    model: response.model || model,
+    raw: response,
+    prompt,
+    parsed: normalizeAnalysisOutput(page.url, page.pageType, parsed)
+  };
+}
+
+function getPageAnalysisModel() {
+  return process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+}
+
+async function createOpenAiAnalysisResponse(
+  client: OpenAI,
+  request: OpenAI.Responses.ResponseCreateParamsNonStreaming
+) {
+  try {
+    return await client.responses.create(request);
+  } catch (error) {
+    if (isModelNotFound(error) && request.model !== "gpt-5.4-mini") {
+      return client.responses.create({
+        ...request,
+        model: "gpt-5.4-mini"
+      });
+    }
+    throw error;
+  }
+}
+
+function parseResponseJson(response: { output_text?: string; output?: unknown[] }) {
+  const text = response.output_text || extractTextFromOutput(response.output);
+  if (!text) {
+    throw new Error("OpenAI response did not include output text.");
+  }
+
+  return JSON.parse(text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, ""));
+}
+
+function extractTextFromOutput(output: unknown[] | undefined) {
+  if (!Array.isArray(output)) {
+    return "";
+  }
+
+  const texts: string[] = [];
+  for (const item of output) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+    const content = (item as { content?: unknown[] }).content;
+    if (!Array.isArray(content)) {
+      continue;
+    }
+    for (const part of content) {
+      if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+        texts.push(part.text);
+      }
+    }
+  }
+
+  return texts.join("\n").trim();
+}
+
+function isModelNotFound(error: unknown) {
+  return error instanceof OpenAI.APIError && error.status === 404 && typeof error.message === "string";
+}
+
 function finalizeAnalysis(
   page: PageExtraction,
   passes: AnalysisPassResult[],
   mergeDecision: "stable" | "unstable",
   unstableReason: string | null
-) {
+): AnalyzedPageRecord {
   const finalPass = passes[passes.length - 1] ?? passes[0];
   const merged = {
     ...finalPass.parsed,
@@ -191,6 +352,24 @@ function buildFallbackAnalysis(
     stability,
     timestamp: new Date().toISOString()
   };
+}
+
+function buildFallbackAnalysisRecord(
+  page: PageExtraction,
+  context: AnalysisContext,
+  pass: AnalysisPassName,
+  error: string
+): AnalyzedPageRecord {
+  const parsed = buildFallbackAnalysis(page, context, pass, error);
+  const fallbackPass: AnalysisPassResult = {
+    pass,
+    model: "fallback",
+    raw: { error, fallback: true },
+    prompt: "",
+    parsed
+  };
+
+  return finalizeAnalysis(page, [fallbackPass], "unstable", error);
 }
 
 function inferIntent(text: string, pageType: string) {

@@ -191,23 +191,11 @@ export function buildRecommendations(input: {
       rationale: "AI never found the site in the discovery runs, so category listings, review platforms, and clearer entity signals need work.",
       source: "Discoverability analysis",
       evidence: [
-        `Appearance rate: ${Math.round(discoverability.factorScores.appearance_rate.score)}%`,
+        `Discovery prompts that included the target: ${discoverability.targetWebsite.appearanceCount}`,
         ...discoverability.targetWebsite.reasonsFoundOrMissed.slice(0, 2)
       ],
       pageUrl: null,
       priority: 96
-    });
-  }
-
-  if (discoverability?.factorScores.entity_match_clarity.score && discoverability.factorScores.entity_match_clarity.score < 60) {
-    recommendations.push({
-      action: "CHANGE",
-      title: "Clarify the website's category and entity match",
-      rationale: "The website is not strongly signalling what it is, where it operates, or who it serves, which makes it easier for AI to miss.",
-      source: "Discoverability analysis",
-      evidence: [discoverability.factorScores.entity_match_clarity.evidence],
-      pageUrl: homepage?.url ?? null,
-      priority: 90
     });
   }
 

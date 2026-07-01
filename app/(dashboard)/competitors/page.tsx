@@ -1,19 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, BarChart3 } from "lucide-react";
+import { BarChart3, PlayCircle, ScanLine } from "lucide-react";
 
+import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
 import type { ProjectCompetitorReport } from "@/lib/sqlite-queries";
 import { shortenDisplayUrl } from "@/lib/site-state";
 
 export default function CompetitorsPage() {
-  const { hydrated, projects, activeProjectId, competitorAnalyses, scanProgressByProject } = useSiteIntent();
+  const { hydrated, projects, activeProjectId, scanProgressByProject, startScan, isScanning } = useSiteIntent();
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null;
   const liveScanProgress = activeProject ? scanProgressByProject[activeProject.id] ?? null : null;
   const [report, setReport] = useState<ProjectCompetitorReport | null>(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!hydrated || !activeProject?.id) {
@@ -24,7 +23,6 @@ export default function CompetitorsPage() {
     const controller = new AbortController();
 
     async function loadReport() {
-      setLoading(true);
       try {
         const response = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/competitors`, {
           headers: { Accept: "application/json" },
@@ -41,85 +39,109 @@ export default function CompetitorsPage() {
           return;
         }
         setReport(null);
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
       }
     }
 
     void loadReport();
     return () => controller.abort();
-  }, [activeProject?.id, hydrated, liveScanProgress?.stage]);
+  }, [
+    activeProject?.id,
+    hydrated,
+    liveScanProgress?.stage,
+    liveScanProgress?.progress,
+    liveScanProgress?.completedCompetitors,
+    liveScanProgress?.totalCompetitors
+  ]);
 
   const competitorUrls = activeProject?.competitorUrls.slice(0, 5) ?? [];
-  const isCompetitorScoring = liveScanProgress?.scanMode === "full" && liveScanProgress.stage !== "completed";
+  const sortedCompetitors = report?.competitors
+    ? [...report.competitors].sort((left, right) => {
+        const leftScore = left.aiSearchScore ?? -1;
+        const rightScore = right.aiSearchScore ?? -1;
+
+        if (rightScore !== leftScore) {
+          return rightScore - leftScore;
+        }
+
+        return (left.displayUrl || left.url).localeCompare(right.displayUrl || right.url);
+      })
+    : [];
+  const placeholderCompetitors = (competitorUrls.length ? competitorUrls : [""]).map((url, index) => ({
+    url,
+    displayUrl: url ? shortenDisplayUrl(url) : `Competitor ${index + 1}`
+  }));
+  const showPlaceholderCards = !sortedCompetitors.length;
 
   return (
     <div className="page-shell">
-      <section className="page-hero">
-        <div className="eyebrow">
-          <BarChart3 size={14} />
-          Competitors
-        </div>
-        <h1 className="page-title">Top 5 competitor results</h1>
-        <p className="page-copy">
-          Competitor scoring starts after your website scoring finishes. This page only shows the discovered top five comparison sites.
-        </p>
-        <div className="hero-actions">
-          <Link className="button button--secondary" href="/dashboard">
-            Back to dashboard
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
-
-      {isCompetitorScoring ? (
-        <section className="card">
-          <h2 className="card__title">Competitor scoring in progress</h2>
-          <p className="card__copy">{liveScanProgress?.description ?? "Scoring the discovered top competitors now."}</p>
-          <div className="section-note" style={{ marginTop: 16 }}>
-            <strong>{liveScanProgress?.title}</strong>
-            <div>
-              {liveScanProgress?.totalCompetitors
-                ? `${liveScanProgress.completedCompetitors ?? 0} of ${liveScanProgress.totalCompetitors} competitors processed.`
-                : "Waiting for the top competitor set to be discovered."}
-            </div>
+      <div className="page-header-inline">
+        <div className="page-header-inline__content">
+          <div className="eyebrow">
+            <BarChart3 size={14} />
+            Competitors
           </div>
-        </section>
-      ) : null}
-
-      {report?.competitors.length ? (
+          <h1 className="page-title">Competitor results</h1>
+          <p className="page-copy">
+            Competitor scoring starts after your website scoring finishes. This page shows up to five validated competitors, and only keeps
+            websites that AI scored as true competitors with high confidence.
+          </p>
+        </div>
+        <div className="page-header-inline__actions">
+          <button
+            className="button button--primary"
+            type="button"
+            onClick={() => activeProject && startScan(activeProject.id, { navigate: false, scanMode: "competitors" })}
+            disabled={isScanning || !activeProject}
+          >
+            {isScanning ? <ScanLine size={16} /> : <PlayCircle size={16} />}
+            {isScanning ? "Scanning..." : "Run Competitor Scan"}
+          </button>
+        </div>
+      </div>
+      {sortedCompetitors.length ? (
         <div className="stack">
-          {report.competitors.map((competitor, index) => {
-            const liveAnalysis = competitorAnalyses[index] ?? null;
+          {sortedCompetitors.map((competitor, index) => {
+            const rank = index + 1;
+            const competitorLabel = getCompetitorLabel(competitor.url, competitor.displayUrl);
+            const competitorDomain = getCompetitorDomain(competitor.url, competitor.displayUrl);
             return (
               <section key={competitor.url} className="card">
-                <h2 className="card__title">{competitor.displayUrl || shortenDisplayUrl(competitor.url)}</h2>
-                <div className="dashboard-grid" style={{ marginTop: 16 }}>
-                  <div className="section-note">
-                    <strong>Discovery footprint</strong>
-                    <div>
-                      Best rank {competitor.bestRank ? `#${competitor.bestRank}` : "not observed"} · appeared {competitor.appearanceCount} time
-                      {competitor.appearanceCount === 1 ? "" : "s"}
-                    </div>
+                <div className="website-overview-card__identity">
+                  <div className="competitor-rank-lockup">
+                    <span className="competitor-rank-badge" aria-label={`Rank ${rank}`}>
+                      {rank}
+                    </span>
+                    <SiteFavicon
+                      url={competitor.url}
+                      faviconUrl={competitor.faviconUrl}
+                      alt={`${competitor.displayUrl || shortenDisplayUrl(competitor.url)} favicon`}
+                    />
                   </div>
-                  <div className="section-note">
-                    <strong>Source paths</strong>
-                    <div>{competitor.sourceDomains.join(", ") || "No discovery sources saved yet."}</div>
+                  <div>
+                    <h2 className="card__title">
+                      <a href={competitor.url} target="_blank" rel="noreferrer noopener">
+                        {competitorLabel}
+                      </a>
+                    </h2>
+                    <p className="card__copy">{competitorDomain}</p>
                   </div>
                 </div>
-                <div className="section-note" style={{ marginTop: 12 }}>
-                  <strong>Audience</strong>
-                  <div>{competitor.analysis?.audience ?? liveAnalysis?.audience ?? "No audience inference saved yet."}</div>
-                </div>
-                <div className="section-note" style={{ marginTop: 12 }}>
-                  <strong>Positioning</strong>
-                  <div>{competitor.analysis?.positioning ?? liveAnalysis?.positioning ?? "No positioning inference saved yet."}</div>
-                </div>
-                <div className="section-note" style={{ marginTop: 12 }}>
-                  <strong>Outcomes</strong>
-                  <div>{competitor.analysis?.outcomes.join(", ") || liveAnalysis?.outcomes.join(", ") || "No clear outcomes inferred yet."}</div>
+                <div className="metric-grid" style={{ marginTop: 16 }}>
+                  <MetricStat
+                    label="AI Search Score"
+                    value={competitor.aiSearchScore}
+                    note="Overall AI visibility strength across discovery and website quality."
+                  />
+                  <MetricStat
+                    label="Rankability"
+                    value={competitor.rankabilityScore}
+                    note="How strong the website looks once AI includes it as a candidate."
+                  />
+                  <MetricStat
+                    label="Discoverability"
+                    value={competitor.discoverabilityScore}
+                    note="How likely AI is to surface the site in repeated searches."
+                  />
                 </div>
                 <div className="section-note" style={{ marginTop: 12 }}>
                   <strong>Why it was discovered</strong>
@@ -129,22 +151,119 @@ export default function CompetitorsPage() {
             );
           })}
         </div>
-      ) : loading ? (
-        <section className="card">
-          <h2 className="card__title">Loading competitors</h2>
-          <p className="card__copy">Reading the latest competitor set from SQLite.</p>
-        </section>
-      ) : competitorUrls.length ? (
-        <section className="card">
-          <h2 className="card__title">Competitor results pending</h2>
-          <p className="card__copy">The top competitors have been discovered, but their detailed results are still being prepared.</p>
-        </section>
       ) : (
-        <section className="card">
-          <h2 className="card__title">No competitors yet</h2>
-          <p className="card__copy">Finish the website scoring pass and Site Intent will begin scoring the top five competitors automatically.</p>
-        </section>
+        <div className="stack">
+          {placeholderCompetitors.map((competitor, index) => (
+            <section key={`${competitor.displayUrl}-${index}`} className="card">
+              <div className="website-overview-card__identity">
+                <div className="competitor-rank-lockup">
+                  <span className="competitor-rank-badge" aria-label={`Rank ${index + 1}`}>
+                    {index + 1}
+                  </span>
+                  <SiteFavicon
+                    url={competitor.url}
+                    faviconUrl={null}
+                    alt={`${competitor.displayUrl} favicon`}
+                  />
+                </div>
+                <div>
+                  <h2 className="card__title">
+                    {competitor.url ? (
+                      <a href={competitor.url} target="_blank" rel="noreferrer noopener">
+                        {getCompetitorLabel(competitor.url, competitor.displayUrl)}
+                      </a>
+                    ) : (
+                      competitor.displayUrl
+                    )}
+                  </h2>
+                  <p className="card__copy">
+                    {competitor.url
+                      ? getCompetitorDomain(competitor.url, competitor.displayUrl)
+                      : "Validated competitor details will appear here once the scan completes."}
+                  </p>
+                </div>
+              </div>
+              <div className="metric-grid" style={{ marginTop: 16 }}>
+                <MetricStat
+                  label="AI Search Score"
+                  value={null}
+                  note="Overall AI visibility strength across discovery and website quality."
+                />
+                <MetricStat
+                  label="Rankability"
+                  value={null}
+                  note="How strong the website looks once AI includes it as a candidate."
+                />
+                <MetricStat
+                  label="Discoverability"
+                  value={null}
+                  note="How likely AI is to surface the site in repeated searches."
+                />
+              </div>
+              <div className="section-note" style={{ marginTop: 12 }}>
+                <strong>Why it was discovered</strong>
+                <div>This explanation will be added once the competitor scan completes.</div>
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );
+}
+
+function MetricStat({
+  label,
+  value,
+  note
+}: {
+  label: string;
+  value: number | null;
+  note: string;
+}) {
+  const scoreTone = value == null ? null : getScoreTone(value);
+
+  return (
+    <section className="card metric-card">
+      <div className="metric-card__label">{label}</div>
+      <div className="metric-card__value-row">
+        <div className={scoreTone ? `metric-card__value metric-card__value--${scoreTone}` : "metric-card__value"}>
+          {value == null ? "Pending" : `${Math.round(value)}%`}
+        </div>
+      </div>
+      <div className="metric-card__note">{note}</div>
+    </section>
+  );
+}
+
+function getScoreTone(score: number) {
+  if (score >= 80) {
+    return "good";
+  }
+
+  if (score >= 50) {
+    return "warn";
+  }
+
+  return "bad";
+}
+
+function getCompetitorLabel(url: string, displayUrl?: string | null) {
+  const domain = getCompetitorDomain(url, displayUrl);
+  const base = domain.split(".")[0] || domain;
+  const words = base
+    .split(/[-_]+/g)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1));
+
+  return words.join(" ") || domain;
+}
+
+function getCompetitorDomain(url: string, displayUrl?: string | null) {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "");
+  } catch {
+    return shortenDisplayUrl(displayUrl || url).split("/")[0] || shortenDisplayUrl(displayUrl || url);
+  }
 }
