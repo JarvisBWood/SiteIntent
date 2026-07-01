@@ -6,6 +6,7 @@ import type {
   PageScanRecord,
   ProjectScanRequest,
   ProjectScanRun,
+  ScanProgressEvent,
   WebsiteScan,
   WebsiteScanPage
 } from "@/lib/scan/types";
@@ -57,8 +58,23 @@ export type TargetIntentModel = {
   removableConcepts: string[];
   addableConcepts: string[];
   notes: string;
+  isLocationSpecific?: boolean;
+  locationTargets?: BusinessLocationTarget[];
   updatedAt: string;
   isUserOwned?: boolean;
+};
+
+export type BusinessLocationType = "country" | "state" | "town" | "suburb";
+
+export type BusinessLocationTarget = {
+  id: string;
+  label: string;
+  type: BusinessLocationType;
+  country: string;
+  countryCode: string;
+  region?: string;
+  city?: string;
+  timezone?: string;
 };
 
 export type ProjectOnboardingState = {
@@ -76,13 +92,20 @@ export type ProjectOnboardingState = {
   reviewModalOpen?: boolean;
 };
 
+export type AppPreferences = {
+  pageAnalysisModel: string;
+  scoringModel: string;
+};
+
 export type SiteIntentSessionState = {
   session: SiteIntentSession | null;
   projects: SiteIntentProject[];
   activeProjectId: string | null;
   scanRuns: ProjectScanRun[];
+  scanProgressByProject: Record<string, ScanProgressEvent | null>;
   targetIntentModels: Record<string, TargetIntentModel>;
   projectOnboarding: Record<string, ProjectOnboardingState>;
+  preferences: AppPreferences;
 };
 
 export type SiteIntentProjectDraft = {
@@ -90,6 +113,7 @@ export type SiteIntentProjectDraft = {
   websiteUrl: string;
   competitorUrls: string[];
   scanDepth: number;
+  targetIntentModel?: TargetIntentModel;
 };
 
 export function createEmptyState(): SiteIntentSessionState {
@@ -98,8 +122,17 @@ export function createEmptyState(): SiteIntentSessionState {
     projects: [],
     activeProjectId: null,
     scanRuns: [],
+    scanProgressByProject: {},
     targetIntentModels: {},
-    projectOnboarding: {}
+    projectOnboarding: {},
+    preferences: createDefaultPreferences()
+  };
+}
+
+export function createDefaultPreferences(): AppPreferences {
+  return {
+    pageAnalysisModel: "llama3.1:8b",
+    scoringModel: "qwen2.5:14b"
   };
 }
 

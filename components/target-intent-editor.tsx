@@ -1,47 +1,54 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Save, RotateCcw, X } from "lucide-react";
+import { Save } from "lucide-react";
 
+import { LocationTargetInput } from "@/components/location-target-input";
 import { useSiteIntent } from "@/components/site-intent-provider";
 import { createDefaultTargetIntentModel } from "@/lib/models";
+import { normalizeLocationTargets } from "@/lib/location-targeting";
 import type { TargetIntentModel } from "@/lib/site-state";
 
 type TargetIntentEditorProps = {
+  projectId?: string;
   onSave?: () => void;
 };
 
-export function TargetIntentEditor({ onSave }: TargetIntentEditorProps) {
-  const { targetIntentModel, updateTargetIntentModel, categoryModel } = useSiteIntent();
+export function TargetIntentEditor({ projectId, onSave }: TargetIntentEditorProps) {
+  const {
+    targetIntentModel,
+    updateTargetIntentModel,
+    categoryModel,
+    getProjectTargetIntentModel,
+    getProjectCategoryModel,
+    updateProjectTargetIntentModel
+  } = useSiteIntent();
+  const scopedCategoryModel = projectId ? getProjectCategoryModel(projectId) : categoryModel;
+  const scopedTargetIntentModel = projectId ? getProjectTargetIntentModel(projectId) : targetIntentModel;
   const draft = useMemo<TargetIntentModel | null>(() => {
-    if (targetIntentModel) {
-      return targetIntentModel;
+    if (scopedTargetIntentModel) {
+      return scopedTargetIntentModel;
     }
 
-    return categoryModel ? createDefaultTargetIntentModel(categoryModel) : null;
-  }, [categoryModel, targetIntentModel]);
+    return scopedCategoryModel ? createDefaultTargetIntentModel(scopedCategoryModel) : null;
+  }, [scopedCategoryModel, scopedTargetIntentModel]);
 
-  const [category, setCategory] = useState(draft?.category ?? "");
-  const [notes, setNotes] = useState(draft?.notes ?? "");
-  const [lockedConcepts, setLockedConcepts] = useState<string[]>(draft?.lockedConcepts ?? []);
-  const [removableConcepts, setRemovableConcepts] = useState<string[]>(draft?.removableConcepts ?? []);
-  const [addableConcepts, setAddableConcepts] = useState<string[]>(draft?.addableConcepts ?? []);
-  const [newLocked, setNewLocked] = useState("");
-  const [newRemovable, setNewRemovable] = useState("");
-  const [newAddable, setNewAddable] = useState("");
+  const [productTarget, setProductTarget] = useState(draft?.category ?? "");
+  const [description, setDescription] = useState(draft?.notes ?? "");
+  const [isLocationSpecific, setIsLocationSpecific] = useState(Boolean(draft?.isLocationSpecific));
+  const [locationTargets, setLocationTargets] = useState(normalizeLocationTargets(draft?.locationTargets));
 
   useEffect(() => {
-    setCategory(draft?.category ?? "");
-    setNotes(draft?.notes ?? "");
-    setLockedConcepts(draft?.lockedConcepts ?? []);
-    setRemovableConcepts(draft?.removableConcepts ?? []);
-    setAddableConcepts(draft?.addableConcepts ?? []);
+    setProductTarget(draft?.category ?? "");
+    setDescription(draft?.notes ?? "");
+    setIsLocationSpecific(Boolean(draft?.isLocationSpecific));
+    setLocationTargets(normalizeLocationTargets(draft?.locationTargets));
   }, [draft]);
 
   if (!draft) {
     return (
       <div className="empty-state">
-        Create and scan a project first so the target intent editor has a category model to work from.
+        Create and scan a project first so the target editor has enough website context to work from.
       </div>
     );
   }
@@ -49,149 +56,82 @@ export function TargetIntentEditor({ onSave }: TargetIntentEditorProps) {
   const draftModel = draft;
 
   function save() {
-    updateTargetIntentModel({
-      category: category.trim() || draftModel.category,
-      lockedConcepts: normalizeConcepts(lockedConcepts),
-      removableConcepts: normalizeConcepts(removableConcepts),
-      addableConcepts: normalizeConcepts(addableConcepts),
-      notes: notes.trim(),
+    const normalizedTarget = normalizeText(productTarget) || draftModel.category;
+    const nextModel = {
+      category: normalizedTarget,
+      lockedConcepts: normalizedTarget ? [normalizedTarget] : [],
+      removableConcepts: [],
+      addableConcepts: [],
+      notes: normalizeText(description),
+      isLocationSpecific,
+      locationTargets,
       updatedAt: new Date().toISOString()
-    });
+    };
+
+    if (projectId) {
+      updateProjectTargetIntentModel(projectId, nextModel);
+    } else {
+      updateTargetIntentModel(nextModel);
+    }
 
     onSave?.();
   }
 
-  function reset() {
-    setCategory(categoryModel?.category ?? draftModel.category);
-    setNotes(draftModel.notes);
-    setLockedConcepts(draftModel.lockedConcepts);
-    setRemovableConcepts(draftModel.removableConcepts);
-    setAddableConcepts(draftModel.addableConcepts);
-  }
-
   return (
-    <div className="stack">
+    <div className="stack target-intent-editor">
       <label className="field">
-        <span className="field__label">Category</span>
-        <input className="input" value={category} onChange={(event) => setCategory(event.target.value)} />
-        <span className="field__hint">Adjust the optimization target without changing the shared category model.</span>
+        <span className="field__label">Product or service target</span>
+        <input
+          className="input"
+          value={productTarget}
+          onChange={(event) => setProductTarget(event.target.value)}
+          placeholder="Visitor management system for workplaces"
+        />
+        <span className="field__hint">A simple one-line description of what the website should be known for.</span>
       </label>
 
       <label className="field">
-        <span className="field__label">Notes</span>
-        <textarea className="input" rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
-        <span className="field__hint">Keep the target practical and easy to explain to the team.</span>
+        <span className="field__label">Deeper description</span>
+        <textarea
+          className="input"
+          rows={6}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Describe the product, audience, problem it solves, and the context you want competitor discovery to use."
+        />
+        <span className="field__hint">This gives future competitor scans richer context without changing the current results.</span>
       </label>
 
-      <ConceptSection
-        label="Locked concepts"
-        hint="These stay fixed as part of the target."
-        values={lockedConcepts}
-        newValue={newLocked}
-        onNewValueChange={setNewLocked}
-        onAdd={() => {
-          const next = normalizeSingleConcept(newLocked);
-          if (!next) {
-            return;
-          }
-          setLockedConcepts((current) => [...current, next]);
-          setNewLocked("");
-        }}
-        onRemove={(index) => setLockedConcepts((current) => current.filter((_, currentIndex) => currentIndex !== index))}
-      />
+      <label className="field field--checkbox">
+        <span className="field__checkbox">
+          <input
+            type="checkbox"
+            checked={isLocationSpecific}
+            onChange={(event) => setIsLocationSpecific(event.target.checked)}
+          />
+          <span>This business is location specific</span>
+        </span>
+        <span className="field__hint">When enabled, these places get attached to competitor discovery and scoring queries.</span>
+      </label>
 
-      <ConceptSection
-        label="Removable concepts"
-        hint="These are candidates to cut or de-emphasize."
-        values={removableConcepts}
-        newValue={newRemovable}
-        onNewValueChange={setNewRemovable}
-        onAdd={() => {
-          const next = normalizeSingleConcept(newRemovable);
-          if (!next) {
-            return;
-          }
-          setRemovableConcepts((current) => [...current, next]);
-          setNewRemovable("");
-        }}
-        onRemove={(index) => setRemovableConcepts((current) => current.filter((_, currentIndex) => currentIndex !== index))}
-      />
+      {isLocationSpecific ? (
+        <label className="field">
+          <span className="field__label">Target locations</span>
+          <LocationTargetInput selected={locationTargets} onChange={setLocationTargets} />
+          <span className="field__hint">Add one or more countries, states, towns, or suburbs to keep the comparison set local.</span>
+        </label>
+      ) : null}
 
-      <ConceptSection
-        label="Addable concepts"
-        hint="These are ideas you want the site to introduce more strongly."
-        values={addableConcepts}
-        newValue={newAddable}
-        onNewValueChange={setNewAddable}
-        onAdd={() => {
-          const next = normalizeSingleConcept(newAddable);
-          if (!next) {
-            return;
-          }
-          setAddableConcepts((current) => [...current, next]);
-          setNewAddable("");
-        }}
-        onRemove={(index) => setAddableConcepts((current) => current.filter((_, currentIndex) => currentIndex !== index))}
-      />
-
-      <div className="hero-actions">
+      <div className="setup-modal__actions setup-modal__actions--target-editor">
         <button className="button button--primary" type="button" onClick={save}>
           <Save size={16} />
           Save target
-        </button>
-        <button className="button button--secondary" type="button" onClick={reset}>
-          <RotateCcw size={16} />
-          Reset draft
         </button>
       </div>
     </div>
   );
 }
 
-function ConceptSection({
-  label,
-  hint,
-  values,
-  newValue,
-  onNewValueChange,
-  onAdd,
-  onRemove
-}: {
-  label: string;
-  hint: string;
-  values: string[];
-  newValue: string;
-  onNewValueChange: (value: string) => void;
-  onAdd: () => void;
-  onRemove: (index: number) => void;
-}) {
-  return (
-    <section className="card card--subtle">
-      <div className="card__title">{label}</div>
-      <p className="card__copy">{hint}</p>
-      <div className="tag-list" style={{ marginTop: 12 }}>
-        {values.length ? values.map((value, index) => (
-          <button key={`${label}-${value}-${index}`} className="tag tag--interactive" type="button" onClick={() => onRemove(index)}>
-            {value}
-            <X size={12} />
-          </button>
-        )) : <span className="muted">None yet.</span>}
-      </div>
-      <div className="hero-actions" style={{ marginTop: 12 }}>
-        <input className="input" value={newValue} onChange={(event) => onNewValueChange(event.target.value)} placeholder={`Add ${label.toLowerCase()}`} />
-        <button className="button button--secondary" type="button" onClick={onAdd}>
-          <Plus size={16} />
-          Add
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function normalizeSingleConcept(value: string) {
+function normalizeText(value: string) {
   return value.trim().replace(/\s+/g, " ");
-}
-
-function normalizeConcepts(values: string[]) {
-  return values.map(normalizeSingleConcept).filter(Boolean);
 }

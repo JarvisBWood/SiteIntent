@@ -173,12 +173,16 @@ export type ProjectScanRequest = {
   competitorUrls: string[];
   scanMode?: ScanMode;
   scanDepth: number;
+  pageAnalysisModel?: string;
+  scoringModel?: string;
   targetIntentModel?: {
     category: string;
     lockedConcepts: string[];
     removableConcepts: string[];
     addableConcepts: string[];
     notes: string;
+    isLocationSpecific?: boolean;
+    locationTargets?: import("@/lib/site-state").BusinessLocationTarget[];
     updatedAt: string;
   };
 };
@@ -196,6 +200,8 @@ export type ScanProgressEvent = {
   title: string;
   description: string;
   progress: number;
+  currentUrl?: string;
+  currentLabel?: string;
   analyzedPages?: number;
   totalPages?: number;
   discoveredPages?: number;
@@ -206,4 +212,4 @@ export type ScanProgressEvent = {
   totalCompetitors?: number;
 };
 
-export type ScanMode = "initial" | "full";
+export type ScanMode = "initial" | "full" | "competitors";

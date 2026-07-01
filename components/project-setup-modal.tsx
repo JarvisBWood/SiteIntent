@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, LoaderCircle, Plus, Sparkles, X } from "lucide-react";
 
+import { LocationTargetInput } from "@/components/location-target-input";
 import { useSiteIntent } from "@/components/site-intent-provider";
+import { normalizeLocationTargets } from "@/lib/location-targeting";
 import type { ScanProgressEvent } from "@/lib/scan/types";
 import {
   buildProjectDraft,
@@ -49,6 +51,8 @@ export function ProjectSetupModal({
   const [modalView, setModalView] = useState<ModalView>("form");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [isLocationSpecific, setIsLocationSpecific] = useState(false);
+  const [locationTargets, setLocationTargets] = useState(normalizeLocationTargets(undefined));
   const [errors, setErrors] = useState<FormErrors>({});
   const [scanProgress, setScanProgress] = useState<ScanProgressEvent>(buildInitialScanProgress());
   const [scanError, setScanError] = useState<string | null>(null);
@@ -76,6 +80,8 @@ export function ProjectSetupModal({
     setModalView("form");
     setIsSubmitting(false);
     setWebsiteUrl("");
+    setIsLocationSpecific(false);
+    setLocationTargets([]);
     setErrors({});
     setScanProgress(buildInitialScanProgress());
     setScanError(null);
@@ -104,7 +110,20 @@ export function ProjectSetupModal({
       name: buildProjectDraft(websiteUrl),
       websiteUrl: sanitizeWebsiteUrl(websiteUrl),
       competitorUrls: [],
-      scanDepth: 1
+      scanDepth: 1,
+      targetIntentModel: isLocationSpecific
+        ? {
+            category: "",
+            lockedConcepts: [],
+            removableConcepts: [],
+            addableConcepts: [],
+            notes: "",
+            isLocationSpecific: true,
+            locationTargets,
+            updatedAt: new Date().toISOString(),
+            isUserOwned: true
+          }
+        : undefined
     });
     setCreatedProject(project);
     setModalOpen(false);
@@ -194,6 +213,26 @@ export function ProjectSetupModal({
                       />
                       {errors.websiteUrl ? <span className="field__error">{errors.websiteUrl}</span> : <span className="field__hint">Required. This is the site we will analyze first.</span>}
                     </label>
+
+                    <label className="field field--checkbox">
+                      <span className="field__checkbox">
+                        <input
+                          type="checkbox"
+                          checked={isLocationSpecific}
+                          onChange={(event) => setIsLocationSpecific(event.target.checked)}
+                        />
+                        <span>This business is location specific</span>
+                      </span>
+                      <span className="field__hint">Use this when competitor discovery should stay inside specific locations.</span>
+                    </label>
+
+                    {isLocationSpecific ? (
+                      <label className="field">
+                        <span className="field__label">Target locations</span>
+                        <LocationTargetInput selected={locationTargets} onChange={setLocationTargets} />
+                        <span className="field__hint">Add one or more countries, states, towns, or suburbs.</span>
+                      </label>
+                    ) : null}
 
                   </div>
 

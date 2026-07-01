@@ -1,7 +1,11 @@
 import OpenAI from "openai";
 
+import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
+import { isOpenAIModelName } from "@/lib/llm/provider";
+import { buildLocationAwareContext, buildLocationSearchTerms, buildWebSearchUserLocation } from "@/lib/location-targeting";
 import type { CategoryModel, CompetitorAnalysis } from "@/lib/models";
 import type { ProjectScanRun, WebsiteScanPage } from "@/lib/scan/types";
+import type { TargetIntentModel } from "@/lib/site-state";
 import {
   RANKABILITY_FACTORS,
   RANKABILITY_SCORING_PROFILE_ID,
@@ -13,21 +17,11 @@ import {
 
 const DEFAULT_MODEL = process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5-mini";
 const FALLBACK_MODEL = "gpt-5.4-mini";
-const WEB_SEARCH_TOOL = {
-  type: "web_search" as const,
-  user_location: {
-    type: "approximate" as const,
-    country: "AU",
-    region: "New South Wales",
-    city: "Sydney",
-    timezone: "Australia/Sydney"
-  }
-};
-
 type ScoreWebsiteInput = {
   scan: ProjectScanRun;
   categoryModel: CategoryModel;
   competitorAnalyses: CompetitorAnalysis[];
+  targetIntentModel?: TargetIntentModel;
 };
 
 type RawFactorScore = {
@@ -110,18 +104,88 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
     };
   }
 
+  const selectedModel = getRankabilityModel();
   const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (!openAiApiKey) {
+  if (isOpenAIModelName(selectedModel)) {
+    if (openAiApiKey) {
+      return scoreWebsiteWithOpenAIModel(input, selectedModel);
+    }
+
+    return scoreWebsiteWithLocalModel(input, getLocalRankabilityModel());
+  }
+
+  return scoreWebsiteWithLocalModel(input, selectedModel);
+}
+
+async function scoreWebsiteWithLocalModel(
+  input: ScoreWebsiteInput,
+  model: string
+): Promise<{
+  scorecard: RankabilityScorecard | null;
+  error: string | null;
+}> {
+  try {
+    const response = await generateJsonWithLocalSearch<RawRankabilityResponse>({
+      model,
+      responseSchema: RANKABILITY_RESPONSE_SCHEMA,
+      systemPrompt: [
+        "You are scoring website rankability for AI recommendations.",
+        "Use the provided stored crawl plus the collected web search evidence for current external validation.",
+        "Return only JSON matching the required shape.",
+        "Do not invent URLs or sources.",
+        "Score each fixed factor independently.",
+        "Do not reward a website for the same evidence in multiple factors unless it genuinely applies to both.",
+        "Treat product fit, materials, features, menus, service range, compliance, and category-specific details as part of website_content_relevance_completeness.",
+        "The app will calculate weighted totals. Do not calculate the final weighted score."
+      ].join(" "),
+      userPrompt: `${buildScorePrompt(input.scan, input.categoryModel, input.competitorAnalyses, input.targetIntentModel)}\n\n${buildRankabilityJsonContract()}`,
+      searchQueries: buildRankabilitySearchQueries(input.scan, input.categoryModel, input.targetIntentModel),
+      maxResultsPerQuery: 6,
+      maxAttempts: 3,
+      temperature: 0.1
+    });
+
+    const scorecard = normalizeRankabilityScorecard(response.content, {
+      model: response.model,
+      usesWebSearch: response.searchRuns.some((run) => run.results.length > 0)
+    });
+
+    if (!scorecard) {
+      return {
+        scorecard: null,
+        error: "Unable to normalize local rankability scoring response."
+      };
+    }
+
+    scorecard.warnings = uniqueStrings([...scorecard.warnings, ...response.warnings]);
+    return {
+      scorecard,
+      error: null
+    };
+  } catch (error) {
     return {
       scorecard: null,
-      error: "OPENAI_API_KEY is required for Rankability scoring."
+      error: error instanceof Error ? error.message : "Unable to score website rankability with the local model."
     };
+  }
+}
+
+async function scoreWebsiteWithOpenAIModel(
+  input: ScoreWebsiteInput,
+  model: string
+): Promise<{
+  scorecard: RankabilityScorecard | null;
+  error: string | null;
+}> {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
+    return scoreWebsiteWithLocalModel(input, model);
   }
 
   try {
     const client = new OpenAI({ apiKey: openAiApiKey });
     const response = await createResponseWithModelFallback(client, {
-      model: DEFAULT_MODEL,
+      model,
       input: [
         {
           role: "system",
@@ -138,10 +202,15 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
         },
         {
           role: "user",
-          content: buildScorePrompt(input.scan, input.categoryModel, input.competitorAnalyses)
+          content: buildScorePrompt(input.scan, input.categoryModel, input.competitorAnalyses, input.targetIntentModel)
         }
       ],
-      tools: [WEB_SEARCH_TOOL],
+      tools: [
+        {
+          type: "web_search" as const,
+          user_location: buildWebSearchUserLocation(input.targetIntentModel)
+        }
+      ],
       tool_choice: "required",
       text: {
         format: {
@@ -155,7 +224,7 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
 
     const parsed = parseResponseJson(response);
     const scorecard = normalizeRankabilityScorecard(parsed, {
-      model: response.model || DEFAULT_MODEL,
+      model: response.model || model,
       usesWebSearch: containsWebSearchCall(response)
     });
 
@@ -238,7 +307,8 @@ export function normalizeRankabilityScorecard(
 function buildScorePrompt(
   scan: ProjectScanRun,
   categoryModel: CategoryModel,
-  competitorAnalyses: CompetitorAnalysis[]
+  competitorAnalyses: CompetitorAnalysis[],
+  targetIntentModel?: TargetIntentModel
 ) {
   const includedPages = scan.websiteScanPages.filter((page) => page.includeInScoring);
   const homepage = includedPages.find((page) => page.pageType === "homepage") ?? includedPages[0] ?? null;
@@ -263,9 +333,12 @@ function buildScorePrompt(
 
   return [
     `Category: ${categoryModel.category}`,
-    `User context: ${buildUserContext(categoryModel)}`,
+    `User context: ${buildUserContext(categoryModel, targetIntentModel)}`,
     `Website name: ${scan.projectName}`,
     `Website URL: ${scan.websiteUrl}`,
+    targetIntentModel?.isLocationSpecific
+      ? `Location targeting: ${buildLocationSearchTerms(targetIntentModel).join(" | ")}`
+      : "Location targeting: Broad Australia-wide category comparison",
     "",
     "Score this website for Rankability.",
     "Use the fixed factors exactly as provided.",
@@ -305,8 +378,40 @@ function buildScorePrompt(
   ].join("\n");
 }
 
-function buildUserContext(categoryModel: CategoryModel) {
-  return `${categoryModel.customer} evaluating ${categoryModel.category} options in Australia`;
+function buildUserContext(categoryModel: CategoryModel, targetIntentModel?: TargetIntentModel) {
+  return buildLocationAwareContext(categoryModel.customer, categoryModel.category, targetIntentModel, "evaluating");
+}
+
+function buildRankabilitySearchQueries(scan: ProjectScanRun, categoryModel: CategoryModel, targetIntentModel?: TargetIntentModel) {
+  const domain = normalizeDomain(scan.websiteUrl);
+  const locationTerms = buildLocationSearchTerms(targetIntentModel);
+
+  return uniqueStrings([
+    ...locationTerms.map((location) => `${scan.projectName} ${categoryModel.category} ${location}`),
+    ...locationTerms.map((location) => `${domain} ${categoryModel.category} ${location}`),
+    `${scan.projectName} reviews`,
+    `${scan.projectName} pricing`,
+    `${scan.projectName} case study OR testimonial`,
+    `${scan.projectName} award OR directory`
+  ]);
+}
+
+function getLocalRankabilityModel() {
+  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+}
+
+function getRankabilityModel() {
+  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5-mini";
+}
+
+function buildRankabilityJsonContract() {
+  return [
+    "Return valid JSON with these top-level keys: website, category, context, factor_scores, summary, warnings.",
+    "website must include: name, url.",
+    `factor_scores must include exactly these keys: ${RANKABILITY_FACTORS.map((factor) => factor.id).join(", ")}.`,
+    "Each factor must include: score (0-100), confidence (high|medium|low), could_verify_signal (boolean), evidence (string), sources (array of URLs).",
+    "warnings must be an array of short strings."
+  ].join("\n");
 }
 
 function summarizePage(page: WebsiteScanPage, excerptLimit: number) {
@@ -421,4 +526,16 @@ function safePath(value: string) {
   } catch {
     return value.toLowerCase();
   }
+}
+
+function normalizeDomain(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return value.trim().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].toLowerCase();
+  }
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }

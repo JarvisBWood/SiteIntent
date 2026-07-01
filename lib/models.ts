@@ -9,6 +9,25 @@ export type CompetitorAnalysis = {
   differentiators: string[];
   intentScore: number;
   intentAlignment: number;
+  competitorConfidence?: number;
+  competitorReasoning?: string;
+  aiSearchScore?: number | null;
+  rankabilityScore?: number | null;
+  discoverabilityScore?: number | null;
+  sourceDomains?: string[];
+  sourceTypes?: string[];
+  sourceEvidence?: Array<{
+    sourceName: string;
+    sourceDomain: string;
+    sourceType: string;
+    sourceUrl: string;
+    influence: "high" | "medium" | "low";
+    evidenceFound: string;
+  }>;
+  discoveryReasons?: string[];
+  supportingPromptVariations?: number[];
+  rankabilityFactorScores?: Record<string, number>;
+  discoverabilityFactorScores?: Record<string, number>;
 };
 
 export type CategoryModel = {
@@ -27,9 +46,13 @@ export type TargetIntentModel = {
   removableConcepts: string[];
   addableConcepts: string[];
   notes: string;
+  isLocationSpecific?: boolean;
+  locationTargets?: import("@/lib/site-state").BusinessLocationTarget[];
   updatedAt: string;
   isUserOwned?: boolean;
 };
+
+export const OBSERVED_INTENT_LOCKED_NOTES = "Locked from the initial observed intent review.";
 
 const CATEGORY_STOPWORDS = new Set([
   "about",
@@ -197,6 +220,8 @@ export function createDefaultTargetIntentModel(category: CategoryModel): TargetI
       ...category.expectedOutcomes.slice(0, 2)
     ].filter(Boolean),
     notes: "Use this target to keep the site focused on the category, customer, and outcome the product should own.",
+    isLocationSpecific: false,
+    locationTargets: [],
     updatedAt: new Date().toISOString(),
     isUserOwned: false
   };
@@ -252,9 +277,41 @@ export function createTargetIntentModelFromObservedIntent(observedIntent: Observ
     ]),
     removableConcepts: [],
     addableConcepts: [],
-    notes: "Locked from the initial observed intent review.",
+    notes: buildTargetIntentNotesFromObservedIntent(observedIntent),
+    isLocationSpecific: false,
+    locationTargets: [],
     updatedAt: new Date().toISOString(),
     isUserOwned: true
+  };
+}
+
+export function normalizeTargetIntentModel(
+  model: TargetIntentModel,
+  observedIntent: ObservedIntent | null | undefined
+): TargetIntentModel {
+  const normalizedLocations = Array.isArray(model.locationTargets) ? model.locationTargets.filter(Boolean) : [];
+  const hasCategory = Boolean(model.category.trim());
+  const hasLockedConcepts = model.lockedConcepts.some((concept) => concept.trim());
+  const trimmedNotes = model.notes.trim();
+  const hasMeaningfulNotes = Boolean(trimmedNotes && trimmedNotes !== OBSERVED_INTENT_LOCKED_NOTES);
+
+  if (!observedIntent) {
+    return {
+      ...model,
+      isLocationSpecific: Boolean(model.isLocationSpecific),
+      locationTargets: normalizedLocations
+    };
+  }
+
+  return {
+    ...model,
+    category: hasCategory ? model.category : observedIntent.topic,
+    lockedConcepts: hasLockedConcepts
+      ? model.lockedConcepts
+      : uniqueStrings([observedIntent.topic, ...observedIntent.audience, ...observedIntent.problem, ...observedIntent.outcome]),
+    notes: hasMeaningfulNotes ? model.notes : buildTargetIntentNotesFromObservedIntent(observedIntent),
+    isLocationSpecific: Boolean(model.isLocationSpecific),
+    locationTargets: normalizedLocations
   };
 }
 
@@ -320,6 +377,35 @@ function inferProblem(signalText: string) {
     return "The website is not clearly communicating what it does and who it is for.";
   }
   return "The market cannot quickly understand the site’s promise and value.";
+}
+
+function buildTargetIntentNotesFromObservedIntent(observedIntent: ObservedIntent) {
+  const audience = formatList(observedIntent.audience);
+  const problem = formatList(observedIntent.problem);
+  const outcomes = formatList(observedIntent.outcome);
+  const sentences = [
+    audience
+      ? `This website appears to be a ${observedIntent.topic.toLowerCase()} for ${audience}.`
+      : `This website appears to be focused on ${observedIntent.topic.toLowerCase()}.`,
+    problem ? `It is trying to solve ${problem}.` : "",
+    outcomes ? `The main outcomes it promises are ${outcomes}.` : ""
+  ].filter(Boolean);
+
+  return sentences.join(" ");
+}
+
+function formatList(values: string[]) {
+  const unique = uniqueStrings(values.map((value) => value.trim()).filter(Boolean)).slice(0, 3);
+  if (unique.length === 0) {
+    return "";
+  }
+  if (unique.length === 1) {
+    return unique[0];
+  }
+  if (unique.length === 2) {
+    return `${unique[0]} and ${unique[1]}`;
+  }
+  return `${unique.slice(0, -1).join(", ")}, and ${unique[unique.length - 1]}`;
 }
 
 function inferAudienceFromText(text: string, index: number) {

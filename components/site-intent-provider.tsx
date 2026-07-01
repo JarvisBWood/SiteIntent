@@ -12,21 +12,23 @@ import {
   buildObservedIntent,
   createDefaultTargetIntentModel,
   createTargetIntentModelFromObservedIntent,
+  normalizeTargetIntentModel,
   type CategoryModel,
   type CompetitorAnalysis,
   summarizeConceptDelta,
   type TargetIntentModel
 } from "@/lib/models";
-import { fetchWebsiteFavicon } from "@/lib/favicon";
 import { normalizeRankabilityScorecard } from "@/lib/scoring/score-site";
 import type { RankabilityScorecard } from "@/lib/scoring/types";
 import { getIncludedPageRecords } from "@/lib/scan/storage";
 import type { ScanDiscoverySource, ScanProgressEvent } from "@/lib/scan/types";
 import {
   createEmptyState,
+  createDefaultPreferences,
   normalizeProjectScanDepth,
   shortenDisplayUrl,
   type ObservedIntent,
+  type AppPreferences,
   type ProjectOnboardingState,
   type ProjectScanRun,
   type SiteIntentProject,
@@ -46,6 +48,13 @@ type ToastMessage = {
   tone?: "default" | "success" | "error";
 };
 
+type PinnedScanToast = {
+  title: string;
+  description: string;
+  detail?: string | null;
+  progress: number;
+} | null;
+
 type SiteIntentContextValue = SiteIntentSessionState & {
   hydrated: boolean;
   signIn: (displayName?: string) => void;
@@ -60,11 +69,14 @@ type SiteIntentContextValue = SiteIntentSessionState & {
     options?: {
       navigate?: boolean;
       onProgress?: (event: ScanProgressEvent) => void;
-      scanMode?: "initial" | "full";
+      scanMode?: "initial" | "full" | "competitors";
       background?: boolean;
     }
   ) => Promise<ProjectScanRun | null>;
   updateTargetIntentModel: (next: TargetIntentModel) => void;
+  updateProjectTargetIntentModel: (projectId: string, next: TargetIntentModel) => void;
+  getProjectCategoryModel: (projectId: string) => CategoryModel | null;
+  getProjectTargetIntentModel: (projectId: string) => TargetIntentModel | null;
   categoryModel: CategoryModel | null;
   competitorAnalyses: CompetitorAnalysis[];
   targetIntentModel: TargetIntentModel | null;
@@ -73,10 +85,96 @@ type SiteIntentContextValue = SiteIntentSessionState & {
   conceptDelta: ReturnType<typeof summarizeConceptDelta> | null;
   isScanning: boolean;
   lastScanError: string | null;
-  scanProgressByProject: ScanProgressByProject;
+      scanProgressByProject: ScanProgressByProject;
+  preferences: AppPreferences;
+  updatePreferences: (next: Partial<AppPreferences>) => void;
 };
 
 const SiteIntentContext = createContext<SiteIntentContextValue | null>(null);
+
+function normalizeLoadedState(parsed?: Partial<SiteIntentSessionState> | null): SiteIntentSessionState {
+  if (!parsed) {
+    return createEmptyState();
+  }
+
+  const projects = Array.isArray(parsed.projects)
+    ? parsed.projects.map((project) => ({
+        ...project,
+        websiteDisplayUrl:
+          typeof project.websiteDisplayUrl === "string" && project.websiteDisplayUrl
+            ? project.websiteDisplayUrl
+            : shortenDisplayUrl(project.websiteUrl ?? ""),
+        websiteFaviconUrl:
+          typeof project.websiteFaviconUrl === "string" || project.websiteFaviconUrl === null ? project.websiteFaviconUrl : null,
+        competitorDisplayUrls: Array.isArray(project.competitorDisplayUrls)
+          ? project.competitorDisplayUrls.map((value, index) =>
+              typeof value === "string" && value ? value : shortenDisplayUrl(project.competitorUrls?.[index] ?? "")
+            )
+          : Array.isArray(project.competitorUrls)
+            ? project.competitorUrls.map((value) => shortenDisplayUrl(value))
+            : [],
+        competitorFaviconUrls: Array.isArray(project.competitorFaviconUrls)
+          ? project.competitorFaviconUrls.map((value) => (typeof value === "string" ? value : null))
+          : Array.isArray(project.competitorUrls)
+            ? project.competitorUrls.map(() => null)
+            : [],
+        competitorAnalysesByUrl:
+          project.competitorAnalysesByUrl && typeof project.competitorAnalysesByUrl === "object"
+            ? (project.competitorAnalysesByUrl as SiteIntentProject["competitorAnalysesByUrl"])
+            : {},
+        competitorRefreshStatusByUrl:
+          project.competitorRefreshStatusByUrl && typeof project.competitorRefreshStatusByUrl === "object"
+            ? (project.competitorRefreshStatusByUrl as SiteIntentProject["competitorRefreshStatusByUrl"])
+            : {},
+        scanDepth: normalizeProjectScanDepth(project.scanDepth)
+      }))
+    : [];
+  const scanRuns = Array.isArray(parsed.scanRuns) ? hydrateScanRuns(parsed.scanRuns) : [];
+  const projectOnboarding =
+    parsed.projectOnboarding && typeof parsed.projectOnboarding === "object"
+      ? (parsed.projectOnboarding as SiteIntentSessionState["projectOnboarding"])
+      : {};
+  const observedIntentByProject = new Map<string, ObservedIntent>();
+  for (const scan of scanRuns) {
+    if (scan.projectId && scan.observedIntent) {
+      observedIntentByProject.set(scan.projectId, scan.observedIntent);
+    }
+  }
+  for (const [projectId, onboarding] of Object.entries(projectOnboarding)) {
+    if (onboarding?.observedIntent) {
+      observedIntentByProject.set(projectId, onboarding.observedIntent);
+    }
+  }
+  const targetIntentModels =
+    parsed.targetIntentModels && typeof parsed.targetIntentModels === "object"
+      ? Object.fromEntries(
+          Object.entries(parsed.targetIntentModels as SiteIntentSessionState["targetIntentModels"]).map(([projectId, model]) => [
+            projectId,
+            normalizeTargetIntentModel(model, observedIntentByProject.get(projectId))
+          ])
+        )
+      : {};
+
+  return {
+    session: parsed.session ?? null,
+    projects,
+    activeProjectId: typeof parsed.activeProjectId === "string" ? parsed.activeProjectId : null,
+    scanRuns,
+    scanProgressByProject:
+      parsed.scanProgressByProject && typeof parsed.scanProgressByProject === "object"
+        ? (parsed.scanProgressByProject as SiteIntentSessionState["scanProgressByProject"])
+        : {},
+    targetIntentModels,
+    projectOnboarding,
+    preferences:
+      parsed.preferences && typeof parsed.preferences === "object"
+        ? {
+            ...createDefaultPreferences(),
+            ...(parsed.preferences as Partial<AppPreferences>)
+          }
+        : createDefaultPreferences()
+  };
+}
 
 export function SiteIntentProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
@@ -88,6 +186,16 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const attemptedFaviconHydration = useRef(new Set<string>());
   const emittedToastKeys = useRef(new Set<string>());
+  const stateRef = useRef<SiteIntentSessionState>(state);
+  const scanProgressRef = useRef<ScanProgressByProject>(scanProgressByProject);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    scanProgressRef.current = scanProgressByProject;
+  }, [scanProgressByProject]);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,69 +213,23 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         }
 
         const payload = (await response.json()) as { state?: Partial<SiteIntentSessionState> };
-        const parsed = payload.state;
-        if (!parsed || cancelled) {
+        if (!payload.state || cancelled) {
           if (!cancelled) {
             setState(createEmptyState());
+            setScanProgressByProject({});
           }
           return;
         }
+        const normalized = normalizeLoadedState(payload.state);
 
-          const projects = Array.isArray(parsed.projects)
-            ? parsed.projects.map((project) => ({
-                ...project,
-                websiteDisplayUrl:
-                  typeof project.websiteDisplayUrl === "string" && project.websiteDisplayUrl
-                    ? project.websiteDisplayUrl
-                    : shortenDisplayUrl(project.websiteUrl ?? ""),
-                websiteFaviconUrl:
-                  typeof project.websiteFaviconUrl === "string" || project.websiteFaviconUrl === null
-                    ? project.websiteFaviconUrl
-                    : null,
-                competitorDisplayUrls: Array.isArray(project.competitorDisplayUrls)
-                  ? project.competitorDisplayUrls.map((value, index) =>
-                      typeof value === "string" && value
-                        ? value
-                        : shortenDisplayUrl(project.competitorUrls?.[index] ?? "")
-                    )
-                  : Array.isArray(project.competitorUrls)
-                    ? project.competitorUrls.map((value) => shortenDisplayUrl(value))
-                    : [],
-                competitorFaviconUrls: Array.isArray(project.competitorFaviconUrls)
-                  ? project.competitorFaviconUrls.map((value) => (typeof value === "string" ? value : null))
-                  : Array.isArray(project.competitorUrls)
-                    ? project.competitorUrls.map(() => null)
-                    : [],
-                competitorAnalysesByUrl:
-                  project.competitorAnalysesByUrl && typeof project.competitorAnalysesByUrl === "object"
-                    ? (project.competitorAnalysesByUrl as SiteIntentProject["competitorAnalysesByUrl"])
-                    : {},
-                competitorRefreshStatusByUrl:
-                  project.competitorRefreshStatusByUrl && typeof project.competitorRefreshStatusByUrl === "object"
-                    ? (project.competitorRefreshStatusByUrl as SiteIntentProject["competitorRefreshStatusByUrl"])
-                    : {},
-                scanDepth: normalizeProjectScanDepth(project.scanDepth)
-              }))
-            : [];
-          if (!cancelled) {
-            setState({
-            session: parsed.session ?? null,
-            projects,
-            activeProjectId: typeof parsed.activeProjectId === "string" ? parsed.activeProjectId : null,
-            scanRuns: Array.isArray(parsed.scanRuns) ? hydrateScanRuns(parsed.scanRuns) : [],
-              targetIntentModels:
-                parsed.targetIntentModels && typeof parsed.targetIntentModels === "object"
-                  ? (parsed.targetIntentModels as SiteIntentSessionState["targetIntentModels"])
-                  : {},
-              projectOnboarding:
-                parsed.projectOnboarding && typeof parsed.projectOnboarding === "object"
-                  ? (parsed.projectOnboarding as SiteIntentSessionState["projectOnboarding"])
-                  : {}
-            });
-          }
+        if (!cancelled) {
+          setState(normalized);
+          setScanProgressByProject(normalized.scanProgressByProject);
+        }
       } catch {
         if (!cancelled) {
           setState(createEmptyState());
+          setScanProgressByProject({});
         }
       } finally {
         if (!cancelled) {
@@ -195,7 +257,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           "Content-Type": "application/json",
           Accept: "application/json"
         },
-        body: JSON.stringify({ state }),
+        body: JSON.stringify({ state: { ...state, scanProgressByProject } }),
         signal: controller.signal
       })
         .then((response) => {
@@ -215,7 +277,64 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [hydrated, state]);
+  }, [hydrated, scanProgressByProject, state]);
+
+  async function saveStateImmediately(nextState: SiteIntentSessionState) {
+    try {
+      const response = await fetch("/api/state", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          state: {
+            ...nextState,
+            scanProgressByProject: scanProgressRef.current
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to save the latest state to SQLite.");
+      }
+    } catch {
+      setLastScanError("Unable to save the latest state to SQLite.");
+    }
+  }
+
+  useEffect(() => {
+    if (!hydrated || isScanning || !Object.values(scanProgressByProject).some((progress) => progress && progress.stage !== "completed")) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void fetch("/api/state", {
+        headers: { Accept: "application/json" }
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Unable to refresh active scan state.");
+          }
+
+          const payload = (await response.json()) as { state?: Partial<SiteIntentSessionState> };
+          const normalized = normalizeLoadedState(payload.state);
+          setState((current) => ({
+            ...current,
+            projects: normalized.projects,
+            activeProjectId: normalized.activeProjectId,
+            scanRuns: normalized.scanRuns,
+            targetIntentModels: normalized.targetIntentModels,
+            projectOnboarding: normalized.projectOnboarding,
+            preferences: normalized.preferences
+          }));
+          setScanProgressByProject(normalized.scanProgressByProject);
+        })
+        .catch(() => {});
+    }, 2000);
+
+    return () => window.clearInterval(interval);
+  }, [hydrated, isScanning, scanProgressByProject]);
 
   useEffect(() => {
     if (!hydrated || !state.projects.length) {
@@ -290,8 +409,12 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       return null;
     }
 
-    return state.targetIntentModels[activeProject?.id ?? ""] ?? createDefaultTargetIntentModel(categoryModel);
-  }, [activeProject?.id, categoryModel, state.targetIntentModels]);
+    const projectId = activeProject?.id ?? "";
+    const observedIntent = activeProjectOnboarding?.observedIntent ?? latestScan?.observedIntent ?? null;
+    const existingModel = state.targetIntentModels[projectId];
+
+    return existingModel ? normalizeTargetIntentModel(existingModel, observedIntent) : createDefaultTargetIntentModel(categoryModel);
+  }, [activeProject?.id, activeProjectOnboarding?.observedIntent, categoryModel, latestScan?.observedIntent, state.targetIntentModels]);
 
   const rankability = useMemo<RankabilityScorecard | null>(() => latestScan?.rankability ?? null, [latestScan]);
   const discoverability = useMemo<DiscoverabilityScorecard | null>(() => latestScan?.discoverability ?? null, [latestScan]);
@@ -303,6 +426,43 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
 
     return summarizeConceptDelta(categoryModel, targetIntentModel);
   }, [categoryModel, targetIntentModel]);
+
+  const pinnedScanToast = useMemo<PinnedScanToast>(() => {
+    const activeScanEntry = Object.entries(scanProgressByProject).find(([, progress]) => progress && progress.stage !== "completed");
+    const progress = activeScanEntry?.[1] ?? null;
+
+    if (!progress) {
+      return null;
+    }
+
+    const parts = [
+      `Stage: ${progress.title}`,
+      `Mode: ${progress.scanMode === "competitors" ? "Competitor scan" : progress.scanMode === "initial" ? "Initial website scan" : "Full scan"}`,
+      `Analysis model: ${state.preferences.pageAnalysisModel}`,
+      `Scoring model: ${state.preferences.scoringModel}`
+    ];
+
+    if (progress.currentUrl) {
+      parts.push(`Current URL: ${progress.currentUrl}`);
+    } else if (progress.currentLabel) {
+      parts.push(`Current item: ${progress.currentLabel}`);
+    }
+
+    if (progress.analyzedPages !== undefined && progress.totalPages !== undefined) {
+      parts.push(`Pages: ${progress.analyzedPages}/${progress.totalPages}`);
+    }
+
+    if (progress.completedCompetitors !== undefined && progress.totalCompetitors !== undefined) {
+      parts.push(`Competitors: ${progress.completedCompetitors}/${progress.totalCompetitors}`);
+    }
+
+    return {
+      title: progress.scanMode === "competitors" ? "Competitor Scan Running" : "Scan Running",
+      description: progress.description,
+      detail: parts.join(" | "),
+      progress: progress.progress
+    };
+  }, [scanProgressByProject, state.preferences.pageAnalysisModel, state.preferences.scoringModel]);
 
   function showToast(input: Omit<ToastMessage, "id">) {
     const id = crypto.randomUUID();
@@ -403,6 +563,43 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
     }));
   }
 
+  function getProjectCategoryModelForId(projectId: string) {
+    const project = state.projects.find((item) => item.id === projectId) ?? null;
+    if (!project) {
+      return null;
+    }
+
+    const projectLatestScan = state.scanRuns.find((scan) => scan.projectId === projectId) ?? null;
+    const projectCompetitorAnalyses = project.competitorUrls.map((url, index) => {
+      return (
+        project.competitorAnalysesByUrl[url] ??
+        projectLatestScan?.competitorAnalyses?.[index] ??
+        buildCompetitorAnalyses([url])[0]
+      );
+    });
+
+    return buildCategoryModel({
+      project,
+      latestScan: projectLatestScan,
+      competitorAnalyses: projectCompetitorAnalyses
+    });
+  }
+
+  function getProjectTargetIntentModelForId(projectId: string) {
+    const projectCategoryModel = getProjectCategoryModelForId(projectId);
+    if (!projectCategoryModel) {
+      return null;
+    }
+
+    const observedIntent =
+      state.projectOnboarding[projectId]?.observedIntent ??
+      state.scanRuns.find((scan) => scan.projectId === projectId)?.observedIntent ??
+      null;
+    const existingModel = state.targetIntentModels[projectId];
+
+    return existingModel ? normalizeTargetIntentModel(existingModel, observedIntent) : createDefaultTargetIntentModel(projectCategoryModel);
+  }
+
   const value = useMemo<SiteIntentContextValue>(() => {
     return {
       ...state,
@@ -416,6 +613,20 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       discoverability,
       conceptDelta,
       scanProgressByProject,
+      preferences: state.preferences,
+      updatePreferences(next) {
+        setState((current) => {
+          const nextState = {
+            ...current,
+            preferences: {
+              ...current.preferences,
+              ...next
+            }
+          };
+          void saveStateImmediately(nextState);
+          return nextState;
+        });
+      },
       signIn(displayName = "Local user") {
         const session: SiteIntentSession = {
           displayName,
@@ -454,6 +665,15 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           ...current,
           projects: [project, ...current.projects],
           activeProjectId: project.id,
+          targetIntentModels: draft.targetIntentModel
+            ? {
+                ...current.targetIntentModels,
+                [project.id]: {
+                  ...draft.targetIntentModel,
+                  updatedAt: draft.targetIntentModel.updatedAt || now
+                }
+              }
+            : current.targetIntentModels,
           projectOnboarding: {
             ...current.projectOnboarding,
             [project.id]: {
@@ -567,7 +787,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           );
           const homepage = completedScan.pages.find((page) => page.pageType === "homepage") ?? completedScan.pages[0] ?? null;
           const refreshedAnalysis = homepage ? buildCompetitorAnalysisFromPage(homepage) : buildCompetitorAnalyses([competitorUrl])[0];
-          const refreshedFaviconUrl = await fetchWebsiteFavicon(competitorUrl);
+          const refreshedFaviconUrl = await requestFaviconUrl(competitorUrl);
 
           setState((current) => ({
             ...current,
@@ -650,8 +870,29 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           }
         }));
       },
+      updateProjectTargetIntentModel(projectId, next) {
+        setState((current) => ({
+          ...current,
+          targetIntentModels: {
+            ...current.targetIntentModels,
+            [projectId]: {
+              ...next,
+              updatedAt: new Date().toISOString(),
+              isUserOwned: true
+            }
+          }
+        }));
+      },
+      getProjectCategoryModel(projectId) {
+        return getProjectCategoryModelForId(projectId);
+      },
+      getProjectTargetIntentModel(projectId) {
+        return getProjectTargetIntentModelForId(projectId);
+      },
       async startScan(projectOrId, options) {
-        const scanMode = options?.scanMode ?? "full";
+        const scanMode: "initial" | "full" | "competitors" = options?.scanMode ?? "full";
+        const isInitialScan = scanMode === "initial";
+        const isCompetitorOnlyScan = scanMode === "competitors";
         const nextProject =
           typeof projectOrId === "string"
             ? state.projects.find((item) => item.id === projectOrId) ?? null
@@ -670,7 +911,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           backgroundScanStartedAt: null,
           reviewModalOpen: false
         };
-        const scanLabel = scanMode === "initial" ? "website scoring" : options?.background ? "competitor scoring" : "full scan";
+        const scanLabel = isInitialScan ? "website scoring" : isCompetitorOnlyScan ? "competitor scan" : "full scan";
 
         setIsScanning(true);
         setLastScanError(null);
@@ -681,13 +922,18 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           ...current,
           [nextProject.id]: {
             stage: "queued",
-            title: scanMode === "initial" ? "Preparing website scoring" : "Preparing competitor scoring",
+            title:
+              isInitialScan
+                ? "Preparing website scoring"
+                : isCompetitorOnlyScan
+                  ? "Preparing competitor scan"
+                  : "Preparing full scan",
             description:
-              scanMode === "initial"
+              isInitialScan
                 ? "Saving the website and starting the first dashboard scoring pass."
-                : options?.background
-                  ? "Starting competitor scoring in the background."
-                  : "Starting a new scan for the current website.",
+                : isCompetitorOnlyScan
+                  ? "Starting a competitors-only scan from the latest saved website data."
+                  : "Starting a fresh full scan for the current website.",
             progress: 5,
             scanMode
           }
@@ -695,9 +941,11 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         showToast({
           title: `Started ${scanLabel}`,
           description:
-            scanMode === "initial"
+            isInitialScan
               ? "The dashboard will update as your website is crawled and scored."
-              : "The competitor page will update as comparison data finishes processing."
+              : isCompetitorOnlyScan
+                ? "The competitors page will update as the comparison set is rediscovered and rescored."
+                : "The dashboard and competitors page will update as the full scan finishes."
         });
         setState((current) => ({
           ...current,
@@ -717,7 +965,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
                 options?.background && scanMode === "full"
                   ? (current.projectOnboarding[nextProject.id]?.backgroundScanStartedAt ?? new Date().toISOString())
                   : current.projectOnboarding[nextProject.id]?.backgroundScanStartedAt ?? null,
-              status: scanMode === "initial" ? "website_scanning" : "competitor_scoring",
+              status: isInitialScan ? "website_scanning" : "competitor_scoring",
               reviewModalOpen: false
             }
           }
@@ -732,6 +980,8 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
               competitorUrls: nextProject.competitorUrls,
               scanMode,
               scanDepth: nextProject.scanDepth,
+              pageAnalysisModel: state.preferences.pageAnalysisModel,
+              scoringModel: state.preferences.scoringModel,
               targetIntentModel: state.targetIntentModels[nextProject.id] ?? undefined
             },
             (progress) => {
@@ -778,12 +1028,14 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
 
             nextProjectOnboarding[nextProject.id] = {
               ...onboardingBeforeRun,
-              status: scanMode === "initial" ? "website_scored" : "competitor_scored",
+              status: isInitialScan ? "website_scored" : "competitor_scored",
               observedIntent,
               firstScanAt: onboardingBeforeRun.firstScanAt ?? completedScan.completedAt ?? new Date().toISOString(),
               reviewedAt: onboardingBeforeRun.reviewedAt,
               backgroundScanStartedAt:
-                scanMode === "full" ? onboardingBeforeRun.backgroundScanStartedAt ?? new Date().toISOString() : null,
+                !isInitialScan && !isCompetitorOnlyScan
+                  ? onboardingBeforeRun.backgroundScanStartedAt ?? new Date().toISOString()
+                  : null,
               reviewModalOpen: false
             };
 
@@ -803,11 +1055,13 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
             ...current,
             [nextProject.id]: {
               stage: "completed",
-              title: scanMode === "initial" ? "Website scoring complete" : "Competitor scoring complete",
+              title: isInitialScan ? "Website scoring complete" : "Competitor scoring complete",
               description:
-                scanMode === "initial"
+                isInitialScan
                   ? "The dashboard now has your website score breakdown."
-                  : "The competitor page now has the latest comparison results.",
+                  : isCompetitorOnlyScan
+                    ? "The competitor page now has the latest comparison results."
+                    : "The dashboard and competitor results are fully refreshed.",
               progress: 100,
               scanMode,
               analyzedPages: completedScan.pages.length,
@@ -850,7 +1104,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
                       backgroundScanStartedAt: null,
                       reviewModalOpen: false
                     }),
-                    status: scanMode === "initial" ? "setup_completed" : "website_scored"
+                    status: isInitialScan ? "setup_completed" : "website_scored"
                   }
                 }
               : current.projectOnboarding
@@ -879,51 +1133,6 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
   ]);
 
   useEffect(() => {
-    if (!hydrated || isScanning || !activeProject || !activeProjectOnboarding) {
-      return;
-    }
-
-    const latestProjectScan = state.scanRuns.find((scan) => scan.projectId === activeProject.id) ?? null;
-    const shouldStartBackgroundScan =
-      activeProjectOnboarding.status === "website_scored" &&
-      activeProjectOnboarding.backgroundScanStartedAt == null &&
-      latestProjectScan?.scanMode === "initial";
-
-    if (!shouldStartBackgroundScan) {
-      return;
-    }
-
-    setState((current) => ({
-      ...current,
-      projectOnboarding: {
-        ...current.projectOnboarding,
-        [activeProject.id]: {
-          ...(current.projectOnboarding[activeProject.id] ?? {
-            status: "website_scored",
-            observedIntent: null,
-            firstScanAt: null,
-            reviewedAt: null,
-            backgroundScanStartedAt: null,
-            reviewModalOpen: false
-          }),
-          backgroundScanStartedAt: new Date().toISOString()
-        }
-      }
-    }));
-
-    showToast({
-      title: "Competitor scoring in progress",
-      description: "Website scoring has finished and we are now comparing the top competitors in the background."
-    });
-
-    void value.startScan(activeProject, {
-      navigate: false,
-      scanMode: "full",
-      background: true
-    });
-  }, [activeProject, activeProjectOnboarding, hydrated, isScanning, state.scanRuns, value]);
-
-  useEffect(() => {
     if (!hydrated || !state.projects.length) {
       return;
     }
@@ -944,8 +1153,8 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
 
   async function hydrateProjectFavicons(project: SiteIntentProject) {
     const [websiteFaviconUrl, ...competitorFaviconUrls] = await Promise.all([
-      fetchWebsiteFavicon(project.websiteUrl),
-      ...project.competitorUrls.map((url) => fetchWebsiteFavicon(url))
+      requestFaviconUrl(project.websiteUrl),
+      ...project.competitorUrls.map((url) => requestFaviconUrl(url))
     ]);
 
     setState((current) => ({
@@ -968,8 +1177,10 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       projectName: string;
       websiteUrl: string;
       competitorUrls: string[];
-      scanMode: "initial" | "full";
+      scanMode: "initial" | "full" | "competitors";
       scanDepth: number;
+      pageAnalysisModel?: string;
+      scoringModel?: string;
       targetIntentModel?: TargetIntentModel;
     },
     onProgress?: (event: ScanProgressEvent) => void
@@ -1055,10 +1266,29 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
     return completedScan;
   }
 
+  async function requestFaviconUrl(websiteUrl: string) {
+    try {
+      const response = await fetch(`/api/favicon?url=${encodeURIComponent(websiteUrl)}`, {
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to resolve favicon.");
+      }
+
+      const payload = (await response.json()) as { faviconUrl?: string | null };
+      return payload.faviconUrl ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   return (
     <SiteIntentContext.Provider value={value}>
       {children}
-      <ToastViewport toasts={toasts} onDismiss={dismissToast} />
+      <ToastViewport toasts={toasts} pinnedToast={pinnedScanToast} onDismiss={dismissToast} />
     </SiteIntentContext.Provider>
   );
 }
@@ -1131,13 +1361,35 @@ function hydrateScanRuns(scanRuns: unknown[]): ProjectScanRun[] {
         totalCharacters: typeof scan.totalCharacters === "number" ? scan.totalCharacters : websiteScanPages.reduce((sum, page) => sum + page.mainText.length, 0),
         scoringStatus: scan.scoringStatus === "completed" || scan.scoringStatus === "failed" ? scan.scoringStatus : "completed",
         scoringError: typeof scan.scoringError === "string" ? scan.scoringError : null,
-        rankability:
-          normalizeRankabilityScorecard((scan as { rankability?: unknown }).rankability) ?? undefined,
+        rankability: hydrateRankabilityScorecard((scan as { rankability?: unknown }).rankability),
         discoverability:
           normalizeDiscoverabilityScorecard((scan as { discoverability?: unknown }).discoverability) ?? undefined,
         errors: Array.isArray(scan.errors) ? scan.errors : []
       } as ProjectScanRun;
     });
+}
+
+function hydrateRankabilityScorecard(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const normalized = value as {
+    weightedTotalScore?: unknown;
+    factorScores?: unknown;
+    summary?: unknown;
+  };
+
+  if (
+    typeof normalized.weightedTotalScore === "number" &&
+    normalized.factorScores &&
+    typeof normalized.factorScores === "object" &&
+    typeof normalized.summary === "string"
+  ) {
+    return normalized as RankabilityScorecard;
+  }
+
+  return normalizeRankabilityScorecard(value) ?? undefined;
 }
 
 function countWords(value: string) {

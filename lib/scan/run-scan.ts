@@ -1,13 +1,21 @@
+import OpenAI from "openai";
+
+import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
+import { isOpenAIModelName } from "@/lib/llm/provider";
+import { ensureSqliteState } from "@/lib/sqlite-state";
 import {
   buildCategoryModel,
   buildCompetitorAnalyses,
   buildCompetitorAnalysisFromPage,
-  buildObservedIntent
+  buildObservedIntent,
+  type CompetitorAnalysis
 } from "@/lib/models";
 import { scoreDiscoverability } from "@/lib/discoverability/score-site";
+import type { AggregatedCandidate } from "@/lib/discoverability/types";
 import { scoreWebsite } from "@/lib/scoring/score-site";
 import { analyzePage } from "@/lib/scan/analyze";
 import { crawlSite } from "@/lib/scan/crawl";
+import { logScanEvent, toErrorDetails } from "@/lib/scan/logging";
 import { completeWebsiteScan, createWebsiteScan, saveWebsiteScanPages } from "@/lib/scan/storage";
 import { shortenDisplayUrl } from "@/lib/site-state";
 import type {
@@ -21,11 +29,35 @@ import type {
 
 export async function runProjectScan(
   request: ProjectScanRequest,
-  options?: { onProgress?: (event: ScanProgressEvent) => void }
+  options?: {
+    onProgress?: (event: ScanProgressEvent) => void;
+    onScanSnapshot?: (scan: ProjectScanRun) => void;
+  }
 ): Promise<ProjectScanRun> {
+  if (request.scanMode === "competitors") {
+    return runCompetitorOnlyScan(request, options);
+  }
+
+  logScanEvent({
+    level: "info",
+    event: "scan_started",
+    projectId: request.projectId,
+    projectName: request.projectName,
+    websiteUrl: request.websiteUrl,
+    scanMode: request.scanMode ?? "full",
+    message: "Website scan started.",
+    details: {
+      competitorCount: request.competitorUrls.length,
+      scanDepth: request.scanDepth,
+      pageAnalysisModel: request.pageAnalysisModel ?? null,
+      scoringModel: request.scoringModel ?? null
+    }
+  });
+
   const startedAt = new Date().toISOString();
   const scanMode: ScanMode = request.scanMode ?? "full";
   const isWebsiteFirstScan = scanMode === "initial";
+  const isFullWebsiteScan = scanMode === "full";
   const emitProgress = (event: ScanProgressEvent) => options?.onProgress?.(event);
 
   let scan = createWebsiteScan({
@@ -36,11 +68,13 @@ export async function runProjectScan(
 
   emitProgress({
     stage: "queued",
-    title: isWebsiteFirstScan ? "Preparing website scoring" : "Preparing competitor scoring",
+    title: isWebsiteFirstScan || isFullWebsiteScan ? "Preparing website scan" : "Preparing competitor scoring",
     description:
       isWebsiteFirstScan
         ? "Starting the website analysis so the dashboard can score your site first."
-        : "Starting the background competitor analysis pass.",
+        : isFullWebsiteScan
+          ? "Starting the full website refresh before discoverability and competitor comparison."
+          : "Starting the background competitor analysis pass.",
     progress: 8,
     scanMode
   });
@@ -53,16 +87,36 @@ export async function runProjectScan(
   });
 
   scan = saveWebsiteScanPages(scan, crawl.websiteScanPages);
+  if (crawl.errors.length) {
+    logScanEvent({
+      level: "warn",
+      event: "crawl_completed_with_errors",
+      projectId: request.projectId,
+      projectName: request.projectName,
+      websiteUrl: request.websiteUrl,
+      scanId: scan.id,
+      scanMode,
+      message: "Crawl completed with errors.",
+      details: {
+        crawlErrors: crawl.errors,
+        discoveredPages: crawl.websiteScanPages.length,
+        selectedPages: crawl.pagesToAnalyze.length
+      }
+    });
+  }
 
   emitProgress({
     stage: "discovering",
-    title: isWebsiteFirstScan ? "Website pages discovered" : "Website refresh complete",
+    title: isWebsiteFirstScan || isFullWebsiteScan ? "Website pages discovered" : "Website refresh complete",
     description:
       isWebsiteFirstScan
         ? `Found ${crawl.websiteScanPages.length} candidate pages and selected ${crawl.pagesToAnalyze.length} for website scoring.`
-        : `Refreshed ${crawl.pagesToAnalyze.length} pages before starting competitor analysis.`,
+        : isFullWebsiteScan
+          ? `Found ${crawl.websiteScanPages.length} candidate pages and selected ${crawl.pagesToAnalyze.length} for the full scan.`
+          : `Refreshed ${crawl.pagesToAnalyze.length} pages before starting competitor analysis.`,
     progress: 22,
     scanMode,
+    currentLabel: crawl.pagesToAnalyze[0]?.url ?? request.websiteUrl,
     discoveredPages: crawl.websiteScanPages.length,
     totalPages: crawl.pagesToAnalyze.length
   });
@@ -89,7 +143,9 @@ export async function runProjectScan(
     description:
       isWebsiteFirstScan
         ? "Building the website context used for the first dashboard scores."
-        : "Refreshing the website context before comparing against competitors.",
+        : isFullWebsiteScan
+          ? "Building the website context before discoverability and competitor comparison."
+          : "Refreshing the website context before comparing against competitors.",
     progress: 86,
     scanMode,
     analyzedPages: scan.pages.length,
@@ -123,6 +179,34 @@ export async function runProjectScan(
     competitorAnalyses: baselineCompetitorAnalyses
   });
 
+  const websiteOnlyScoringResult = await scoreWebsite({
+    scan: completedRun,
+    categoryModel: initialCategoryModel,
+    competitorAnalyses: [],
+    targetIntentModel: request.targetIntentModel
+  });
+  const websiteRankability = websiteOnlyScoringResult.scorecard;
+
+  completedRun = completeWebsiteScan(completedRun, {
+    completedAt: new Date().toISOString(),
+    rankability: websiteRankability ?? undefined,
+    scoringStatus: websiteRankability ? "completed" : "failed",
+    scoringError: websiteOnlyScoringResult.error ?? null
+  });
+  options?.onScanSnapshot?.(completedRun);
+
+  emitProgress({
+    stage: "computing_rankability",
+    title: "Website quality score ready",
+    description:
+      "The dashboard now has the website's rankability score. Discoverability and competitor benchmarking are continuing in the background.",
+    progress: 89,
+    scanMode,
+    analyzedPages: completedRun.pages.length,
+    totalPages: crawl.pagesToAnalyze.length,
+    discoveredPages: completedRun.websiteScanPages.length
+  });
+
   emitProgress({
     stage: "computing_discoverability",
     title: isWebsiteFirstScan ? "Scoring discoverability" : "Discovering top competitors",
@@ -138,28 +222,110 @@ export async function runProjectScan(
 
   const discoverabilityResult = await scoreDiscoverability({
     scan: completedRun,
-    categoryModel: initialCategoryModel
+    categoryModel: initialCategoryModel,
+    targetIntentModel: request.targetIntentModel,
+    onPartialScorecard(partialScorecard) {
+      const partialRun = completeWebsiteScan(completedRun, {
+        completedAt: new Date().toISOString(),
+        rankability: websiteRankability ?? undefined,
+        discoverability: partialScorecard,
+        scoringStatus: websiteRankability || partialScorecard ? "completed" : "failed",
+        scoringError: websiteOnlyScoringResult.error ?? null
+      });
+      options?.onScanSnapshot?.(partialRun);
+      emitProgress({
+        stage: "computing_discoverability",
+        title: isWebsiteFirstScan ? "Scoring discoverability" : "Discovering top competitors",
+        description: isWebsiteFirstScan
+          ? "Updating discoverability signals from repeated AI discovery prompts."
+          : "Updating discoverability signals while identifying the top competitors to score next.",
+        progress: Math.min(
+          93,
+          90 + Math.round((partialScorecard.discoveryRuns.length / Math.max(partialScorecard.discoveryRuns.length, 1, 7)) * 3)
+        ),
+        scanMode,
+        analyzedPages: completedRun.pages.length,
+        totalPages: crawl.pagesToAnalyze.length,
+        discoveredPages: completedRun.websiteScanPages.length
+      });
+    }
   });
   const discoverability = discoverabilityResult.scorecard;
-  const autoCompetitorUrls = selectAutoCompetitorUrls(discoverability, request.websiteUrl, request.competitorUrls);
+
+  if (websiteOnlyScoringResult.error || discoverabilityResult.error) {
+    logScanEvent({
+      level: "warn",
+      event: "scan_scoring_warning",
+      projectId: request.projectId,
+      projectName: request.projectName,
+      websiteUrl: request.websiteUrl,
+      scanId: completedRun.id,
+      scanMode,
+      message: "One or more website scoring stages returned an error.",
+      details: {
+        rankabilityError: websiteOnlyScoringResult.error,
+        discoverabilityError: discoverabilityResult.error
+      }
+    });
+  }
+
+  completedRun = completeWebsiteScan(completedRun, {
+    completedAt: new Date().toISOString(),
+    rankability: websiteRankability ?? undefined,
+    discoverability: discoverability ?? undefined,
+    scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
+    scoringError: [websiteOnlyScoringResult.error, discoverabilityResult.error].filter(Boolean).join(" | ") || null
+  });
+  options?.onScanSnapshot?.(completedRun);
+
+  emitProgress({
+    stage: "computing_discoverability",
+    title: "Website scores ready",
+    description:
+      "The dashboard now has the website's own scores. Competitor discovery and benchmarking are continuing in the background.",
+    progress: 94,
+    scanMode,
+    analyzedPages: completedRun.pages.length,
+    totalPages: crawl.pagesToAnalyze.length,
+    discoveredPages: completedRun.websiteScanPages.length
+  });
+
   if (!isWebsiteFirstScan) {
+    const discoveredCompetitorCandidates = selectAutoCompetitorCandidates(discoverability, request.websiteUrl);
     emitProgress({
       stage: "computing_discoverability",
-      title: "Top competitors discovered",
-      description: autoCompetitorUrls.length
-        ? `Found ${autoCompetitorUrls.length} competitors to analyze next.`
+      title: "Validating discovered competitors",
+      description: discoveredCompetitorCandidates.length
+        ? `Found ${discoveredCompetitorCandidates.length} possible competitors and now checking which ones are true competitors.`
         : "No competitors were discovered, so the scan will complete without competitor context.",
       progress: 91,
       scanMode,
       analyzedPages: completedRun.pages.length,
       totalPages: crawl.pagesToAnalyze.length,
       discoveredPages: completedRun.websiteScanPages.length,
-      competitorUrls: autoCompetitorUrls,
+      competitorUrls: discoveredCompetitorCandidates.map((candidate) => candidate.website),
       completedCompetitors: 0,
-      totalCompetitors: autoCompetitorUrls.length
+      totalCompetitors: discoveredCompetitorCandidates.length
     });
   }
-  const competitorAnalyses = isWebsiteFirstScan ? [] : await analyzeCompetitorHomepages(autoCompetitorUrls, emitProgress);
+  const competitorAnalyses = isWebsiteFirstScan
+    ? []
+    : await analyzeCompetitorHomepages(
+        selectAutoCompetitorCandidates(discoverability, request.websiteUrl),
+        emitProgress,
+        {
+          targetScan: completedRun,
+          categoryModel: initialCategoryModel,
+          targetIntentModel: request.targetIntentModel,
+          onPartialAnalyses(nextAnalyses) {
+            completedRun = completeWebsiteScan(completedRun, {
+              competitorAnalyses: nextAnalyses
+            });
+            options?.onScanSnapshot?.(completedRun);
+          }
+        }
+      );
+  const autoCompetitorUrls = competitorAnalyses.map((analysis) => analysis.url);
 
   completedRun = completeWebsiteScan(completedRun, {
     competitorAnalyses
@@ -186,32 +352,14 @@ export async function runProjectScan(
   });
 
   emitProgress({
-    stage: "computing_rankability",
-    title: isWebsiteFirstScan ? "Scoring rankability" : "Refreshing rankability",
-    description: isWebsiteFirstScan
-      ? "Scoring the website itself so the dashboard can show your first AI Search Score."
-      : "Re-scoring the website with competitor context included.",
-    progress: 96,
-    scanMode,
-    analyzedPages: completedRun.pages.length,
-    totalPages: crawl.pagesToAnalyze.length,
-    discoveredPages: completedRun.websiteScanPages.length
-  });
-
-  const scoringResult = await scoreWebsite({
-    scan: completedRun,
-    categoryModel,
-    competitorAnalyses
-  });
-  const rankability = scoringResult.scorecard;
-
-  emitProgress({
     stage: "preparing_review",
-    title: isWebsiteFirstScan ? "Preparing dashboard results" : "Preparing competitor results",
+    title: isWebsiteFirstScan || isFullWebsiteScan ? "Preparing dashboard results" : "Preparing competitor results",
     description:
       isWebsiteFirstScan
         ? "Finalizing the first website scores for the dashboard."
-        : "Finalizing competitor analysis in the background.",
+        : isFullWebsiteScan
+          ? "Finalizing the refreshed dashboard and competitor results."
+          : "Finalizing competitor analysis in the background.",
     progress: 98,
     scanMode,
     analyzedPages: completedRun.pages.length,
@@ -221,26 +369,28 @@ export async function runProjectScan(
 
   completedRun = completeWebsiteScan(completedRun, {
     completedAt: new Date().toISOString(),
-    rankability: rankability ?? undefined,
+    rankability: websiteRankability ?? undefined,
     discoverability: discoverability ?? undefined,
-    scoringStatus: rankability || discoverability ? "completed" : "failed",
-    scoringError: [scoringResult.error, discoverabilityResult.error].filter(Boolean).join(" | ") || null
+    scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
+    scoringError: [websiteOnlyScoringResult.error, discoverabilityResult.error].filter(Boolean).join(" | ") || null
   });
 
   const observedIntent = buildObservedIntent({
     categoryModel,
     latestScan: completedRun,
     competitorAnalyses,
-    metrics: rankability
+    metrics: websiteRankability
   });
 
   emitProgress({
     stage: "completed",
-    title: isWebsiteFirstScan ? "Website scoring complete" : "Competitor scoring complete",
+    title: isWebsiteFirstScan || isFullWebsiteScan ? "Website scan complete" : "Competitor scoring complete",
     description:
       isWebsiteFirstScan
         ? "The dashboard can now show your website scores while competitor scoring starts next."
-        : "The competitor page can now show the completed comparison set.",
+        : isFullWebsiteScan
+          ? "The dashboard and competitor views can now show the refreshed results."
+          : "The competitor page can now show the completed comparison set.",
     progress: 100,
     scanMode,
     analyzedPages: completedRun.pages.length,
@@ -252,27 +402,261 @@ export async function runProjectScan(
     totalCompetitors: autoCompetitorUrls.length
   });
 
-  return completeWebsiteScan(completedRun, {
+  const finalizedRun = completeWebsiteScan(completedRun, {
     observedIntent
   });
+
+  logScanEvent({
+    level: finalizedRun.scoringStatus === "failed" ? "error" : "info",
+    event: "scan_completed",
+    projectId: request.projectId,
+    projectName: request.projectName,
+    websiteUrl: request.websiteUrl,
+    scanId: finalizedRun.id,
+    scanMode,
+    message: "Website scan completed.",
+    details: {
+      status: finalizedRun.status,
+      scoringStatus: finalizedRun.scoringStatus,
+      scoringError: finalizedRun.scoringError ?? null,
+      errorCount: finalizedRun.errors.length,
+      competitorCount: finalizedRun.competitorAnalyses?.length ?? 0
+    }
+  });
+
+  return finalizedRun;
 }
 
-function selectAutoCompetitorUrls(
+async function runCompetitorOnlyScan(
+  request: ProjectScanRequest,
+  options?: {
+    onProgress?: (event: ScanProgressEvent) => void;
+    onScanSnapshot?: (scan: ProjectScanRun) => void;
+  }
+): Promise<ProjectScanRun> {
+  logScanEvent({
+    level: "info",
+    event: "competitor_scan_started",
+    projectId: request.projectId,
+    projectName: request.projectName,
+    websiteUrl: request.websiteUrl,
+    scanMode: "competitors",
+    message: "Competitor-only scan started.",
+    details: {
+      scanDepth: request.scanDepth,
+      pageAnalysisModel: request.pageAnalysisModel ?? null,
+      scoringModel: request.scoringModel ?? null
+    }
+  });
+  const emitProgress = (event: ScanProgressEvent) => options?.onProgress?.(event);
+  const persistedState = ensureSqliteState();
+  const baseScan = persistedState.scanRuns.find((scan) => scan.projectId === request.projectId) ?? null;
+
+  if (!baseScan || !baseScan.pages.length) {
+    logScanEvent({
+      level: "error",
+      event: "competitor_scan_missing_base_scan",
+      projectId: request.projectId,
+      projectName: request.projectName,
+      websiteUrl: request.websiteUrl,
+      scanMode: "competitors",
+      message: "A website scan must exist before running a competitor-only scan."
+    });
+    throw new Error("A website scan must exist before running a competitor-only scan.");
+  }
+
+  const startedAt = new Date().toISOString();
+  const baselineCompetitorAnalyses = buildCompetitorAnalyses([]);
+  const initialCategoryModel = buildCategoryModel({
+    project: {
+      id: request.projectId,
+      name: request.projectName,
+      websiteUrl: request.websiteUrl,
+      websiteDisplayUrl: shortenDisplayUrl(request.websiteUrl),
+      websiteFaviconUrl: null,
+      competitorUrls: request.competitorUrls,
+      competitorDisplayUrls: request.competitorUrls.map((value) => shortenDisplayUrl(value)),
+      competitorFaviconUrls: request.competitorUrls.map(() => null),
+      competitorAnalysesByUrl: {},
+      competitorRefreshStatusByUrl: {},
+      scanDepth: request.scanDepth,
+      createdAt: startedAt,
+      updatedAt: startedAt
+    },
+    latestScan: baseScan,
+    competitorAnalyses: baselineCompetitorAnalyses
+  });
+
+  emitProgress({
+    stage: "queued",
+    title: "Preparing competitor scan",
+    description: "Using the latest saved website scan as the baseline for competitor discovery and comparison.",
+    progress: 8,
+    scanMode: "competitors",
+    analyzedPages: baseScan.pages.length,
+    totalPages: baseScan.pages.length,
+    discoveredPages: baseScan.websiteScanPages.length
+  });
+
+  emitProgress({
+    stage: "computing_discoverability",
+    title: "Discovering top competitors",
+    description: "Running repeated AI discovery prompts to refresh the competitor set without recrawling the website.",
+    progress: 88,
+    scanMode: "competitors",
+    analyzedPages: baseScan.pages.length,
+    totalPages: baseScan.pages.length,
+    discoveredPages: baseScan.websiteScanPages.length
+  });
+
+  const discoverabilityResult = await scoreDiscoverability({
+    scan: baseScan,
+    categoryModel: initialCategoryModel,
+    targetIntentModel: request.targetIntentModel
+  });
+  const discoverability = discoverabilityResult.scorecard ?? baseScan.discoverability ?? undefined;
+  if (discoverabilityResult.error) {
+    logScanEvent({
+      level: "warn",
+      event: "competitor_scan_discoverability_warning",
+      projectId: request.projectId,
+      projectName: request.projectName,
+      websiteUrl: request.websiteUrl,
+      scanId: baseScan.id,
+      scanMode: "competitors",
+      message: discoverabilityResult.error,
+      details: {
+        discoverabilityError: discoverabilityResult.error
+      }
+    });
+  }
+  const discoveredCompetitorCandidates = selectAutoCompetitorCandidates(discoverabilityResult.scorecard, request.websiteUrl);
+
+  emitProgress({
+    stage: "computing_discoverability",
+    title: "Validating discovered competitors",
+    description: discoveredCompetitorCandidates.length
+      ? `Found ${discoveredCompetitorCandidates.length} possible competitors and now checking which ones are true competitors.`
+      : "No competitors were discovered, so the previous website scores will be kept unchanged.",
+    progress: 91,
+    scanMode: "competitors",
+    analyzedPages: baseScan.pages.length,
+    totalPages: baseScan.pages.length,
+    discoveredPages: baseScan.websiteScanPages.length,
+    competitorUrls: discoveredCompetitorCandidates.map((candidate) => candidate.website),
+    completedCompetitors: 0,
+    totalCompetitors: discoveredCompetitorCandidates.length
+  });
+
+  const competitorAnalyses = await analyzeCompetitorHomepages(
+    discoveredCompetitorCandidates,
+    emitProgress,
+    {
+      targetScan: baseScan,
+      categoryModel: initialCategoryModel,
+      targetIntentModel: request.targetIntentModel,
+      onPartialAnalyses(nextAnalyses) {
+        const partialRun = completeWebsiteScan(createWebsiteScan({ request, startedAt, status: "completed" }), {
+          completedAt: new Date().toISOString(),
+          status: "completed",
+          scoringStatus: "completed",
+          websiteScanPages: baseScan.websiteScanPages,
+          competitorAnalyses: nextAnalyses,
+          rankability: baseScan.rankability,
+          discoverability,
+          scoringError: discoverabilityResult.error ?? null,
+          observedIntent: baseScan.observedIntent ?? undefined
+        });
+        options?.onScanSnapshot?.(partialRun);
+      }
+    }
+  );
+  const autoCompetitorUrls = competitorAnalyses.map((analysis) => analysis.url);
+  const categoryModel = buildCategoryModel({
+    project: {
+      id: request.projectId,
+      name: request.projectName,
+      websiteUrl: request.websiteUrl,
+      websiteDisplayUrl: shortenDisplayUrl(request.websiteUrl),
+      websiteFaviconUrl: null,
+      competitorUrls: autoCompetitorUrls,
+      competitorDisplayUrls: autoCompetitorUrls.map((value) => shortenDisplayUrl(value)),
+      competitorFaviconUrls: autoCompetitorUrls.map(() => null),
+      competitorAnalysesByUrl: {},
+      competitorRefreshStatusByUrl: {},
+      scanDepth: request.scanDepth,
+      createdAt: baseScan.startedAt,
+      updatedAt: new Date().toISOString()
+    },
+    latestScan: baseScan,
+    competitorAnalyses
+  });
+
+  const completedRun = completeWebsiteScan(createWebsiteScan({ request, startedAt, status: "completed" }), {
+    completedAt: new Date().toISOString(),
+    status: "completed",
+    scoringStatus: "completed",
+    websiteScanPages: baseScan.websiteScanPages,
+    competitorAnalyses,
+    rankability: baseScan.rankability,
+    discoverability,
+    scoringError: discoverabilityResult.error ?? null,
+    observedIntent:
+      baseScan.observedIntent ??
+      buildObservedIntent({
+        categoryModel,
+        latestScan: baseScan,
+        competitorAnalyses,
+        metrics: baseScan.rankability ?? null
+      })
+  });
+
+  emitProgress({
+    stage: "completed",
+    title: "Competitor scoring complete",
+    description: "The competitor page can now show the completed comparison set.",
+    progress: 100,
+    scanMode: "competitors",
+    analyzedPages: baseScan.pages.length,
+    totalPages: baseScan.pages.length,
+    discoveredPages: baseScan.websiteScanPages.length,
+    competitorUrls: autoCompetitorUrls,
+    competitorAnalyses,
+    completedCompetitors: competitorAnalyses.length,
+    totalCompetitors: autoCompetitorUrls.length
+  });
+
+  logScanEvent({
+    level: completedRun.scoringStatus === "failed" ? "error" : "info",
+    event: "competitor_scan_completed",
+    projectId: request.projectId,
+    projectName: request.projectName,
+    websiteUrl: request.websiteUrl,
+    scanId: completedRun.id,
+    scanMode: "competitors",
+    message: "Competitor-only scan completed.",
+    details: {
+      scoringStatus: completedRun.scoringStatus,
+      scoringError: completedRun.scoringError ?? null,
+      competitorCount: completedRun.competitorAnalyses?.length ?? 0
+    }
+  });
+
+  return completedRun;
+}
+
+function selectAutoCompetitorCandidates(
   discoverability: Awaited<ReturnType<typeof scoreDiscoverability>>["scorecard"],
-  websiteUrl: string,
-  fallbackUrls: string[]
+  websiteUrl: string
 ) {
   if (!discoverability) {
-    return fallbackUrls;
+    return [];
   }
 
   const targetDomain = normalizeDomain(websiteUrl);
-  const selected = discoverability.aggregatedCandidates
+  return discoverability.aggregatedCandidates
     .filter((candidate) => normalizeDomain(candidate.website) !== targetDomain)
-    .slice(0, 5)
-    .map((candidate) => candidate.website);
-
-  return selected.length ? selected : fallbackUrls;
+    .slice(0, 10);
 }
 
 async function analyzeProjectPages(input: {
@@ -334,7 +718,22 @@ async function analyzeProjectPages(input: {
         };
       }
     } catch (error) {
-      input.errors.push(error instanceof Error ? error.message : "Failed to analyze page.");
+      const message = error instanceof Error ? error.message : "Failed to analyze page.";
+      input.errors.push(message);
+      logScanEvent({
+        level: "warn",
+        event: "page_analysis_failed",
+        projectId: input.request.projectId,
+        projectName: input.request.projectName,
+        websiteUrl: input.request.websiteUrl,
+        scanMode: input.scanMode,
+        message,
+        details: {
+          pageUrl: page.url,
+          pageType: page.pageType,
+          error: toErrorDetails(error)
+        }
+      });
     }
 
     input.emitProgress({
@@ -346,6 +745,8 @@ async function analyzeProjectPages(input: {
           : `Processed ${pages.length} of ${input.crawlPages.length} selected pages before competitor scoring.`,
       progress: Math.min(78, Math.round(24 + (pages.length / totalPages) * 54)),
       scanMode: input.scanMode,
+      currentUrl: page.url,
+      currentLabel: page.pageType,
       analyzedPages: pages.length,
       totalPages: input.crawlPages.length,
       discoveredPages: input.websiteScanPages.length
@@ -360,17 +761,156 @@ async function analyzeProjectPages(input: {
 }
 
 async function analyzeCompetitorHomepages(
-  competitorUrls: string[],
-  emitProgress: (event: ScanProgressEvent) => void
+  competitorCandidates: AggregatedCandidate[],
+  emitProgress: (event: ScanProgressEvent) => void,
+  context: {
+    targetScan: ProjectScanRun;
+    categoryModel: ReturnType<typeof buildCategoryModel>;
+    targetIntentModel?: ProjectScanRequest["targetIntentModel"];
+    onPartialAnalyses?: (analyses: CompetitorAnalysis[]) => void;
+  }
 ) {
-  if (!competitorUrls.length) {
+  if (!competitorCandidates.length) {
     return [];
   }
 
   const analyses = [];
-  for (let index = 0; index < competitorUrls.length; index += 1) {
-    const websiteUrl = competitorUrls[index];
+  for (let index = 0; index < competitorCandidates.length; index += 1) {
+    const candidate = competitorCandidates[index];
+    const websiteUrl = candidate.website;
     try {
+      if (isDirectoryLikeCompetitorCandidate(candidate.website)) {
+        logScanEvent({
+          level: "info",
+          event: "competitor_candidate_rejected",
+          projectId: context.targetScan.projectId,
+          projectName: context.targetScan.projectName,
+          websiteUrl: context.targetScan.websiteUrl,
+          scanId: context.targetScan.id,
+          scanMode: "full",
+          message: "Competitor candidate was rejected before validation because it looks like a directory or roundup page.",
+          details: {
+            candidate: {
+              name: candidate.name,
+              website: candidate.website
+            },
+            threshold: COMPETITOR_VALIDATION_THRESHOLD
+          }
+        });
+        continue;
+      }
+
+      let validation = await validateCompetitorCandidate({
+        targetScan: context.targetScan,
+        categoryModel: context.categoryModel,
+        candidate,
+        retryMode: "initial"
+      });
+
+      logScanEvent({
+        level: "info",
+        event: "competitor_candidate_validation",
+        projectId: context.targetScan.projectId,
+        projectName: context.targetScan.projectName,
+        websiteUrl: context.targetScan.websiteUrl,
+        scanId: context.targetScan.id,
+        scanMode: "full",
+        message: "Initial competitor validation completed.",
+        details: {
+          candidate: {
+            name: candidate.name,
+            website: candidate.website
+          },
+          validation
+        }
+      });
+
+      if (shouldRecheckCompetitorCandidate(validation)) {
+        logScanEvent({
+          level: "info",
+          event: "competitor_candidate_recheck_requested",
+          projectId: context.targetScan.projectId,
+          projectName: context.targetScan.projectName,
+          websiteUrl: context.targetScan.websiteUrl,
+          scanId: context.targetScan.id,
+          scanMode: "full",
+          message: "Competitor validation is borderline, so a recheck is being run.",
+          details: {
+            candidate: {
+              name: candidate.name,
+              website: candidate.website
+            },
+            initialValidation: validation
+          }
+        });
+
+        const recheckedValidation = await validateCompetitorCandidate({
+          targetScan: context.targetScan,
+          categoryModel: context.categoryModel,
+          candidate,
+          retryMode: "recheck"
+        });
+
+        logScanEvent({
+          level: "info",
+          event: "competitor_candidate_recheck_completed",
+          projectId: context.targetScan.projectId,
+          projectName: context.targetScan.projectName,
+          websiteUrl: context.targetScan.websiteUrl,
+          scanId: context.targetScan.id,
+          scanMode: "full",
+          message: "Borderline competitor recheck completed.",
+          details: {
+            candidate: {
+              name: candidate.name,
+              website: candidate.website
+            },
+            initialValidation: validation,
+            recheckedValidation
+          }
+        });
+
+        if (recheckedValidation.confidence >= validation.confidence || recheckedValidation.isCompetitor) {
+          validation = recheckedValidation;
+        }
+      }
+
+      if (!validation.isCompetitor || validation.confidence < COMPETITOR_VALIDATION_THRESHOLD) {
+        logScanEvent({
+          level: "info",
+          event: "competitor_candidate_rejected",
+          projectId: context.targetScan.projectId,
+          projectName: context.targetScan.projectName,
+          websiteUrl: context.targetScan.websiteUrl,
+          scanId: context.targetScan.id,
+          scanMode: "full",
+          message: "Competitor candidate was rejected after validation.",
+          details: {
+            candidate: {
+              name: candidate.name,
+              website: candidate.website
+            },
+            validation,
+            threshold: COMPETITOR_VALIDATION_THRESHOLD
+          }
+        });
+
+        emitProgress({
+          stage: "analyzing",
+          title: "Filtering discovered competitors",
+          description: `Checked ${index + 1} of ${competitorCandidates.length} discovered websites and kept ${analyses.length} that scored at least ${COMPETITOR_VALIDATION_THRESHOLD}% competitor confidence.`,
+          progress: Math.min(95, Math.round(91 + ((index + 1) / competitorCandidates.length) * 4)),
+          scanMode: "full",
+          currentUrl: candidate.website,
+          currentLabel: candidate.name,
+          competitorUrls: analyses.map((analysis) => analysis.url),
+          competitorAnalyses: analyses,
+          completedCompetitors: analyses.length,
+          totalCompetitors: competitorCandidates.length
+        });
+        continue;
+      }
+
       const crawl = await crawlSite({
         websiteUrl,
         scanDepth: 0,
@@ -387,8 +927,7 @@ async function analyzeCompetitorHomepages(
         competitorUrls: []
       });
 
-      analyses.push(
-        buildCompetitorAnalysisFromPage({
+      const competitorPage = {
           url: analysis.url,
           normalizedUrl: analysis.normalizedUrl,
           pageType: analysis.pageType,
@@ -411,26 +950,453 @@ async function analyzeCompetitorHomepages(
           merged: analysis.merged,
           mergeDecision: analysis.mergeDecision,
           unstableReason: analysis.unstableReason
-        })
+        } satisfies PageScanRecord;
+      const competitorWebsiteScanPage: WebsiteScanPage = {
+        id: crypto.randomUUID(),
+        scanId: crypto.randomUUID(),
+        url: competitorPage.url,
+        normalizedUrl: competitorPage.normalizedUrl,
+        pageType: competitorPage.pageType,
+        pageTitle: competitorPage.pageTitle,
+        metaTitle: competitorPage.metaTitle,
+        metaDescription: competitorPage.metaDescription,
+        h1: competitorPage.h1,
+        headings: competitorPage.headings,
+        mainText: competitorPage.mainText,
+        wordCount: competitorPage.wordCount,
+        contentHash: competitorPage.contentHash,
+        httpStatus: competitorPage.httpStatus,
+        crawlDepth: competitorPage.crawlDepth,
+        includeInScoring: true,
+        exclusionReason: "",
+        scrapeTimestamp: competitorPage.scrapeTimestamp,
+        internalLinks: competitorPage.internalLinks,
+        discoverySources: ["internal-link"],
+        canonicalUrl: competitorPage.canonicalUrl,
+        passes: competitorPage.passes,
+        merged: competitorPage.merged,
+        mergeDecision: competitorPage.mergeDecision,
+        unstableReason: competitorPage.unstableReason
+      };
+      const competitorScan = completeWebsiteScan(
+        createWebsiteScan({
+          request: {
+            projectId: `competitor:${normalizeDomain(websiteUrl)}`,
+            projectName: `Competitor ${index + 1}`,
+            websiteUrl,
+            competitorUrls: [],
+            scanMode: "full",
+            scanDepth: 0
+          },
+          startedAt: new Date().toISOString(),
+          status: "completed"
+        }),
+        {
+          completedAt: new Date().toISOString(),
+          status: "completed",
+          scoringStatus: "completed",
+          websiteScanPages: [competitorWebsiteScanPage]
+        }
       );
-    } catch {
-      analyses.push(...buildCompetitorAnalyses([websiteUrl]));
+      const competitorScoreCategoryModel = {
+        ...context.categoryModel,
+        updatedAt: new Date().toISOString()
+      };
+      const competitorDiscoverabilityResult = await scoreDiscoverability({
+        scan: competitorScan,
+        categoryModel: competitorScoreCategoryModel,
+        targetIntentModel: context.targetIntentModel
+      });
+      const competitorRankabilityResult = await scoreWebsite({
+        scan: competitorScan,
+        categoryModel: competitorScoreCategoryModel,
+        competitorAnalyses: [],
+        targetIntentModel: context.targetIntentModel
+      });
+      const rankabilityScore = competitorRankabilityResult.scorecard?.weightedTotalScore ?? null;
+      const discoverabilityScore = competitorDiscoverabilityResult.scorecard?.discoverabilityScore ?? null;
+      const aiSearchScore =
+        rankabilityScore == null || discoverabilityScore == null
+          ? null
+          : roundOne(rankabilityScore * 0.4 + discoverabilityScore * 0.6);
+
+      analyses.push({
+        ...buildCompetitorAnalysisFromPage(competitorPage),
+        competitorConfidence: validation.confidence,
+        competitorReasoning: validation.reasoning,
+        rankabilityScore,
+        discoverabilityScore,
+        aiSearchScore,
+        rankabilityFactorScores: competitorRankabilityResult.scorecard
+          ? Object.fromEntries(
+              Object.entries(competitorRankabilityResult.scorecard.factorScores).map(([factorId, factor]) => [factorId, factor.score])
+            )
+          : undefined,
+        discoverabilityFactorScores: competitorDiscoverabilityResult.scorecard
+          ? Object.fromEntries(
+              Object.entries(competitorDiscoverabilityResult.scorecard.factorScores).map(([factorId, factor]) => [factorId, factor.score])
+            )
+          : undefined,
+        sourceDomains: uniqueStrings(candidate.sources.map((source) => source.sourceDomain)).slice(0, 8),
+        sourceTypes: uniqueStrings(candidate.sources.map((source) => source.sourceType)).slice(0, 8),
+        sourceEvidence: candidate.sources.slice(0, 12).map((source) => ({
+          sourceName: source.sourceName,
+          sourceDomain: source.sourceDomain,
+          sourceType: source.sourceType,
+          sourceUrl: source.sourceUrl,
+          influence: source.influence,
+          evidenceFound: source.evidenceFound
+        })),
+        discoveryReasons: candidate.reasons.slice(0, 5),
+        supportingPromptVariations: candidate.supportingPromptVariations
+      });
+      logScanEvent({
+        level: "info",
+        event: "competitor_candidate_accepted",
+        projectId: context.targetScan.projectId,
+        projectName: context.targetScan.projectName,
+        websiteUrl: context.targetScan.websiteUrl,
+        scanId: context.targetScan.id,
+        scanMode: "full",
+        message: "Competitor candidate was accepted.",
+        details: {
+          candidate: {
+            name: candidate.name,
+            website: candidate.website
+          },
+          validation,
+          currentCompetitorCount: analyses.length
+        }
+      });
+      context.onPartialAnalyses?.([...analyses]);
+    } catch (error) {
+      logScanEvent({
+        level: "warn",
+        event: "competitor_candidate_failed",
+        projectId: context.targetScan.projectId,
+        projectName: context.targetScan.projectName,
+        websiteUrl: context.targetScan.websiteUrl,
+        scanId: context.targetScan.id,
+        scanMode: "full",
+        message: "Competitor candidate validation or scoring failed.",
+        details: {
+          candidate: {
+            name: candidate.name,
+            website: candidate.website
+          },
+          error: toErrorDetails(error)
+        }
+      });
+      // Skip candidates that cannot be validated and scored cleanly. Fewer than five competitors is acceptable.
     }
 
     emitProgress({
       stage: "analyzing",
       title: "Scoring discovered competitors",
-      description: `Processed ${index + 1} of ${competitorUrls.length} discovered competitor homepages.`,
-      progress: Math.min(95, Math.round(91 + ((index + 1) / competitorUrls.length) * 4)),
+      description: `Checked ${index + 1} of ${competitorCandidates.length} discovered websites and kept ${analyses.length} validated competitors so far.`,
+      progress: Math.min(95, Math.round(91 + ((index + 1) / competitorCandidates.length) * 4)),
       scanMode: "full",
-      competitorUrls,
+      currentUrl: candidate.website,
+      currentLabel: candidate.name,
+      competitorUrls: analyses.map((analysis) => analysis.url),
       competitorAnalyses: analyses,
       completedCompetitors: analyses.length,
-      totalCompetitors: competitorUrls.length
+      totalCompetitors: competitorCandidates.length
     });
+
+    if (analyses.length >= 5) {
+      break;
+    }
   }
 
   return analyses;
+}
+
+const COMPETITOR_VALIDATION_MODEL = process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || "gpt-5-mini";
+const COMPETITOR_VALIDATION_FALLBACK_MODEL = "gpt-5.4-mini";
+const COMPETITOR_VALIDATION_THRESHOLD = 75;
+const COMPETITOR_VALIDATION_RECHECK_MIN = 65;
+const COMPETITOR_VALIDATION_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["is_competitor", "confidence", "reasoning"],
+  properties: {
+    is_competitor: { type: "boolean" },
+    confidence: { type: "number", minimum: 0, maximum: 100 },
+    reasoning: { type: "string" }
+  }
+} as const;
+const WEB_SEARCH_TOOL = {
+  type: "web_search" as const,
+  user_location: {
+    type: "approximate" as const,
+    country: "AU",
+    region: "New South Wales",
+    city: "Sydney",
+    timezone: "Australia/Sydney"
+  }
+};
+
+async function validateCompetitorCandidate(input: {
+  targetScan: ProjectScanRun;
+  categoryModel: ReturnType<typeof buildCategoryModel>;
+  candidate: AggregatedCandidate;
+  retryMode?: "initial" | "recheck";
+}) {
+  const model = getCompetitorValidationModel();
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (isOpenAIModelName(model)) {
+    if (openAiApiKey) {
+      return validateCompetitorCandidateWithOpenAIModel(input, model);
+    }
+
+    return validateCompetitorCandidateWithLocalModel(input, getLocalCompetitorValidationModel());
+  }
+
+  return validateCompetitorCandidateWithLocalModel(input, model);
+}
+
+async function validateCompetitorCandidateWithLocalModel(input: {
+  targetScan: ProjectScanRun;
+  categoryModel: ReturnType<typeof buildCategoryModel>;
+  candidate: AggregatedCandidate;
+  retryMode?: "initial" | "recheck";
+}, model: string) {
+  try {
+    const response = await generateJsonWithLocalSearch<{
+      is_competitor?: unknown;
+      confidence?: unknown;
+      reasoning?: unknown;
+    }>({
+      model,
+      responseSchema: COMPETITOR_VALIDATION_SCHEMA,
+      systemPrompt: [
+        "You are validating whether a website is a true competitor to another website.",
+        "Use the provided search evidence for current external facts.",
+        "Return only JSON matching the required shape.",
+        "A true competitor should serve a meaningfully similar product or service to a similar buyer in the same market context.",
+        "The primary decision should be whether the candidate offers the same product or service target as the scanned website.",
+        "For visitor management systems in Australia, a candidate that clearly offers visitor management software or visitor management systems for workplaces should usually be treated as a competitor unless it is clearly a directory, roundup, marketplace listing, agency, or unrelated adjacent tool.",
+        input.retryMode === "recheck"
+          ? "This is a second-pass review for a borderline candidate. Re-check carefully and do not reject a genuine direct competitor just because positioning, sector emphasis, or wording differs slightly."
+          : "Focus on whether the candidate is a real direct alternative rather than a directory, review page, marketplace listing, or editorial roundup."
+      ].join(" "),
+      userPrompt: [
+        `Target website: ${input.targetScan.websiteUrl}`,
+        `Target website name: ${input.targetScan.projectName}`,
+        `Primary product/service target: ${input.categoryModel.category}`,
+        `Candidate website: ${input.candidate.website}`,
+        `Candidate name: ${input.candidate.name}`,
+        `Category: ${input.categoryModel.category}`,
+        `Customer: ${input.categoryModel.customer}`,
+        `Problem: ${input.categoryModel.problem}`,
+        `Expected concepts: ${input.categoryModel.expectedConcepts.slice(0, 8).join(", ") || "none"}`,
+        `Why the candidate surfaced: ${input.candidate.reasons.slice(0, 3).join(" ") || "No stored reason."}`,
+        "",
+        "Decide whether the candidate is truly a competitor to the target website.",
+        input.retryMode === "recheck"
+          ? "This candidate was close to the acceptance threshold on the first pass. Reassess carefully and return valid JSON with keys: is_competitor (boolean), confidence (0-100), reasoning (string)."
+          : "Return valid JSON with keys: is_competitor (boolean), confidence (0-100), reasoning (string)."
+      ].join("\n"),
+      searchQueries: uniqueStrings([
+        `${input.targetScan.projectName} ${input.categoryModel.category}`,
+        `${input.candidate.name} ${input.categoryModel.category}`,
+        `${normalizeDomain(input.candidate.website)} competitor`,
+        `${normalizeDomain(input.targetScan.websiteUrl)} alternative`
+      ]),
+      maxResultsPerQuery: 6,
+      maxAttempts: 3,
+      temperature: 0.1
+    });
+
+    return {
+      isCompetitor: Boolean(response.content.is_competitor),
+      confidence: clampScore(response.content.confidence),
+      reasoning: typeof response.content.reasoning === "string" ? response.content.reasoning.trim() : ""
+    };
+  } catch (error) {
+    return {
+      isCompetitor: true,
+      confidence: 30,
+      reasoning:
+        error instanceof Error
+          ? `Local competitor validation failed, so the candidate was kept for manual review: ${error.message}`
+          : "Local competitor validation failed, so the candidate was kept for manual review."
+    };
+  }
+}
+
+async function validateCompetitorCandidateWithOpenAIModel(
+  input: {
+    targetScan: ProjectScanRun;
+    categoryModel: ReturnType<typeof buildCategoryModel>;
+    candidate: AggregatedCandidate;
+    retryMode?: "initial" | "recheck";
+  },
+  model: string
+) {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
+    return validateCompetitorCandidateWithLocalModel(input, model);
+  }
+
+  const client = new OpenAI({ apiKey: openAiApiKey });
+  const response = await createCompetitorValidationResponse(client, {
+    model,
+    input: [
+      {
+        role: "system",
+        content: [
+          "You are validating whether a website is a true competitor to another website.",
+          "Use web search for current evidence.",
+          "Return only JSON matching the provided schema.",
+          "A true competitor should serve a meaningfully similar product or service to a similar buyer in the same market context.",
+          "The primary decision should be whether the candidate offers the same product or service target as the scanned website.",
+          "For visitor management systems in Australia, a candidate that clearly offers visitor management software or visitor management systems for workplaces should usually be treated as a competitor unless it is clearly a directory, roundup, marketplace listing, agency, or unrelated adjacent tool.",
+          input.retryMode === "recheck"
+            ? "This is a second-pass review for a borderline candidate. Re-check carefully and do not reject a genuine direct competitor just because positioning, sector emphasis, or wording differs slightly."
+            : "Focus on whether the candidate is a real direct alternative rather than a directory, review page, marketplace listing, or editorial roundup."
+        ].join(" ")
+      },
+      {
+        role: "user",
+        content: [
+          `Target website: ${input.targetScan.websiteUrl}`,
+          `Target website name: ${input.targetScan.projectName}`,
+          `Primary product/service target: ${input.categoryModel.category}`,
+          `Candidate website: ${input.candidate.website}`,
+          `Candidate name: ${input.candidate.name}`,
+          `Category: ${input.categoryModel.category}`,
+          `Customer: ${input.categoryModel.customer}`,
+          `Problem: ${input.categoryModel.problem}`,
+          `Expected concepts: ${input.categoryModel.expectedConcepts.slice(0, 8).join(", ") || "none"}`,
+          `Why the candidate surfaced: ${input.candidate.reasons.slice(0, 3).join(" ") || "No stored reason."}`,
+          "",
+          "Decide whether the candidate is truly a competitor to the target website.",
+          input.retryMode === "recheck"
+            ? "This candidate was close to the acceptance threshold on the first pass. Reassess carefully and give a confidence score from 0 to 100."
+            : "Give a confidence score from 0 to 100."
+        ].join("\n")
+      }
+    ],
+    tools: [WEB_SEARCH_TOOL],
+    tool_choice: "required",
+    text: {
+      format: {
+        type: "json_schema",
+        name: "siteintent_competitor_validation",
+        strict: true,
+        schema: COMPETITOR_VALIDATION_SCHEMA
+      }
+    }
+  });
+
+  const payload = parseOpenAiJson(response) as {
+    is_competitor?: unknown;
+    confidence?: unknown;
+    reasoning?: unknown;
+  };
+
+  return {
+    isCompetitor: Boolean(payload.is_competitor),
+    confidence: clampScore(payload.confidence),
+    reasoning: typeof payload.reasoning === "string" ? payload.reasoning.trim() : ""
+  };
+}
+
+function shouldRecheckCompetitorCandidate(result: { isCompetitor: boolean; confidence: number }) {
+  return result.confidence >= COMPETITOR_VALIDATION_RECHECK_MIN && result.confidence < COMPETITOR_VALIDATION_THRESHOLD;
+}
+
+function isDirectoryLikeCompetitorCandidate(websiteUrl: string) {
+  try {
+    const url = new URL(websiteUrl);
+    const host = url.hostname.replace(/^www\./i, "").toLowerCase();
+    const path = url.pathname.toLowerCase();
+    return (
+      /\/(directory|alternatives?|comparison|comparisons|roundup|reviews?|report|reports)\b/.test(path) ||
+      /(^|\.)(g2|capterra|getapp|softwareadvice|trustradius)\./.test(host)
+    );
+  } catch {
+    const lower = websiteUrl.toLowerCase();
+    return /\/(directory|alternatives?|comparison|comparisons|roundup|reviews?|report|reports)\b/.test(lower);
+  }
+}
+
+async function createCompetitorValidationResponse(
+  client: OpenAI,
+  request: OpenAI.Responses.ResponseCreateParamsNonStreaming
+) {
+  try {
+    return await client.responses.create(request);
+  } catch (error) {
+    if (isModelNotFound(error) && request.model !== COMPETITOR_VALIDATION_FALLBACK_MODEL) {
+      return client.responses.create({
+        ...request,
+        model: COMPETITOR_VALIDATION_FALLBACK_MODEL
+      });
+    }
+    throw error;
+  }
+}
+
+function parseOpenAiJson(response: { output_text?: string; output?: unknown[] }) {
+  const text = response.output_text || extractTextFromOutput(response.output);
+  if (!text) {
+    throw new Error("OpenAI response did not include output text.");
+  }
+
+  return JSON.parse(text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, ""));
+}
+
+function extractTextFromOutput(output: unknown[] | undefined) {
+  if (!Array.isArray(output)) {
+    return "";
+  }
+
+  const texts: string[] = [];
+  for (const item of output) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+    const content = (item as { content?: unknown[] }).content;
+    if (!Array.isArray(content)) {
+      continue;
+    }
+    for (const part of content) {
+      if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+        texts.push(part.text);
+      }
+    }
+  }
+
+  return texts.join("\n").trim();
+}
+
+function isModelNotFound(error: unknown) {
+  return (
+    error instanceof OpenAI.APIError &&
+    error.status === 404 &&
+    typeof error.message === "string" &&
+    error.message.toLowerCase().includes("model")
+  );
+}
+
+function clampScore(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number.parseFloat(String(value ?? ""));
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, numeric));
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function normalizeDomain(value: string) {
@@ -440,4 +1406,12 @@ function normalizeDomain(value: string) {
   } catch {
     return value.trim().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].toLowerCase();
   }
+}
+
+function getLocalCompetitorValidationModel() {
+  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+}
+
+function getCompetitorValidationModel() {
+  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || "gpt-5-mini";
 }
