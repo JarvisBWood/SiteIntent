@@ -57,6 +57,8 @@ Use these settings:
 - Deploy command: `npm run cf:deploy`
 - Root directory: repository root
 
+Do not use Cloudflare's default `npx wrangler deploy` deploy command for this app. The build step creates OpenNext output first, and the deploy step must run the OpenNext deploy command through the `cf:deploy` package script.
+
 The Worker name in Cloudflare must remain `siteintent-dashboard` because it must match `wrangler.jsonc`.
 
 The apex domain is intentionally handled by the separate `aisearchauditor-coming-soon` Worker so `aisearchauditor.com` stays available for the public website while `dash.aisearchauditor.com` hosts the app.
