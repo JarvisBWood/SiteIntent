@@ -9,6 +9,7 @@
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare deploy",
+    "cf:deploy:coming-soon": "wrangler deploy --config wrangler-coming-soon.jsonc",
     "db:migrate:local": "wrangler d1 migrations apply siteintent-dashboard-prod --local",
     "db:migrate:remote": "wrangler d1 migrations apply siteintent-dashboard-prod --remote",
     "research:category-top10": "node scripts/run-category-top10-scan.mjs",

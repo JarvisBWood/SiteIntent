@@ -14,36 +14,30 @@ AI Search Score = (Rankability x 0.4) + (Discoverability x 0.6)
 
 ## Cloudflare Workers Deployment
 
-The dashboard is prepared to run on Cloudflare Workers through OpenNext and to use Cloudflare D1 as its hosted database. Local `npm run dev` still uses the local SQLite fallback for offline testing.
+The dashboard runs on Cloudflare Workers through OpenNext and uses Cloudflare D1 as its hosted database. Local `npm run dev` still uses the local SQLite fallback for offline testing.
 
 Production target:
 
 - Worker name: `siteintent-dashboard`
 - Dashboard domain: `dash.aisearchauditor.com`
 - Public website domain: `aisearchauditor.com`
+- Public coming-soon Worker: `aisearchauditor-coming-soon`
 - D1 database name: `siteintent-dashboard-prod`
+- D1 database ID: `c8098b64-7946-469d-845f-cb930cc30ed9`
 
-### Required Cloudflare Setup
+### Cloudflare Setup
 
-1. Log in with Wrangler:
+The Workers and D1 database can be deployed manually with Wrangler:
 
 ```bash
 npx wrangler login
-```
-
-2. Create the D1 database and copy the returned `database_id` into `wrangler.jsonc`:
-
-```bash
-npx wrangler d1 create siteintent-dashboard-prod
-```
-
-3. Apply the remote D1 migration:
-
-```bash
 npm run db:migrate:remote
+npm run cf:build
+npm run cf:deploy
+npm run cf:deploy:coming-soon
 ```
 
-4. Add these Worker secrets in Cloudflare:
+The dashboard Worker requires these runtime secrets in Cloudflare:
 
 ```txt
 OPENAI_API_KEY
@@ -52,13 +46,20 @@ DASH_ADMIN_PASSWORD
 SESSION_SECRET
 ```
 
-5. In Cloudflare Workers & Pages, connect the GitHub repo `JarvisBWood/SiteIntent` to the Worker, use `main` as the production branch, and set the build command to:
+### Automatic Deploys
 
-```bash
-npm run cf:build
-```
+Cloudflare Workers Builds is configured from the Cloudflare dashboard, not Wrangler. In Cloudflare Workers & Pages, connect the GitHub repo `JarvisBWood/SiteIntent` to the existing `siteintent-dashboard` Worker from `Settings > Builds > Connect`.
 
-6. Add the Worker custom domain `dash.aisearchauditor.com`. Do not attach this Worker to the apex domain.
+Use these settings:
+
+- Production branch: `main`
+- Build command: `npm run cf:build`
+- Deploy command: `npm run cf:deploy`
+- Root directory: repository root
+
+The Worker name in Cloudflare must remain `siteintent-dashboard` because it must match `wrangler.jsonc`.
+
+The apex domain is intentionally handled by the separate `aisearchauditor-coming-soon` Worker so `aisearchauditor.com` stays available for the public website while `dash.aisearchauditor.com` hosts the app.
 
 ### Local Cloudflare Preview
 

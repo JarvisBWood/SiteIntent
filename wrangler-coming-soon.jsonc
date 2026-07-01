@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aisearchauditor-coming-soon",
+  "main": "workers/coming-soon.ts",
+  "compatibility_date": "2026-07-01",
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "aisearchauditor.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.aisearchauditor.com",
+      "custom_domain": true
+    }
+  ]
+}

@@ -17,11 +17,10 @@
     {
       "binding": "DB",
       "database_name": "siteintent-dashboard-prod",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_id": "c8098b64-7946-469d-845f-cb930cc30ed9"
     }
   ],
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://dash.aisearchauditor.com"
   }
 }
-
