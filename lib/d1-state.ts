@@ -65,13 +65,13 @@ export async function loadStateFromD1(db: D1Database): Promise<SiteIntentSession
 
 export async function saveStateToD1(db: D1Database, state: SiteIntentSessionState) {
   await db.batch([
-    db.prepare("DELETE FROM app_session"),
-    db.prepare("DELETE FROM app_ui_state"),
-    db.prepare("DELETE FROM projects"),
+    db.prepare("DELETE FROM scan_pages"),
+    db.prepare("DELETE FROM scan_runs"),
     db.prepare("DELETE FROM target_intent_models"),
     db.prepare("DELETE FROM project_onboarding"),
-    db.prepare("DELETE FROM scan_pages"),
-    db.prepare("DELETE FROM scan_runs")
+    db.prepare("DELETE FROM projects"),
+    db.prepare("DELETE FROM app_session"),
+    db.prepare("DELETE FROM app_ui_state")
   ]);
 
   const statements: D1PreparedStatement[] = [
@@ -181,11 +181,7 @@ export async function persistScanRunSnapshotInD1(db: D1Database, scan: ProjectSc
 }
 
 function createDefaultD1Preferences() {
-  return {
-    ...createDefaultPreferences(),
-    pageAnalysisModel: "gpt-5-mini",
-    scoringModel: "gpt-5-mini"
-  };
+  return createDefaultPreferences();
 }
 
 export async function persistCompletedScanInD1(db: D1Database, scan: ProjectScanRun) {

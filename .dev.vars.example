@@ -1,4 +1,20 @@
-DASH_ADMIN_EMAIL=admin@example.com
-DASH_ADMIN_PASSWORD=replace-with-a-local-password
-SESSION_SECRET=replace-with-a-long-random-secret
-OPENAI_API_KEY=replace-with-your-openai-key
+DASH_ADMIN_EMAIL=admin@localhost
+DASH_ADMIN_PASSWORD=password
+SESSION_SECRET=local-dev-secret-not-for-production
+OPENAI_API_KEY=sk-your-openai-key
+
+# Remote D1 database — set these to have local dev hit remote Cloudflare D1 databases
+# Use either an API Token (Bearer auth):
+#   CLOUDFLARE_API=your_api_token
+# Or a Global API Key (X-Auth-Email + X-Auth-Key):
+#   CLOUDFLARE_API=your_global_key
+#   CLOUDFLARE_API_EMAIL=your@email.com
+# CLOUDFLARE_ACCOUNT_ID=your-account-id
+# CLOUDFLARE_D1_DATABASE_ID=your-database-id
+
+# Remote AI provider (free tier) - set SITEINTENT_AI_PROVIDER=remote to use this
+# instead of OpenAI. Get a free API key from https://console.groq.com
+# SITEINTENT_AI_PROVIDER=remote
+# SITEINTENT_AI_API_URL=https://api.groq.com/openai/v1
+# SITEINTENT_AI_API_KEY=gsk_your_groq_api_key
+# SITEINTENT_AI_MODEL=llama3-70b-8192

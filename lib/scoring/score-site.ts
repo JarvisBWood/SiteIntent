@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 
 import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
-import { isOpenAIModelName } from "@/lib/llm/provider";
+import { MODEL_CONFIG } from "@/lib/llm/model-config";
+import { createRemoteLLMClient } from "@/lib/llm/remote";
+import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
 import { buildLocationAwareContext, buildLocationSearchTerms, buildWebSearchUserLocation } from "@/lib/location-targeting";
 import type { CategoryModel, CompetitorAnalysis } from "@/lib/models";
 import type { ProjectScanRun, WebsiteScanPage } from "@/lib/scan/types";
@@ -15,13 +17,14 @@ import {
   type RankabilityScorecard
 } from "@/lib/scoring/types";
 
-const DEFAULT_MODEL = process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5-mini";
-const FALLBACK_MODEL = "gpt-5.4-mini";
+const DEFAULT_MODEL = MODEL_CONFIG.worker;
+const FALLBACK_MODEL = "openai/gpt-5.4-mini";
 type ScoreWebsiteInput = {
   scan: ProjectScanRun;
   categoryModel: CategoryModel;
   competitorAnalyses: CompetitorAnalysis[];
   targetIntentModel?: TargetIntentModel;
+  model?: string;
 };
 
 type RawFactorScore = {
@@ -104,7 +107,12 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
     };
   }
 
-  const selectedModel = getRankabilityModel();
+  const selectedModel = input.model ?? getRankabilityModel();
+
+  if (shouldUseRemoteProvider()) {
+    return scoreWebsiteWithLocalModel(input, selectedModel);
+  }
+
   const openAiApiKey = process.env.OPENAI_API_KEY;
   if (isOpenAIModelName(selectedModel)) {
     if (openAiApiKey) {
@@ -115,6 +123,64 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
   }
 
   return scoreWebsiteWithLocalModel(input, selectedModel);
+}
+
+export async function scoreWebsiteWithJudgeModel(
+  scan: ProjectScanRun,
+  categoryModel: CategoryModel,
+  factorScorecards: Array<{ model: string; scorecard: RankabilityScorecard }>
+): Promise<RankabilityScorecard | null> {
+  const judgeModel = MODEL_CONFIG.judge;
+
+  const scoringProfile = factorScorecards.map((f) => ({
+    model: f.model,
+    summary: f.scorecard.summary,
+    overall: f.scorecard.weightedTotalScore,
+    factors: Object.fromEntries(
+      RANKABILITY_FACTORS.map((factor) => [
+        factor.id,
+        f.scorecard.factorScores?.[factor.id] ?? null
+      ])
+    )
+  }));
+
+  const systemPrompt = [
+    "You are a neutral scoring judge. Given independent rankability assessments from multiple AI models, produce a final consensus scorecard.",
+    "Weight each model's assessment equally unless one provides significantly stronger evidence.",
+    "Return only valid JSON matching the required schema."
+  ].join(" ");
+
+  const userPrompt = [
+    `Website: ${scan.projectName} (${scan.websiteUrl})`,
+    `Category: ${categoryModel.category}`,
+    `Context: ${categoryModel.context}`,
+    "",
+    "Below are the independent assessments from each analysis model:",
+    JSON.stringify(scoringProfile, null, 2),
+    "",
+    "Produce a final consensus scorecard. For each factor, synthesize the evidence from all models. The overall score should reflect the combined assessment.",
+    buildRankabilityJsonContract()
+  ].join("\n");
+
+  const client = createRemoteLLMClient({ defaultModel: judgeModel });
+  const result = await client.generate<RawRankabilityResponse>({
+    model: judgeModel,
+    responseFormat: "json",
+    responseSchema: RANKABILITY_RESPONSE_SCHEMA,
+    temperature: 0.1,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ]
+  });
+
+  if (!result.ok) {
+    return null;
+  }
+
+  const scorecard = normalizeRankabilityScorecard(result.content, scan);
+  scorecard.model = judgeModel;
+  return scorecard;
 }
 
 async function scoreWebsiteWithLocalModel(
@@ -397,11 +463,11 @@ function buildRankabilitySearchQueries(scan: ProjectScanRun, categoryModel: Cate
 }
 
 function getLocalRankabilityModel() {
-  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
 }
 
 function getRankabilityModel() {
-  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5-mini";
+  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || process.env.SITEINTENT_AI_MODEL || "gpt-5-mini";
 }
 
 function buildRankabilityJsonContract() {

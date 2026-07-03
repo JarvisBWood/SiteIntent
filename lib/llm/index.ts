@@ -1,4 +1,5 @@
 export { createOllamaClient } from "@/lib/llm/ollama";
+export { createRemoteLLMClient } from "@/lib/llm/remote";
 export type {
   LLMFailure,
   LLMMessage,

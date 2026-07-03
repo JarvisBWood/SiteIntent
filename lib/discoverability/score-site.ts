@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 
 import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
-import { isOpenAIModelName } from "@/lib/llm/provider";
+import { MODEL_CONFIG } from "@/lib/llm/model-config";
+import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
 import {
   buildLocationAwareContext,
   buildLocationScopePhrase,
@@ -255,6 +256,11 @@ export async function scoreDiscoverability(input: ScoreDiscoverabilityInput): Pr
   error: string | null;
 }> {
   const selectedModel = getDiscoverabilityModel();
+
+  if (shouldUseRemoteProvider()) {
+    return scoreDiscoverabilityWithLocalModel(input, selectedModel);
+  }
+
   const openAiApiKey = process.env.OPENAI_API_KEY;
   if (isOpenAIModelName(selectedModel)) {
     if (openAiApiKey) {
@@ -1168,11 +1174,11 @@ function buildSourceAuditJsonContract() {
 }
 
 function getLocalDiscoverabilityModel() {
-  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || MODEL_CONFIG.worker;
 }
 
 function getDiscoverabilityModel() {
-  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || process.env.SITEINTENT_DISCOVERABILITY_MODEL || "gpt-5-mini";
+  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || process.env.SITEINTENT_DISCOVERABILITY_MODEL || MODEL_CONFIG.worker;
 }
 
 function formatQuestion(

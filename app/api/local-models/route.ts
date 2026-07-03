@@ -1,41 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { isCloudflareRuntime } from "@/lib/cloudflare-runtime";
+import { MODEL_CONFIG } from "@/lib/llm/model-config";
 
 export async function GET() {
-  try {
-    if (isCloudflareRuntime()) {
-      return NextResponse.json({
-        models: [],
-        error: "Local Ollama models are available only in offline local development."
-      });
-    }
-
-    const baseUrl = (process.env.OLLAMA_HOST ?? "http://127.0.0.1:11434").replace(/\/+$/, "");
-    const response = await fetch(`${baseUrl}/api/tags`, {
-      headers: {
-        Accept: "application/json"
-      },
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error(`Ollama returned ${response.status}.`);
-    }
-
-    const payload = (await response.json()) as { models?: Array<{ name?: string; model?: string }> };
-    const models = [...new Set((payload.models ?? []).flatMap((item) => [item.name, item.model]).filter(Boolean))];
-
-    return NextResponse.json({
-      models
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        models: [],
-        error: error instanceof Error ? error.message : "Unable to load local models."
-      },
-      { status: 200 }
-    );
-  }
+  return NextResponse.json({
+    models: [
+      { id: MODEL_CONFIG.worker, role: "worker", name: "Worker", description: "Crawl, page analysis, competitor discovery" },
+      { id: MODEL_CONFIG.judge, role: "judge", name: "Judge", description: "Consensus scoring aggregator" },
+      ...MODEL_CONFIG.analysis.map((id) => ({ id, role: "analysis", name: "Analysis", description: "Independent rankability scorer" }))
+    ],
+    provider: "openrouter"
+  });
 }

@@ -84,7 +84,7 @@ export async function signInWithPassword(email: string, password: string): Promi
   cookieStore.set(SESSION_COOKIE, await signSessionToken(token), {
     httpOnly: true,
     sameSite: "lax",
-    secure: isCloudflareRuntime() || process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_TTL_SECONDS
   });
@@ -117,14 +117,14 @@ export class AuthError extends Error {
 }
 
 async function bootstrapAdminUserIfNeeded() {
-  const existingCount = await getUserCount();
-  if (existingCount > 0) {
-    return;
-  }
-
   const credentials = getAdminCredentials();
   if (!credentials.email || !credentials.password) {
     throw new Error("Admin credentials are not configured.");
+  }
+
+  const existing = await getUserByEmail(credentials.email.toLowerCase());
+  if (existing) {
+    return;
   }
 
   const salt = randomToken();
@@ -241,7 +241,7 @@ async function clearSessionCookie() {
   cookieStore.set(SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: isCloudflareRuntime() || process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 0
   });

@@ -1,8 +1,9 @@
 import OpenAI from "openai";
 
 import { getCloudflareEnv, isCloudflareRuntime } from "@/lib/cloudflare-runtime";
-import { createOllamaClient } from "@/lib/llm";
-import { isOpenAIModelName } from "@/lib/llm/provider";
+import { createOllamaClient, createRemoteLLMClient } from "@/lib/llm";
+import { MODEL_CONFIG } from "@/lib/llm/model-config";
+import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
 import type {
   AnalysisPassName,
   AnalysisPassResult,
@@ -43,11 +44,34 @@ const PAGE_ANALYSIS_SCHEMA = {
 
 export async function analyzePage(page: PageExtraction, context: AnalysisContext): Promise<AnalyzedPageRecord> {
   const model = getPageAnalysisModel();
+
+  if (shouldUseRemoteProvider()) {
+    return analyzePageWithRemoteModel(page, context, model);
+  }
+
   if (isOpenAIModelName(model)) {
     return analyzePageWithOpenAI(page, context, model);
   }
 
   const client = createOllamaClient({ defaultModel: model });
+
+  const passA = await runPass("A", page, context, client, model);
+  const passB = await runPass("B", page, context, client, model);
+
+  const stable = isStable(passA.parsed, passB.parsed);
+  if (stable) {
+    return finalizeAnalysis(page, [passA, passB], "stable", null);
+  }
+
+  const passC = await runPass("C", page, context, client, model, {
+    focus: "Resolve the conflict and produce the best final single-page interpretation."
+  });
+
+  return finalizeAnalysis(page, [passA, passB, passC], "unstable", describeInstability(passA.parsed, passB.parsed, passC.parsed));
+}
+
+async function analyzePageWithRemoteModel(page: PageExtraction, context: AnalysisContext, model: string): Promise<AnalyzedPageRecord> {
+  const client = createRemoteLLMClient({ defaultModel: model });
 
   const passA = await runPass("A", page, context, client, model);
   const passB = await runPass("B", page, context, client, model);
@@ -126,6 +150,7 @@ async function runPass(
     };
   }
 
+  console.error("[analyze] AI analysis failed for", page.url, "pass", pass, ":", result.error);
   const fallback = buildFallbackAnalysis(page, context, pass, result.error);
   return {
     pass,
@@ -185,11 +210,7 @@ async function runOpenAiPass(
 }
 
 function getPageAnalysisModel() {
-  if (isCloudflareRuntime()) {
-    return getCloudflareEnv()?.SITEINTENT_PAGE_ANALYSIS_MODEL || process.env.SITEINTENT_PAGE_ANALYSIS_MODEL || "gpt-5-mini";
-  }
-
-  return process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+  return process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || MODEL_CONFIG.worker;
 }
 
 async function createOpenAiAnalysisResponse(

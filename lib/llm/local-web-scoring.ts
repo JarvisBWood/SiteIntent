@@ -1,4 +1,5 @@
-import { createOllamaClient } from "@/lib/llm";
+import { createOllamaClient, createRemoteLLMClient } from "@/lib/llm";
+import { shouldUseRemoteProvider } from "@/lib/llm/provider";
 import { searchWeb, type WebSearchRun } from "@/lib/search/web-search";
 
 type LocalWebScoringOptions<T> = {
@@ -21,7 +22,9 @@ export async function generateJsonWithLocalSearch<T>(
   searchRuns: WebSearchRun[];
   warnings: string[];
 }> {
-  const client = createOllamaClient({ defaultModel: options.model });
+  const client = shouldUseRemoteProvider()
+    ? createRemoteLLMClient({ defaultModel: options.model })
+    : createOllamaClient({ defaultModel: options.model });
   const searchRuns = await Promise.all(
     uniqueStrings(options.searchQueries).map((query) =>
       searchWeb(query, {

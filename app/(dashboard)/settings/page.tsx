@@ -6,20 +6,14 @@ import { Settings2, Trash2, Globe2, CheckCircle2, Sparkles, Target, X } from "lu
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
 import { TargetIntentEditor } from "@/components/target-intent-editor";
-import { isOpenAIModelName } from "@/lib/llm/provider";
+type ModelConfigItem = {
+  id: string;
+  role: "worker" | "judge" | "analysis";
+  name: string;
+  description: string;
+};
 
 type SettingsTab = "general" | "websites";
-
-const OPENAI_MODELS = [
-  { value: "gpt-5.5", label: "GPT-5.5 - $5.00" },
-  { value: "gpt-5.4", label: "GPT-5.4 - $2.50" },
-  { value: "gpt-5.4-mini", label: "GPT-5.4 mini - $0.75" },
-  { value: "gpt-5.4-nano", label: "GPT-5.4 nano - $0.20" },
-  { value: "gpt-5-mini", label: "GPT-5 mini - $0.25" },
-  { value: "gpt-4.1", label: "GPT-4.1 - $2.00" },
-  { value: "gpt-4.1-mini", label: "GPT-4.1 mini - $0.40" },
-  { value: "gpt-4.1-nano", label: "GPT-4.1 nano - $0.10" }
-] as const;
 
 const SETTINGS_TABS: Array<{ id: SettingsTab; label: string }> = [
   { id: "general", label: "General" },
@@ -29,8 +23,7 @@ const SETTINGS_TABS: Array<{ id: SettingsTab; label: string }> = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("websites");
   const [editingTargetProjectId, setEditingTargetProjectId] = useState<string | null>(null);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [localModelsAvailable, setLocalModelsAvailable] = useState(true);
+  const [modelConfig, setModelConfig] = useState<ModelConfigItem[]>([]);
   const { projects, activeProjectId, selectProject, deleteProject, preferences, updatePreferences } = useSiteIntent();
 
   useEffect(() => {
@@ -46,18 +39,16 @@ export default function SettingsPage() {
           headers: { Accept: "application/json" },
           signal: controller.signal
         });
-        const payload = (await response.json()) as { models?: string[]; error?: string };
+        const payload = (await response.json()) as { models?: ModelConfigItem[] };
         if (controller.signal.aborted) {
           return;
         }
-        setAvailableModels(Array.isArray(payload.models) ? payload.models : []);
-        setLocalModelsAvailable(!payload.error);
+        setModelConfig(Array.isArray(payload.models) ? payload.models : []);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setAvailableModels([]);
-        setLocalModelsAvailable(false);
+        setModelConfig([]);
       }
     }
 
@@ -223,51 +214,51 @@ export default function SettingsPage() {
           ) : null}
         </section>
       ) : (
-        <section className="card" aria-label="Model selection">
+        <section className="card" aria-label="Model configuration">
           <div className="card__header">
             <div>
-              <h2 className="card__title">Select model for this scan</h2>
+              <h2 className="card__title">AI model configuration</h2>
+              <p className="card__copy">Fixed models used for all scans. Configured in environment variables.</p>
             </div>
           </div>
 
           <div className="settings-model-grid" style={{ display: "grid", gap: 16 }}>
-            <label style={{ display: "grid", gap: 8 }}>
-              <span className="settings-item__title">Page analysis model</span>
-                <select
-                  className="input"
-                  value={preferences.pageAnalysisModel}
-                  onChange={(event) => updatePreferences({ pageAnalysisModel: event.target.value })}
-                >
-                {renderModelOptions(availableModels, preferences.pageAnalysisModel, localModelsAvailable).map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.options.map((model) => (
-                      <option key={model.value} value={model.value}>
-                        {model.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
+            <div style={{ display: "grid", gap: 8 }}>
+              <span className="settings-item__title">Worker model</span>
+              <code className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
+                {modelConfig.find((m) => m.role === "worker")?.id ?? "Loading..."}
+              </code>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Crawl, page analysis, competitor discovery, competitor validation
+              </p>
+            </div>
 
-            <label style={{ display: "grid", gap: 8 }}>
-              <span className="settings-item__title">Scoring model</span>
-                <select
-                  className="input"
-                  value={preferences.scoringModel}
-                  onChange={(event) => updatePreferences({ scoringModel: event.target.value })}
-                >
-                {renderModelOptions(availableModels, preferences.scoringModel, localModelsAvailable).map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.options.map((model) => (
-                      <option key={model.value} value={model.value}>
-                        {model.label}
-                      </option>
-                    ))}
-                  </optgroup>
+            <div style={{ display: "grid", gap: 8 }}>
+              <span className="settings-item__title">Analysis models</span>
+              <div style={{ display: "grid", gap: 4 }}>
+                {(modelConfig.filter((m) => m.role === "analysis").length
+                  ? modelConfig.filter((m) => m.role === "analysis")
+                  : []
+                ).map((m) => (
+                  <code key={m.id} className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
+                    {m.id}
+                  </code>
                 ))}
-              </select>
-            </label>
+              </div>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Each independently scores the website; results are aggregated by the judge model
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+              <span className="settings-item__title">Judge model</span>
+              <code className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
+                {modelConfig.find((m) => m.role === "judge")?.id ?? "Loading..."}
+              </code>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Aggregates all analysis model scores into a final consensus scorecard
+              </p>
+            </div>
           </div>
         </section>
       )}
@@ -275,38 +266,4 @@ export default function SettingsPage() {
   );
 }
 
-function renderModelOptions(availableModels: string[], selectedModel: string, localModelsAvailable: boolean) {
-  const localModels = [...new Set(availableModels)].sort();
-  const localOptions = (localModels.length ? localModels : ["llama3.1:8b", "qwen2.5:14b"]).map((model) => ({
-    value: model,
-    label: `${model} - local`
-  }));
-  const selectedIsOpenAI = isOpenAIModelName(selectedModel);
-  const openAIOptions =
-    selectedIsOpenAI && selectedModel && !OPENAI_MODELS.some((model) => model.value === selectedModel)
-      ? [{ value: selectedModel, label: `${formatModelLabel(selectedModel)} - $0.00` }, ...OPENAI_MODELS]
-      : OPENAI_MODELS;
-  return [
-    ...(localModelsAvailable
-      ? [
-          {
-            label: "Local models",
-            options:
-              selectedIsOpenAI || !selectedModel.trim()
-                ? localOptions
-                : localOptions.some((model) => model.value === selectedModel)
-                  ? localOptions
-                  : [{ value: selectedModel, label: `${selectedModel} - local` }, ...localOptions]
-          }
-        ]
-      : []),
-    {
-      label: "OpenAI API models",
-      options: openAIOptions
-    }
-  ];
-}
 
-function formatModelLabel(model: string) {
-  return model.replace(/^gpt-/i, "GPT-").replace(/-/g, " ");
-}

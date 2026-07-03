@@ -2,7 +2,8 @@ import OpenAI from "openai";
 
 import { loadAppState } from "@/lib/app-state";
 import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
-import { isOpenAIModelName } from "@/lib/llm/provider";
+import { MODEL_CONFIG } from "@/lib/llm/model-config";
+import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
 import {
   buildCategoryModel,
   buildCompetitorAnalyses,
@@ -12,7 +13,8 @@ import {
 } from "@/lib/models";
 import { scoreDiscoverability } from "@/lib/discoverability/score-site";
 import type { AggregatedCandidate } from "@/lib/discoverability/types";
-import { scoreWebsite } from "@/lib/scoring/score-site";
+import { scoreWebsite, scoreWebsiteWithJudgeModel } from "@/lib/scoring/score-site";
+import type { RankabilityScorecard } from "@/lib/scoring/types";
 import { analyzePage } from "@/lib/scan/analyze";
 import { crawlSite } from "@/lib/scan/crawl";
 import { logScanEvent, toErrorDetails } from "@/lib/scan/logging";
@@ -179,19 +181,42 @@ export async function runProjectScan(
     competitorAnalyses: baselineCompetitorAnalyses
   });
 
-  const websiteOnlyScoringResult = await scoreWebsite({
-    scan: completedRun,
-    categoryModel: initialCategoryModel,
-    competitorAnalyses: [],
-    targetIntentModel: request.targetIntentModel
-  });
-  const websiteRankability = websiteOnlyScoringResult.scorecard;
+  const analysisModelResults: Array<{ model: string; scorecard: RankabilityScorecard }> = [];
+  for (const analysisModel of MODEL_CONFIG.analysis) {
+    const result = await scoreWebsite({
+      scan: completedRun,
+      categoryModel: initialCategoryModel,
+      competitorAnalyses: [],
+      targetIntentModel: request.targetIntentModel,
+      model: analysisModel
+    });
+    if (result.scorecard) {
+      analysisModelResults.push({ model: analysisModel, scorecard: result.scorecard });
+    }
+  }
+
+  let websiteRankability: RankabilityScorecard | null = null;
+  let scoringError: string | null = null;
+  if (analysisModelResults.length > 1) {
+    websiteRankability = await scoreWebsiteWithJudgeModel(
+      completedRun,
+      initialCategoryModel,
+      analysisModelResults
+    );
+    if (!websiteRankability) {
+      scoringError = "Judge model failed to produce a consensus score.";
+    }
+  } else if (analysisModelResults.length === 1) {
+    websiteRankability = analysisModelResults[0].scorecard;
+  } else {
+    scoringError = "All analysis models failed to score the website.";
+  }
 
   completedRun = completeWebsiteScan(completedRun, {
     completedAt: new Date().toISOString(),
     rankability: websiteRankability ?? undefined,
     scoringStatus: websiteRankability ? "completed" : "failed",
-    scoringError: websiteOnlyScoringResult.error ?? null
+    scoringError
   });
   options?.onScanSnapshot?.(completedRun);
 
@@ -230,7 +255,7 @@ export async function runProjectScan(
         rankability: websiteRankability ?? undefined,
         discoverability: partialScorecard,
         scoringStatus: websiteRankability || partialScorecard ? "completed" : "failed",
-        scoringError: websiteOnlyScoringResult.error ?? null
+        scoringError: scoringError ?? null
       });
       options?.onScanSnapshot?.(partialRun);
       emitProgress({
@@ -252,7 +277,7 @@ export async function runProjectScan(
   });
   const discoverability = discoverabilityResult.scorecard;
 
-  if (websiteOnlyScoringResult.error || discoverabilityResult.error) {
+  if (scoringError || discoverabilityResult.error) {
     logScanEvent({
       level: "warn",
       event: "scan_scoring_warning",
@@ -263,7 +288,7 @@ export async function runProjectScan(
       scanMode,
       message: "One or more website scoring stages returned an error.",
       details: {
-        rankabilityError: websiteOnlyScoringResult.error,
+        rankabilityError: scoringError,
         discoverabilityError: discoverabilityResult.error
       }
     });
@@ -274,7 +299,7 @@ export async function runProjectScan(
     rankability: websiteRankability ?? undefined,
     discoverability: discoverability ?? undefined,
     scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
-    scoringError: [websiteOnlyScoringResult.error, discoverabilityResult.error].filter(Boolean).join(" | ") || null
+    scoringError: [scoringError, discoverabilityResult.error].filter(Boolean).join(" | ") || null
   });
   options?.onScanSnapshot?.(completedRun);
 
@@ -372,7 +397,7 @@ export async function runProjectScan(
     rankability: websiteRankability ?? undefined,
     discoverability: discoverability ?? undefined,
     scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
-    scoringError: [websiteOnlyScoringResult.error, discoverabilityResult.error].filter(Boolean).join(" | ") || null
+    scoringError: [scoringError, discoverabilityResult.error].filter(Boolean).join(" | ") || null
   });
 
   const observedIntent = buildObservedIntent({
@@ -1112,8 +1137,8 @@ async function analyzeCompetitorHomepages(
   return analyses;
 }
 
-const COMPETITOR_VALIDATION_MODEL = process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || "gpt-5-mini";
-const COMPETITOR_VALIDATION_FALLBACK_MODEL = "gpt-5.4-mini";
+const COMPETITOR_VALIDATION_MODEL = process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || MODEL_CONFIG.worker;
+const COMPETITOR_VALIDATION_FALLBACK_MODEL = MODEL_CONFIG.judge;
 const COMPETITOR_VALIDATION_THRESHOLD = 75;
 const COMPETITOR_VALIDATION_RECHECK_MIN = 65;
 const COMPETITOR_VALIDATION_SCHEMA = {
@@ -1144,6 +1169,11 @@ async function validateCompetitorCandidate(input: {
   retryMode?: "initial" | "recheck";
 }) {
   const model = getCompetitorValidationModel();
+
+  if (shouldUseRemoteProvider()) {
+    return validateCompetitorCandidateWithLocalModel(input, model);
+  }
+
   const openAiApiKey = process.env.OPENAI_API_KEY;
   if (isOpenAIModelName(model)) {
     if (openAiApiKey) {
@@ -1409,9 +1439,9 @@ function normalizeDomain(value: string) {
 }
 
 function getLocalCompetitorValidationModel() {
-  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
+  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || MODEL_CONFIG.worker;
 }
 
 function getCompetitorValidationModel() {
-  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || "gpt-5-mini";
+  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || MODEL_CONFIG.worker;
 }

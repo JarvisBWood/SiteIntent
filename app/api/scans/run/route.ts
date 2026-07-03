@@ -81,12 +81,20 @@ export async function POST(request: Request) {
               }
             });
             const scan = await runProjectScan(payload, {
-              onProgress(progress: ScanProgressEvent) {
-                void updateScanProgress(payload.projectId, progress);
+              async onProgress(progress: ScanProgressEvent) {
+                try {
+                  await updateScanProgress(payload.projectId, progress);
+                } catch (err) {
+                  console.error("[scan] progress save failed:", err);
+                }
                 send({ type: "progress", progress });
               },
-              onScanSnapshot(scanSnapshot) {
-                void persistScanRunSnapshot(scanSnapshot);
+              async onScanSnapshot(scanSnapshot) {
+                try {
+                  await persistScanRunSnapshot(scanSnapshot);
+                } catch (err) {
+                  console.error("[scan] snapshot save failed:", err);
+                }
               }
             });
 

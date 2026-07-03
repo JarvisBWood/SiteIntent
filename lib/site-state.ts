@@ -133,8 +133,8 @@ export function createEmptyState(): SiteIntentSessionState {
 
 export function createDefaultPreferences(): AppPreferences {
   return {
-    pageAnalysisModel: "llama3.1:8b",
-    scoringModel: "qwen2.5:14b"
+    pageAnalysisModel: process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b",
+    scoringModel: process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "qwen2.5:14b"
   };
 }
 

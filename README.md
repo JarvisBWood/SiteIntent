@@ -12,22 +12,221 @@ The product currently centers on three outputs:
 AI Search Score = (Rankability x 0.4) + (Discoverability x 0.6)
 ```
 
-## Cloudflare Workers Deployment
+## Cloudflare Setup
 
-The dashboard runs on Cloudflare Workers through OpenNext and uses Cloudflare D1 as its hosted database. Local `npm run dev` still uses the local SQLite fallback for offline testing.
+This section is the source of truth for how the hosted app works in Cloudflare. It is written so a future AI agent can understand the production setup, make safe changes, and know which files to inspect before deploying.
 
-Production target:
+### Architecture
+
+SiteIntent has two separate Cloudflare Workers:
+
+- `siteintent-dashboard`
+  - Purpose: the real authenticated app
+  - Domain: `dash.aisearchauditor.com`
+  - Runtime: Next.js on Cloudflare Workers via OpenNext
+  - Database: Cloudflare D1 via binding `DB`
+- `aisearchauditor-coming-soon`
+  - Purpose: simple public holding page
+  - Domains: `aisearchauditor.com`, `www.aisearchauditor.com`
+  - Runtime: plain Worker script in [workers/coming-soon.ts](/Users/jarvis/Documents/GitHub/SiteIntent/workers/coming-soon.ts)
+
+Production intentionally splits the dashboard and the public site. The dashboard lives only on `dash.aisearchauditor.com`, while the apex domain stays free for the public marketing website.
+
+### Important Files
+
+- [wrangler.jsonc](/Users/jarvis/Documents/GitHub/SiteIntent/wrangler.jsonc)
+  - Main production Worker config for `siteintent-dashboard`
+  - Declares the Worker name, custom domain, D1 binding, asset binding, and public env vars
+- [wrangler-coming-soon.jsonc](/Users/jarvis/Documents/GitHub/SiteIntent/wrangler-coming-soon.jsonc)
+  - Separate Worker config for the apex coming-soon page
+- [open-next.config.ts](/Users/jarvis/Documents/GitHub/SiteIntent/open-next.config.ts)
+  - OpenNext Cloudflare adapter config
+- [next.config.ts](/Users/jarvis/Documents/GitHub/SiteIntent/next.config.ts)
+  - Calls `initOpenNextCloudflareForDev()` so local dev/preview can access Cloudflare context helpers
+- [migrations/0001_initial.sql](/Users/jarvis/Documents/GitHub/SiteIntent/migrations/0001_initial.sql)
+  - Canonical D1 schema
+- [lib/cloudflare-runtime.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/cloudflare-runtime.ts)
+  - Reads `getCloudflareContext()` and exposes the D1 binding/env
+- [lib/app-state.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/app-state.ts)
+  - Storage adapter boundary used by the app
+- [lib/d1-state.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/d1-state.ts)
+  - D1 implementation of app persistence
+- [lib/sqlite.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/sqlite.ts)
+  - Local SQLite schema and connection for offline fallback
+- [lib/auth.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/auth.ts)
+  - Auth implementation for both D1 and SQLite modes
+- [public/_headers](/Users/jarvis/Documents/GitHub/SiteIntent/public/_headers)
+  - Cache headers for `/_next/static/*` assets when deployed to Cloudflare
+
+### Production Worker Config
+
+Current dashboard production target:
 
 - Worker name: `siteintent-dashboard`
 - Dashboard domain: `dash.aisearchauditor.com`
-- Public website domain: `aisearchauditor.com`
-- Public coming-soon Worker: `aisearchauditor-coming-soon`
 - D1 database name: `siteintent-dashboard-prod`
 - D1 database ID: `c8098b64-7946-469d-845f-cb930cc30ed9`
+- D1 binding name in code: `DB`
+- Static asset binding name in code: `ASSETS`
+- Public env var: `NEXT_PUBLIC_SITE_URL=https://dash.aisearchauditor.com`
 
-### Cloudflare Setup
+Important detail:
 
-The Workers and D1 database can be deployed manually with Wrangler:
+- The `assets` block in `wrangler.jsonc` is required.
+- It points to `.open-next/assets`.
+- Without it, the login page HTML may load but `/_next/static/*` files return `404`, which prevents React hydration and makes forms appear to do nothing.
+
+### Environment And Secrets
+
+These secrets are required in the `siteintent-dashboard` Worker:
+
+```txt
+OPENAI_API_KEY
+DASH_ADMIN_EMAIL
+DASH_ADMIN_PASSWORD
+SESSION_SECRET
+```
+
+Runtime env keys used by the app:
+
+- `OPENAI_API_KEY`
+  - Required for production scans
+- `DASH_ADMIN_EMAIL`
+  - Bootstrap admin email
+- `DASH_ADMIN_PASSWORD`
+  - Bootstrap admin password
+- `SESSION_SECRET`
+  - HMAC secret used to sign the session cookie
+- `SITEINTENT_PAGE_ANALYSIS_MODEL`
+  - Optional override for page analysis model in Cloudflare
+- `SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL`
+- `SITEINTENT_DISCOVERABILITY_LOCAL_MODEL`
+- `SITEINTENT_RANKABILITY_LOCAL_MODEL`
+- `SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL`
+  - Local model settings retained for non-Cloudflare/local workflows
+
+Local preview secrets live in `.dev.vars`, using [.dev.vars.example](/Users/jarvis/Documents/GitHub/SiteIntent/.dev.vars.example) as the template.
+
+### Database Model
+
+Cloudflare production uses D1 as the source of truth. Local `npm run dev` uses `data/siteintent.sqlite` through `better-sqlite3`. The schemas are intentionally kept aligned.
+
+Tables in D1 and SQLite:
+
+- `app_session`
+  - Legacy single-row JSON state table
+  - Present for compatibility but not the main persistence layer now
+- `users`
+  - Columns: `id`, `email`, `display_name`, `password_hash`, `password_salt`, `created_at`
+  - Stores dashboard users
+  - Current product assumption is one bootstrap admin user, not self-signup
+- `user_sessions`
+  - Columns: `id`, `user_id`, `token_hash`, `expires_at`, `created_at`
+  - Stores session records
+  - `token_hash` is unique and indexed
+  - The raw cookie token is never stored in the database
+- `app_ui_state`
+  - Columns: `id`, `active_project_id`, `preferences_json`, `scan_progress_json`
+  - Stores global UI state and preferences
+  - Row shape assumes a single logical app workspace row with `id = 1`
+- `projects`
+  - Columns: `id`, `sort_order`, `data_json`
+  - Stores project records as serialized JSON
+- `target_intent_models`
+  - Columns: `project_id`, `data_json`
+  - Stores the target intent model for each project
+- `project_onboarding`
+  - Columns: `project_id`, `data_json`
+  - Stores onboarding status and derived state for each project
+- `scan_runs`
+  - Columns: `id`, `project_id`, `sort_order`, `started_at`, `completed_at`, `data_json`
+  - Stores metadata for each scan run
+  - Indexed on `project_id`
+- `scan_pages`
+  - Columns: `scan_id`, `page_index`, `data_json`
+  - Stores the page-level payloads for a scan
+  - Primary key is `(scan_id, page_index)`
+
+How persistence works:
+
+- The route/API layer should call [lib/app-state.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/app-state.ts), not D1 or SQLite directly.
+- `loadAppState()` chooses D1 when `DB` exists, otherwise SQLite.
+- `saveAppState()` rewrites the logical app state into structured rows.
+- Scan progress and scan snapshots have dedicated helper functions so long-running scans can update incrementally.
+
+### Auth Model
+
+Auth is implemented in [lib/auth.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/auth.ts).
+
+Behavior:
+
+- Login happens through `POST /api/auth/login`
+- Logout happens through `POST /api/auth/logout`
+- Session inspection happens through `GET /api/auth/session`
+- Protected state loading happens through `GET /api/state`
+
+Security model:
+
+- Password hashes use PBKDF2 via Web Crypto so the same implementation works in Workers
+- Per-user salts are stored in `users.password_salt`
+- Session cookies are:
+  - HTTP-only
+  - `SameSite=Lax`
+  - `Secure` in production / Cloudflare
+- The cookie value contains a signed token
+- The database stores only a SHA-256 hash of the raw token
+
+Bootstrap behavior:
+
+- On first sign-in, if `users` is empty, the app auto-creates the admin user from `DASH_ADMIN_EMAIL` and `DASH_ADMIN_PASSWORD`
+- In local non-production fallback only, `admin@localhost` / `password` may be used if no env secrets are provided
+- Cloudflare production should always use explicit secrets instead
+
+### Local Vs Cloudflare Runtime
+
+There are three meaningful execution modes:
+
+- `npm run dev`
+  - Standard Next.js local development
+  - Uses SQLite in `data/siteintent.sqlite`
+  - Good for offline/local app testing
+- `npm run cf:preview`
+  - Local Cloudflare Worker preview
+  - Uses local D1 through Wrangler
+  - Best for testing Worker behavior before production deploy
+- Cloudflare production
+  - Uses D1 binding `DB`
+  - Uses Worker secrets instead of `.env`
+  - Should be treated as OpenAI-backed production mode
+
+Rules to remember:
+
+- Do not assume local SQLite data exists in Cloudflare
+- Do not read or write directly to SQLite from code that must run in the Worker
+- Production scans should use OpenAI, not local Ollama
+
+### Build And Deploy Flow
+
+Scripts:
+
+- `npm run dev`
+  - Local Next.js development
+- `npm run build`
+  - Standard Next.js production build
+- `npm run cf:build`
+  - Builds the OpenNext Worker output
+- `npm run cf:preview`
+  - Runs the built Worker locally with Wrangler
+- `npm run cf:deploy`
+  - Deploys the dashboard Worker
+- `npm run cf:deploy:coming-soon`
+  - Deploys the apex coming-soon Worker
+- `npm run db:migrate:local`
+  - Applies D1 migrations to the local Wrangler database
+- `npm run db:migrate:remote`
+  - Applies D1 migrations to the remote Cloudflare D1 database
+
+Manual deploy sequence:
 
 ```bash
 npx wrangler login
@@ -37,31 +236,85 @@ npm run cf:deploy
 npm run cf:deploy:coming-soon
 ```
 
-The dashboard Worker requires these runtime secrets in Cloudflare:
+### Automatic Deploys From GitHub
 
-```txt
-OPENAI_API_KEY
-DASH_ADMIN_EMAIL
-DASH_ADMIN_PASSWORD
-SESSION_SECRET
-```
+Cloudflare Workers Builds is configured in the Cloudflare dashboard for the existing `siteintent-dashboard` Worker.
 
-### Automatic Deploys
-
-Cloudflare Workers Builds is configured from the Cloudflare dashboard, not Wrangler. In Cloudflare Workers & Pages, connect the GitHub repo `JarvisBWood/SiteIntent` to the existing `siteintent-dashboard` Worker from `Settings > Builds > Connect`.
-
-Use these settings:
+Required settings:
 
 - Production branch: `main`
 - Build command: `npm run cf:build`
 - Deploy command: `npm run cf:deploy`
-- Root directory: repository root
+- Root directory: repository root, blank, or `.`
 
-Do not use Cloudflare's default `npx wrangler deploy` deploy command for this app. The build step creates OpenNext output first, and the deploy step must run the OpenNext deploy command through the `cf:deploy` package script.
+Important warning:
 
-The Worker name in Cloudflare must remain `siteintent-dashboard` because it must match `wrangler.jsonc`.
+- Do not use Cloudflare's default `npx wrangler deploy` deploy command for this app.
+- This repo must deploy through the `cf:deploy` package script.
+- `cf:deploy` runs `opennextjs-cloudflare deploy --config wrangler.jsonc`.
 
-The apex domain is intentionally handled by the separate `aisearchauditor-coming-soon` Worker so `aisearchauditor.com` stays available for the public website while `dash.aisearchauditor.com` hosts the app.
+How to think about Git deploys:
+
+- A push to `main` should trigger a Cloudflare build check in GitHub
+- If the check passes, Cloudflare should create a new `siteintent-dashboard` version
+- If HTML loads but JS is broken, check the asset binding in `wrangler.jsonc`
+- If the build passes but deploy fails, inspect the Cloudflare build log and confirm the deploy command is still `npm run cf:deploy`
+
+### Domain Routing
+
+Domain behavior:
+
+- `dash.aisearchauditor.com`
+  - Routed to `siteintent-dashboard`
+- `aisearchauditor.com`
+  - Routed to `aisearchauditor-coming-soon`
+- `www.aisearchauditor.com`
+  - Routed to `aisearchauditor-coming-soon`, which redirects to the apex domain
+
+This means:
+
+- Never attach the dashboard Worker to the apex domain
+- Public marketing content should eventually replace or evolve the apex Worker, not the dashboard Worker
+
+### Updating The App Safely
+
+If an AI agent is asked to update the hosted app:
+
+1. Read [wrangler.jsonc](/Users/jarvis/Documents/GitHub/SiteIntent/wrangler.jsonc), [package.json](/Users/jarvis/Documents/GitHub/SiteIntent/package.json), and [migrations/0001_initial.sql](/Users/jarvis/Documents/GitHub/SiteIntent/migrations/0001_initial.sql) first.
+2. If persistence changes are needed, update both:
+   - D1 migration files
+   - local SQLite schema in [lib/sqlite.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/sqlite.ts)
+3. Keep app code using [lib/app-state.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/app-state.ts) as the storage boundary.
+4. Run local checks:
+   - `npm run typecheck`
+   - `npm run cf:build`
+5. If auth changes are made, verify:
+   - `POST /api/auth/login`
+   - `GET /api/auth/session`
+   - browser login flow
+6. If deploy/runtime changes are made, verify:
+   - `/_next/static/*` assets return `200`
+   - `/login` loads and hydrates
+   - authenticated navigation reaches `/dashboard`
+
+### Troubleshooting
+
+Common problems and what they usually mean:
+
+- Login page loads but clicking Sign in appears to do nothing
+  - Usually means `/_next/static/*` assets are missing
+  - Check `wrangler.jsonc` for the `assets.directory = ".open-next/assets"` binding
+- Cloudflare build succeeds but deploy fails with OpenNext config errors
+  - Usually means the deploy command is wrong
+  - It must be `npm run cf:deploy`, not raw `wrangler deploy`
+- API login works in curl but the browser login page does not redirect
+  - Usually means frontend assets are not being served
+- D1 works locally but not in production
+  - Check remote migrations
+  - Check the `database_id` and `binding` in `wrangler.jsonc`
+- Auth fails immediately in Workers with PBKDF2 iteration errors
+  - Cloudflare Workers supports lower iteration counts than some Node defaults
+  - The current implementation already uses a Workers-compatible iteration count
 
 ### Local Cloudflare Preview
 
@@ -73,7 +326,7 @@ npm run cf:build
 npm run cf:preview
 ```
 
-The preview runs at `http://localhost:8787` with a local D1 database.
+The preview runs at `http://localhost:8787` using local D1. This is the best approximation of production without deploying to Cloudflare.
 
 ## Scan Overview
 

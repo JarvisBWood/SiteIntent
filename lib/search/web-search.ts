@@ -30,12 +30,74 @@ export async function searchWeb(query: string, options: SearchOptions = {}): Pro
   const fetchImpl = options.fetchImpl ?? fetch;
   const maxResults = options.maxResults ?? DEFAULT_MAX_RESULTS;
   const region = options.region ?? DEFAULT_REGION;
+  const apiKey = process.env.SERPER_API_KEY ?? "";
 
+  if (apiKey) {
+    return searchWithSerper(trimmedQuery, apiKey, fetchImpl, maxResults);
+  }
+
+  return searchWithDuckDuckGo(trimmedQuery, fetchImpl, maxResults, region);
+}
+
+async function searchWithSerper(
+  query: string,
+  apiKey: string,
+  fetchImpl: typeof fetch,
+  maxResults: number
+): Promise<WebSearchRun> {
   try {
-    const body = new URLSearchParams({
-      q: trimmedQuery,
-      kl: region
+    const response = await fetchImpl("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ q: query, num: maxResults })
     });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "");
+      return { query, results: [], error: `Serper API returned ${response.status}: ${errorBody}` };
+    }
+
+    const data = (await response.json()) as {
+      organic?: Array<{ title?: string; link?: string; snippet?: string }>;
+    };
+
+    const results: WebSearchResult[] = (data.organic ?? [])
+      .map((item) => {
+        const url = item.link ?? "";
+        const title = (item.title ?? "").trim();
+        const snippet = (item.snippet ?? "").trim();
+        if (!title || !url) return null;
+        return {
+          title,
+          url,
+          displayUrl: url,
+          snippet,
+          sourceDomain: normalizeDomain(url)
+        };
+      })
+      .filter((r): r is WebSearchResult => r !== null);
+
+    return { query, results };
+  } catch (error) {
+    return {
+      query,
+      results: [],
+      error: error instanceof Error ? error.message : "Unknown Serper search error."
+    };
+  }
+}
+
+async function searchWithDuckDuckGo(
+  query: string,
+  fetchImpl: typeof fetch,
+  maxResults: number,
+  region: string
+): Promise<WebSearchRun> {
+  try {
+    const body = new URLSearchParams({ q: query, kl: region });
 
     const response = await fetchImpl("https://html.duckduckgo.com/html/", {
       method: "POST",
@@ -48,23 +110,16 @@ export async function searchWeb(query: string, options: SearchOptions = {}): Pro
     });
 
     if (!response.ok) {
-      return {
-        query: trimmedQuery,
-        results: [],
-        error: `Search request failed with status ${response.status}.`
-      };
+      return { query, results: [], error: `DuckDuckGo returned ${response.status}.` };
     }
 
     const html = await response.text();
-    return {
-      query: trimmedQuery,
-      results: parseDuckDuckGoResults(html).slice(0, maxResults)
-    };
+    return { query, results: parseDuckDuckGoResults(html).slice(0, maxResults) };
   } catch (error) {
     return {
-      query: trimmedQuery,
+      query,
       results: [],
-      error: error instanceof Error ? error.message : "Unknown search error."
+      error: error instanceof Error ? error.message : "Unknown DuckDuckGo search error."
     };
   }
 }
