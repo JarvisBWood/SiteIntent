@@ -25,18 +25,20 @@ import type { ScanDiscoverySource, ScanProgressEvent } from "@/lib/scan/types";
 import {
   createEmptyState,
   createDefaultPreferences,
-  normalizeProjectScanDepth,
-  shortenDisplayUrl,
-  type ObservedIntent,
   type AppPreferences,
+  normalizeProjectScanDepth,
   type ProjectOnboardingState,
   type ProjectScanRun,
   type SiteIntentProject,
   type SiteIntentProjectDraft,
   type SiteIntentSession,
   type SiteIntentSessionState,
+  shortenDisplayUrl,
+  type ObservedIntent,
   ensureProjectName
 } from "@/lib/site-state";
+import { normalizeProviderModelSelection } from "@/lib/llm/provider-models";
+import type { ProjectCompetitorReport, ProjectOverviewReport } from "@/lib/reports";
 import { ToastViewport } from "@/components/toast-viewport";
 
 type ScanProgressByProject = Record<string, ScanProgressEvent | null>;
@@ -88,6 +90,10 @@ type SiteIntentContextValue = SiteIntentSessionState & {
   scanProgressByProject: ScanProgressByProject;
   preferences: AppPreferences;
   updatePreferences: (next: Partial<AppPreferences>) => void;
+  overviewReportsByProject: Record<string, ProjectOverviewReport | null>;
+  competitorReportsByProject: Record<string, ProjectCompetitorReport | null>;
+  loadProjectOverviewReport: (projectId: string, options?: { force?: boolean }) => Promise<ProjectOverviewReport | null>;
+  loadProjectCompetitorReport: (projectId: string, options?: { force?: boolean }) => Promise<ProjectCompetitorReport | null>;
 };
 
 const SiteIntentContext = createContext<SiteIntentContextValue | null>(null);
@@ -170,7 +176,10 @@ function normalizeLoadedState(parsed?: Partial<SiteIntentSessionState> | null): 
       parsed.preferences && typeof parsed.preferences === "object"
         ? {
             ...createDefaultPreferences(),
-            ...(parsed.preferences as Partial<AppPreferences>)
+            ...(parsed.preferences as Partial<AppPreferences>),
+            comparisonModels: normalizeProviderModelSelection(
+              (parsed.preferences as Partial<AppPreferences>).comparisonModels
+            )
           }
         : createDefaultPreferences()
   };
@@ -184,10 +193,14 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
   const [lastScanError, setLastScanError] = useState<string | null>(null);
   const [scanProgressByProject, setScanProgressByProject] = useState<ScanProgressByProject>({});
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [overviewReportsByProject, setOverviewReportsByProject] = useState<Record<string, ProjectOverviewReport | null>>({});
+  const [competitorReportsByProject, setCompetitorReportsByProject] = useState<Record<string, ProjectCompetitorReport | null>>({});
   const attemptedFaviconHydration = useRef(new Set<string>());
   const emittedToastKeys = useRef(new Set<string>());
   const stateRef = useRef<SiteIntentSessionState>(state);
   const scanProgressRef = useRef<ScanProgressByProject>(scanProgressByProject);
+  const overviewReportsRef = useRef<Record<string, ProjectOverviewReport | null>>({});
+  const competitorReportsRef = useRef<Record<string, ProjectCompetitorReport | null>>({});
 
   useEffect(() => {
     stateRef.current = state;
@@ -196,6 +209,14 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
   useEffect(() => {
     scanProgressRef.current = scanProgressByProject;
   }, [scanProgressByProject]);
+
+  useEffect(() => {
+    overviewReportsRef.current = overviewReportsByProject;
+  }, [overviewReportsByProject]);
+
+  useEffect(() => {
+    competitorReportsRef.current = competitorReportsByProject;
+  }, [competitorReportsByProject]);
 
   useEffect(() => {
     let cancelled = false;
@@ -320,6 +341,77 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
     } catch {
       setLastScanError("Unable to save the latest state.");
     }
+  }
+
+  async function loadProjectOverviewReport(projectId: string, options?: { force?: boolean }) {
+    if (!options?.force && Object.prototype.hasOwnProperty.call(overviewReportsRef.current, projectId)) {
+      return overviewReportsRef.current[projectId] ?? null;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/overview`, {
+        headers: { Accept: "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error("Unable to load project overview.");
+      }
+
+      const payload = (await response.json()) as { report?: ProjectOverviewReport };
+      const report = payload.report ?? null;
+      setOverviewReportsByProject((current) => ({
+        ...current,
+        [projectId]: report
+      }));
+      return report;
+    } catch {
+      setOverviewReportsByProject((current) => ({
+        ...current,
+        [projectId]: null
+      }));
+      return null;
+    }
+  }
+
+  async function loadProjectCompetitorReport(projectId: string, options?: { force?: boolean }) {
+    if (!options?.force && Object.prototype.hasOwnProperty.call(competitorReportsRef.current, projectId)) {
+      return competitorReportsRef.current[projectId] ?? null;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/competitors`, {
+        headers: { Accept: "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error("Unable to load competitor report.");
+      }
+
+      const payload = (await response.json()) as { report?: ProjectCompetitorReport };
+      const report = payload.report ?? null;
+      setCompetitorReportsByProject((current) => ({
+        ...current,
+        [projectId]: report
+      }));
+      return report;
+    } catch {
+      setCompetitorReportsByProject((current) => ({
+        ...current,
+        [projectId]: null
+      }));
+      return null;
+    }
+  }
+
+  function invalidateProjectReports(projectId: string) {
+    setOverviewReportsByProject((current) => {
+      const next = { ...current };
+      delete next[projectId];
+      return next;
+    });
+    setCompetitorReportsByProject((current) => {
+      const next = { ...current };
+      delete next[projectId];
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -458,7 +550,9 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       `Stage: ${progress.title}`,
       `Mode: ${progress.scanMode === "competitors" ? "Competitor scan" : progress.scanMode === "initial" ? "Initial website scan" : "Full scan"}`,
       `Analysis model: ${state.preferences.pageAnalysisModel}`,
-      `Scoring model: ${state.preferences.scoringModel}`
+      `OpenAI: ${state.preferences.comparisonModels.openai}`,
+      `Anthropic: ${state.preferences.comparisonModels.anthropic}`,
+      `Gemini: ${state.preferences.comparisonModels.google}`
     ];
 
     if (progress.currentUrl) {
@@ -481,7 +575,13 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       detail: parts.join(" | "),
       progress: progress.progress
     };
-  }, [scanProgressByProject, state.preferences.pageAnalysisModel, state.preferences.scoringModel]);
+  }, [
+    scanProgressByProject,
+    state.preferences.comparisonModels.anthropic,
+    state.preferences.comparisonModels.google,
+    state.preferences.comparisonModels.openai,
+    state.preferences.pageAnalysisModel
+  ]);
 
   function showToast(input: Omit<ToastMessage, "id">) {
     const id = crypto.randomUUID();
@@ -632,7 +732,11 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       discoverability,
       conceptDelta,
       scanProgressByProject,
+      overviewReportsByProject,
+      competitorReportsByProject,
       preferences: state.preferences,
+      loadProjectOverviewReport,
+      loadProjectCompetitorReport,
       updatePreferences(next) {
         setState((current) => {
           const nextState = {
@@ -680,6 +784,8 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
           headers: { Accept: "application/json" }
         }).catch(() => {});
         setState(createEmptyState());
+        setOverviewReportsByProject({});
+        setCompetitorReportsByProject({});
         router.push("/login");
       },
       createProject(draft) {
@@ -727,6 +833,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         }));
 
         void hydrateProjectFavicons(project);
+        invalidateProjectReports(project.id);
         return project;
       },
       deleteProject(projectId) {
@@ -757,6 +864,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
         if (nextProjectCount === 0) {
           router.push("/setup");
         }
+        invalidateProjectReports(projectId);
       },
       deleteCompetitor(projectId, competitorIndex) {
         setState((current) => ({
@@ -860,6 +968,9 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
               };
             })
           }));
+          invalidateProjectReports(projectId);
+          void loadProjectOverviewReport(projectId, { force: true });
+          void loadProjectCompetitorReport(projectId, { force: true });
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unable to refresh competitor.";
           setLastScanError(message);
@@ -1021,6 +1132,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
               scanDepth: nextProject.scanDepth,
               pageAnalysisModel: state.preferences.pageAnalysisModel,
               scoringModel: state.preferences.scoringModel,
+              comparisonModels: state.preferences.comparisonModels,
               targetIntentModel: state.targetIntentModels[nextProject.id] ?? undefined
             },
             (progress) => {
@@ -1090,6 +1202,9 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
 
           attemptedFaviconHydration.current.delete(nextProject.id);
           void hydrateProjectFavicons(refreshedProjectForArtifacts);
+          invalidateProjectReports(nextProject.id);
+          void loadProjectOverviewReport(nextProject.id, { force: true });
+          void loadProjectCompetitorReport(nextProject.id, { force: true });
           setScanProgressByProject((current) => ({
             ...current,
             [nextProject.id]: {
@@ -1220,6 +1335,7 @@ export function SiteIntentProvider({ children }: Readonly<{ children: React.Reac
       scanDepth: number;
       pageAnalysisModel?: string;
       scoringModel?: string;
+      comparisonModels?: import("@/lib/llm/provider-models").ProviderModelSelection;
       targetIntentModel?: TargetIntentModel;
     },
     onProgress?: (event: ScanProgressEvent) => void
@@ -1403,6 +1519,10 @@ function hydrateScanRuns(scanRuns: unknown[]): ProjectScanRun[] {
         rankability: hydrateRankabilityScorecard((scan as { rankability?: unknown }).rankability),
         discoverability:
           normalizeDiscoverabilityScorecard((scan as { discoverability?: unknown }).discoverability) ?? undefined,
+        modelSelections: normalizeProviderModelSelection((scan as { modelSelections?: unknown }).modelSelections as
+          | Partial<AppPreferences["comparisonModels"]>
+          | undefined),
+        providerScanResults: normalizeProviderScanResults((scan as { providerScanResults?: unknown }).providerScanResults),
         errors: Array.isArray(scan.errors) ? scan.errors : []
       } as ProjectScanRun;
     });
@@ -1437,6 +1557,44 @@ function countWords(value: string) {
   }
 
   return value.trim().split(/\s+/).length;
+}
+
+function normalizeProviderScanResults(value: unknown): ProjectScanRun["providerScanResults"] {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  type ProviderScanEntry = NonNullable<ProjectScanRun["providerScanResults"]>[number];
+
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const payload = entry as {
+        provider?: unknown;
+        model?: unknown;
+        rankability?: unknown;
+        discoverability?: unknown;
+        rankabilityError?: unknown;
+        discoverabilityError?: unknown;
+      };
+
+      if (payload.provider !== "openai" && payload.provider !== "anthropic" && payload.provider !== "google") {
+        return null as ProviderScanEntry | null;
+      }
+
+      return {
+        provider: payload.provider,
+        model: typeof payload.model === "string" ? payload.model : "",
+        rankability: hydrateRankabilityScorecard(payload.rankability) ?? null,
+        discoverability: normalizeDiscoverabilityScorecard(payload.discoverability) ?? null,
+        rankabilityError: typeof payload.rankabilityError === "string" ? payload.rankabilityError : null,
+        discoverabilityError: typeof payload.discoverabilityError === "string" ? payload.discoverabilityError : null
+      } satisfies ProviderScanEntry;
+    })
+    .filter((entry): entry is ProviderScanEntry => Boolean(entry));
 }
 
 function normalizeDiscoverySources(value: unknown): ScanDiscoverySource[] {

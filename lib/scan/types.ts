@@ -2,6 +2,7 @@ import type { DiscoverabilityScorecard } from "@/lib/discoverability/types";
 import type { CompetitorAnalysis } from "@/lib/models";
 import type { RankabilityScorecard } from "@/lib/scoring/types";
 import type { ObservedIntent } from "@/lib/site-state";
+import type { ModelProvider, ProviderModelSelection } from "@/lib/llm/provider-models";
 
 export type ScanDiscoverySource = "internal-link";
 
@@ -156,6 +157,15 @@ export type WebsiteScan = {
   competitorAnalyses?: CompetitorAnalysis[];
   rankability?: RankabilityScorecard;
   discoverability?: DiscoverabilityScorecard;
+  modelSelections?: ProviderModelSelection;
+  providerScanResults?: Array<{
+    provider: ModelProvider;
+    model: string;
+    rankability?: RankabilityScorecard | null;
+    discoverability?: DiscoverabilityScorecard | null;
+    rankabilityError?: string | null;
+    discoverabilityError?: string | null;
+  }>;
   observedIntent?: ObservedIntent | null;
   websiteScanPages: WebsiteScanPage[];
   pages: PageScanRecord[];
@@ -175,6 +185,7 @@ export type ProjectScanRequest = {
   scanDepth: number;
   pageAnalysisModel?: string;
   scoringModel?: string;
+  comparisonModels?: Partial<ProviderModelSelection>;
   targetIntentModel?: {
     category: string;
     lockedConcepts: string[];

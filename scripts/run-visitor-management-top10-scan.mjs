@@ -12,7 +12,6 @@ const MODEL =
   process.env.SITEINTENT_DISCOVERABILITY_MODEL ||
   process.env.SITEINTENT_RANKABILITY_MODEL ||
   "gpt-5-mini";
-const FALLBACK_MODEL = "gpt-5.4-mini";
 const TOP_N = 10;
 const API_TIMEOUT_MS = 180000;
 
@@ -230,7 +229,6 @@ for (const candidate of canonicalTop10) {
 const document = {
   generated_at: new Date().toISOString(),
   requested_model: MODEL,
-  fallback_model: FALLBACK_MODEL,
   discovery_runs: discoveryRuns,
   aggregated_candidates: aggregatedCandidates,
   canonical_top_10: canonicalTop10,
@@ -517,13 +515,6 @@ async function createResponseWithModelFallback(client, request) {
   try {
     return await createResponseWithTimeout(client, request);
   } catch (error) {
-    if (error?.code === "model_not_found" && request.model !== FALLBACK_MODEL) {
-      console.warn(`Model ${request.model} not found. Falling back to ${FALLBACK_MODEL}.`);
-      return createResponseWithTimeout(client, {
-        ...request,
-        model: FALLBACK_MODEL
-      });
-    }
     throw error;
   }
 }

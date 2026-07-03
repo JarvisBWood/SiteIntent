@@ -64,6 +64,13 @@ export type RankabilityScorecard = {
   warnings: string[];
 };
 
+export type RankabilityProviderResult = {
+  provider: import("@/lib/llm/provider-models").ModelProvider;
+  model: string;
+  scorecard: RankabilityScorecard | null;
+  error: string | null;
+};
+
 export const RANKABILITY_WEIGHTS: Record<RankabilityFactorId, number> = Object.fromEntries(
   RANKABILITY_FACTORS.map((factor) => [factor.id, factor.weight])
 ) as Record<RankabilityFactorId, number>;

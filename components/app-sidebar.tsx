@@ -20,8 +20,21 @@ type AppSidebarProps = {
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const pathname = usePathname();
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
   const { projects, activeProjectId, selectProject, signOut } = useSiteIntent();
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null;
+  const filteredProjects = projects.filter((project) => {
+    const query = projectSearch.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+
+    return (
+      project.name.toLowerCase().includes(query) ||
+      project.websiteDisplayUrl.toLowerCase().includes(query) ||
+      project.websiteUrl.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <aside className="app-sidebar" data-open={open ? "true" : "false"} aria-label="Primary navigation">
@@ -75,7 +88,15 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
               </button>
               {projectMenuOpen ? (
                 <div className="project-switcher__menu">
-                  {projects.map((project) => {
+                  <input
+                    className="input project-switcher__search"
+                    type="search"
+                    value={projectSearch}
+                    onChange={(event) => setProjectSearch(event.target.value)}
+                    placeholder="Search websites"
+                    aria-label="Search websites"
+                  />
+                  {filteredProjects.map((project) => {
                     const active = project.id === activeProject?.id;
                     return (
                       <button
@@ -86,6 +107,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                         onClick={() => {
                           selectProject(project.id);
                           setProjectMenuOpen(false);
+                          setProjectSearch("");
                           onClose();
                         }}
                       >
@@ -102,12 +124,16 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                       </button>
                     );
                   })}
+                  {!filteredProjects.length ? (
+                    <div className="project-switcher__empty">No websites match that search.</div>
+                  ) : null}
                   <ProjectSetupModal
                     buttonClassName="project-switcher__add"
                     lockWhenNoWebsites
                     onOpenChange={(isOpen) => {
                       if (!isOpen) {
                         setProjectMenuOpen(false);
+                        setProjectSearch("");
                       }
                     }}
                     trigger={(

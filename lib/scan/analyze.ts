@@ -1,9 +1,7 @@
 import OpenAI from "openai";
 
-import { getCloudflareEnv, isCloudflareRuntime } from "@/lib/cloudflare-runtime";
-import { createOllamaClient, createRemoteLLMClient } from "@/lib/llm";
 import { MODEL_CONFIG } from "@/lib/llm/model-config";
-import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
+import { coerceWebSearchCapableModel } from "@/lib/llm/web-search-models";
 import type {
   AnalysisPassName,
   AnalysisPassResult,
@@ -43,49 +41,18 @@ const PAGE_ANALYSIS_SCHEMA = {
 } as const;
 
 export async function analyzePage(page: PageExtraction, context: AnalysisContext): Promise<AnalyzedPageRecord> {
-  const model = getPageAnalysisModel();
-
-  if (shouldUseRemoteProvider()) {
-    return analyzePageWithRemoteModel(page, context, model);
+  const model = coerceWebSearchCapableModel(getPageAnalysisModel(), MODEL_CONFIG.worker);
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
+    return buildFallbackAnalysisRecord(
+      page,
+      context,
+      "C",
+      "OPENAI_API_KEY is required for hosted scans because SiteIntent now uses model-native web search only."
+    );
   }
 
-  if (isOpenAIModelName(model)) {
-    return analyzePageWithOpenAI(page, context, model);
-  }
-
-  const client = createOllamaClient({ defaultModel: model });
-
-  const passA = await runPass("A", page, context, client, model);
-  const passB = await runPass("B", page, context, client, model);
-
-  const stable = isStable(passA.parsed, passB.parsed);
-  if (stable) {
-    return finalizeAnalysis(page, [passA, passB], "stable", null);
-  }
-
-  const passC = await runPass("C", page, context, client, model, {
-    focus: "Resolve the conflict and produce the best final single-page interpretation."
-  });
-
-  return finalizeAnalysis(page, [passA, passB, passC], "unstable", describeInstability(passA.parsed, passB.parsed, passC.parsed));
-}
-
-async function analyzePageWithRemoteModel(page: PageExtraction, context: AnalysisContext, model: string): Promise<AnalyzedPageRecord> {
-  const client = createRemoteLLMClient({ defaultModel: model });
-
-  const passA = await runPass("A", page, context, client, model);
-  const passB = await runPass("B", page, context, client, model);
-
-  const stable = isStable(passA.parsed, passB.parsed);
-  if (stable) {
-    return finalizeAnalysis(page, [passA, passB], "stable", null);
-  }
-
-  const passC = await runPass("C", page, context, client, model, {
-    focus: "Resolve the conflict and produce the best final single-page interpretation."
-  });
-
-  return finalizeAnalysis(page, [passA, passB, passC], "unstable", describeInstability(passA.parsed, passB.parsed, passC.parsed));
+  return analyzePageWithOpenAI(page, context, model);
 }
 
 async function analyzePageWithOpenAI(page: PageExtraction, context: AnalysisContext, model: string): Promise<AnalyzedPageRecord> {
@@ -108,57 +75,6 @@ async function analyzePageWithOpenAI(page: PageExtraction, context: AnalysisCont
   });
 
   return finalizeAnalysis(page, [passA, passB, passC], "unstable", describeInstability(passA.parsed, passB.parsed, passC.parsed));
-}
-
-async function runPass(
-  pass: AnalysisPassName,
-  page: PageExtraction,
-  context: AnalysisContext,
-  client: ReturnType<typeof createOllamaClient>,
-  model: string,
-  extra: { focus?: string } = {}
-): Promise<AnalysisPassResult> {
-  const prompt = buildPrompt(pass, page, context, extra.focus);
-  const result = await client.generate<Record<string, unknown>>({
-    model,
-    responseFormat: "json",
-    responseSchema: PAGE_ANALYSIS_SCHEMA,
-    temperature: pass === "A" ? 0.2 : pass === "B" ? 0.35 : 0.15,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are an analytical website intent model. Return only valid JSON matching the requested keys. " +
-          "Identify the actual product, audience, and outcome from the page content rather than generic website advice. " +
-          "Prefer concrete language like software category, user type, and job-to-be-done. " +
-          "Be concise, specific, and grounded in the page content."
-      },
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  });
-
-  if (result.ok) {
-    return {
-      pass,
-      model: result.model,
-      raw: result.raw,
-      prompt,
-      parsed: normalizeAnalysisOutput(page.url, page.pageType, result.content)
-    };
-  }
-
-  console.error("[analyze] AI analysis failed for", page.url, "pass", pass, ":", result.error);
-  const fallback = buildFallbackAnalysis(page, context, pass, result.error);
-  return {
-    pass,
-    model: result.model,
-    raw: result.raw ?? { error: result.error, fallback: true },
-    prompt,
-    parsed: fallback
-  };
 }
 
 async function runOpenAiPass(
@@ -210,24 +126,14 @@ async function runOpenAiPass(
 }
 
 function getPageAnalysisModel() {
-  return process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || MODEL_CONFIG.worker;
+  return coerceWebSearchCapableModel(process.env.SITEINTENT_PAGE_ANALYSIS_MODEL, MODEL_CONFIG.worker);
 }
 
 async function createOpenAiAnalysisResponse(
   client: OpenAI,
   request: OpenAI.Responses.ResponseCreateParamsNonStreaming
 ) {
-  try {
-    return await client.responses.create(request);
-  } catch (error) {
-    if (isModelNotFound(error) && request.model !== "gpt-5.4-mini") {
-      return client.responses.create({
-        ...request,
-        model: "gpt-5.4-mini"
-      });
-    }
-    throw error;
-  }
+  return client.responses.create(request);
 }
 
 function parseResponseJson(response: { output_text?: string; output?: unknown[] }) {
@@ -261,10 +167,6 @@ function extractTextFromOutput(output: unknown[] | undefined) {
   }
 
   return texts.join("\n").trim();
-}
-
-function isModelNotFound(error: unknown) {
-  return error instanceof OpenAI.APIError && error.status === 404 && typeof error.message === "string";
 }
 
 function finalizeAnalysis(

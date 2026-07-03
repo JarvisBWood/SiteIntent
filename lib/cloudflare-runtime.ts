@@ -3,14 +3,20 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 export type CloudflareEnv = {
   DB?: D1Database;
   OPENAI_API_KEY?: string;
+  ANTHROPIC_API_KEY?: string;
+  GEMINI_API_KEY?: string;
   DASH_ADMIN_EMAIL?: string;
   DASH_ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;
+  SITEINTENT_WORKER_MODEL?: string;
+  SITEINTENT_JUDGE_MODEL?: string;
+  SITEINTENT_ANALYSIS_MODELS?: string;
   SITEINTENT_PAGE_ANALYSIS_MODEL?: string;
-  SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL?: string;
-  SITEINTENT_DISCOVERABILITY_LOCAL_MODEL?: string;
-  SITEINTENT_RANKABILITY_LOCAL_MODEL?: string;
-  SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL?: string;
+  SITEINTENT_DISCOVERABILITY_MODEL?: string;
+  SITEINTENT_RANKABILITY_MODEL?: string;
+  SITEINTENT_COMPETITOR_VALIDATION_MODEL?: string;
+  SITEINTENT_ANTHROPIC_MODEL?: string;
+  SITEINTENT_GEMINI_MODEL?: string;
 };
 
 export function getCloudflareEnv(): CloudflareEnv | null {
@@ -73,12 +79,12 @@ class RemoteD1PreparedStatement {
 
   async all<T = unknown>(): Promise<D1Result<T>> {
     const results = await this.query<T>();
-    return { results, success: true };
+    return { results, success: true, meta: createD1Meta() };
   }
 
   async run<T = unknown>(): Promise<D1Result<T>> {
     await this.query<T>();
-    return { success: true };
+    return { results: [], success: true, meta: createD1Meta() };
   }
 
   raw<T = unknown>(): Promise<T[]> {
@@ -108,7 +114,7 @@ class RemoteD1Database {
       const body = stmt.toApiBody();
       const response = await fetchRemoteD1(body);
       for (const r of response) {
-        allResults.push({ results: r.results as T[], success: r.success });
+        allResults.push({ results: r.results as T[], success: true, meta: createD1Meta(r.meta) });
       }
     }
     return allResults;
@@ -124,6 +130,19 @@ class RemoteD1Database {
 }
 
 let remoteD1: RemoteD1Database | null = null;
+
+function createD1Meta(meta?: { changes?: number; duration?: number }): D1Meta & Record<string, unknown> {
+  return {
+    changed_db: false,
+    changes: meta?.changes ?? 0,
+    duration: meta?.duration ?? 0,
+    last_row_id: 0,
+    rows_read: 0,
+    rows_written: 0,
+    served_by: "remote-d1",
+    size_after: 0
+  };
+}
 
 function getRemoteD1Config() {
   const token = process.env.CLOUDFLARE_API ?? process.env.CLOUDFLARE_API_TOKEN;

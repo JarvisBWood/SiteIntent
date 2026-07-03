@@ -1,12 +1,14 @@
-import OpenAI from "openai";
-
-import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
-import { MODEL_CONFIG } from "@/lib/llm/model-config";
-import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
+import { generateJsonWithProviderSearch } from "@/lib/llm/web-json";
+import {
+  DEFAULT_PROVIDER_MODEL_SELECTION,
+  getProviderForModel,
+  normalizeProviderModelSelection,
+  type ModelProvider,
+  type ProviderModelSelection
+} from "@/lib/llm/provider-models";
 import {
   buildLocationAwareContext,
   buildLocationScopePhrase,
-  buildLocationSearchTerms,
   buildWebSearchUserLocation
 } from "@/lib/location-targeting";
 import type { CategoryModel } from "@/lib/models";
@@ -19,6 +21,7 @@ import {
   DISCOVERABILITY_WEIGHT_TOTAL,
   DISCOVERABILITY_WEIGHTS,
   type AggregatedCandidate,
+  type DiscoverabilityProviderResult,
   type DiscoverabilitySourceCoverage,
   type DiscoverabilityFactorId,
   type DiscoverabilityFactorScore,
@@ -32,8 +35,6 @@ import {
   type TargetDiscoveryResult
 } from "@/lib/discoverability/types";
 
-const DEFAULT_MODEL = process.env.SITEINTENT_DISCOVERABILITY_MODEL || "gpt-5-mini";
-const FALLBACK_MODEL = "gpt-5.4-mini";
 const PROMPT_VARIATIONS = [
   "What are the top 10 {category} websites or providers for {context}?",
   "Recommend the top 10 {category} websites or providers for {context}.",
@@ -256,25 +257,56 @@ export async function scoreDiscoverability(input: ScoreDiscoverabilityInput): Pr
   error: string | null;
 }> {
   const selectedModel = getDiscoverabilityModel();
-
-  if (shouldUseRemoteProvider()) {
-    return scoreDiscoverabilityWithLocalModel(input, selectedModel);
+  const provider = getProviderForModel(selectedModel);
+  if (!provider) {
+    return { scorecard: null, error: `Unsupported discoverability model: ${selectedModel}` };
   }
 
-  const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (isOpenAIModelName(selectedModel)) {
-    if (openAiApiKey) {
-      return scoreDiscoverabilityWithOpenAIModel(input, selectedModel);
-    }
-
-    return scoreDiscoverabilityWithLocalModel(input, getLocalDiscoverabilityModel());
-  }
-
-  return scoreDiscoverabilityWithLocalModel(input, selectedModel);
+  return scoreDiscoverabilityWithProviderModel(input, provider, selectedModel);
 }
 
-async function scoreDiscoverabilityWithLocalModel(
+export async function scoreDiscoverabilityAcrossModels(
+  input: ScoreDiscoverabilityInput & { models: Partial<ProviderModelSelection> }
+): Promise<{
+  scorecard: DiscoverabilityScorecard | null;
+  results: DiscoverabilityProviderResult[];
+  error: string | null;
+}> {
+  const selections = normalizeProviderModelSelection(input.models);
+  const results: DiscoverabilityProviderResult[] = [];
+
+  for (const [provider, model] of Object.entries(selections) as Array<[ModelProvider, string]>) {
+    const result = await scoreDiscoverabilityWithProviderModel(input, provider, model);
+    results.push({
+      provider,
+      model,
+      scorecard: result.scorecard,
+      error: result.error
+    });
+    const availableScorecards = results
+      .map((entry) => entry.scorecard)
+      .filter((entry): entry is DiscoverabilityScorecard => Boolean(entry));
+    if (availableScorecards.length) {
+      input.onPartialScorecard?.(
+        mergeDiscoverabilityScorecards(availableScorecards, input.scan, input.categoryModel) ?? availableScorecards[0]
+      );
+    }
+  }
+
+  const scorecards = results
+    .map((entry) => entry.scorecard)
+    .filter((entry): entry is DiscoverabilityScorecard => Boolean(entry));
+
+  return {
+    scorecard: mergeDiscoverabilityScorecards(scorecards, input.scan, input.categoryModel),
+    results,
+    error: scorecards.length ? null : results.map((entry) => entry.error).filter(Boolean).join(" | ") || "All provider models failed."
+  };
+}
+
+async function scoreDiscoverabilityWithProviderModel(
   input: ScoreDiscoverabilityInput,
+  provider: ModelProvider,
   model: string
 ): Promise<{
   scorecard: DiscoverabilityScorecard | null;
@@ -292,146 +324,31 @@ async function scoreDiscoverabilityWithLocalModel(
       const question = discoveryQuestions[index];
       const mode = index >= PROMPT_VARIATIONS.length ? "domain" : "category";
       try {
-        const response = await generateJsonWithLocalSearch<RawRunPayload>({
+        const response = await generateJsonWithProviderSearch<RawRunPayload>({
+          provider,
           model,
-          responseSchema: DISCOVERABILITY_RESPONSE_SCHEMA,
           systemPrompt: [
             "You are evaluating website discoverability for AI recommendations.",
-            "Use the provided search evidence for current external facts.",
-            "Return only JSON matching the required shape.",
+            "Use web search for current evidence.",
+            "Return only JSON matching the provided schema.",
             "Do not invent websites or URLs.",
             "Use official provider websites where possible.",
             "Assess the target website honestly. Do not include it unless it genuinely belongs in the top candidates.",
             "Use source_type search_engine_result when a search results page, SERP ranking, or search-result snippet helped identify a website.",
-            "When the prompt references a target domain, use that domain to ground the competitor set so the results stay in the right market and product context."
+            "When the prompt references a target domain, use that domain to ground the competitor set so the results stay in the right market and product context.",
+            buildDiscoverabilityJsonContract()
           ].join(" "),
-          userPrompt: `${buildDiscoverabilityPrompt(question, input.scan, input.categoryModel, mode, input.targetIntentModel)}\n\n${buildDiscoverabilityJsonContract()}`,
-          searchQueries: buildDiscoverabilitySearchQueries(question, input.scan, input.categoryModel, mode, input.targetIntentModel),
-          maxResultsPerQuery: 7,
-          maxAttempts: 3,
-          temperature: 0.1
+          userPrompt: buildDiscoverabilityPrompt(question, input.scan, input.categoryModel, mode, input.targetIntentModel),
+          responseSchema: DISCOVERABILITY_RESPONSE_SCHEMA,
+          temperature: 0.1,
+          userLocation: buildWebSearchUserLocation(input.targetIntentModel)
         });
 
         const run = normalizeDiscoveryRun(response.content, {
           promptVariation: index + 1,
           question,
-          usesWebSearch: response.searchRuns.some((searchRun) => searchRun.results.length > 0),
+          usesWebSearch: response.usesWebSearch,
           rawResponse: response.raw
-        });
-
-        warnings.push(...run.warnings, ...response.warnings);
-        runs.push(run);
-        input.onPartialScorecard?.(
-          buildDiscoverabilityScorecard(
-            runs,
-            input.scan,
-            input.categoryModel,
-            warnings,
-            createEmptySourceCoverage()
-          )
-        );
-      } catch (error) {
-        warnings.push(
-          `Prompt ${index + 1} failed: ${error instanceof Error ? error.message : "Unable to complete discovery prompt."}`
-        );
-      }
-    }
-
-    if (!runs.length) {
-      throw new Error("All local discoverability runs failed.");
-    }
-
-    const sourceCoverage = await auditDiscoverySourcesWithLocalModel(
-      runs,
-      input.scan,
-      input.categoryModel,
-      input.targetIntentModel
-    );
-    warnings.push(...sourceCoverage.warnings);
-    const scorecard = buildDiscoverabilityScorecard(runs, input.scan, input.categoryModel, warnings, sourceCoverage.coverage);
-    scorecard.model = model;
-
-    return {
-      scorecard,
-      error: null
-    };
-  } catch (error) {
-    return {
-      scorecard: null,
-      error: error instanceof Error ? error.message : "Unable to score website discoverability with the local model."
-    };
-  }
-}
-
-async function scoreDiscoverabilityWithOpenAIModel(
-  input: ScoreDiscoverabilityInput,
-  model: string
-): Promise<{
-  scorecard: DiscoverabilityScorecard | null;
-  error: string | null;
-}> {
-  const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (!openAiApiKey) {
-    return scoreDiscoverabilityWithLocalModel(input, model);
-  }
-
-  try {
-    const client = new OpenAI({ apiKey: openAiApiKey });
-    const runs: DiscoveryRun[] = [];
-    const warnings: string[] = [];
-    const discoveryQuestions = [
-      ...PROMPT_VARIATIONS.map((template) => formatQuestion(template, input.categoryModel, input.scan.websiteUrl, input.targetIntentModel)),
-      ...DOMAIN_PROMPT_VARIATIONS.map((template) => formatQuestion(template, input.categoryModel, input.scan.websiteUrl, input.targetIntentModel))
-    ];
-
-    for (let index = 0; index < discoveryQuestions.length; index++) {
-      const question = discoveryQuestions[index];
-      const mode = index >= PROMPT_VARIATIONS.length ? "domain" : "category";
-      try {
-        const response = await createResponseWithModelFallback(client, {
-          model,
-          input: [
-            {
-              role: "system",
-              content: [
-                "You are evaluating website discoverability for AI recommendations.",
-                "Use web search for current evidence.",
-                "Return only JSON matching the provided schema.",
-                "Do not invent websites or URLs.",
-                "Use official provider websites where possible.",
-                "Assess the target website honestly. Do not include it unless it genuinely belongs in the top candidates.",
-                "Use source_type search_engine_result when a search results page, SERP ranking, or search-result snippet helped identify a website.",
-                "When the prompt references a target domain, use that domain to ground the competitor set so the results stay in the right market and product context."
-              ].join(" ")
-            },
-            {
-              role: "user",
-              content: buildDiscoverabilityPrompt(question, input.scan, input.categoryModel, mode, input.targetIntentModel)
-            }
-          ],
-          tools: [
-            {
-              type: "web_search" as const,
-              user_location: buildWebSearchUserLocation(input.targetIntentModel)
-            }
-          ],
-          tool_choice: "required",
-          text: {
-            format: {
-              type: "json_schema",
-              name: "siteintent_discoverability_score",
-              strict: true,
-              schema: DISCOVERABILITY_RESPONSE_SCHEMA
-            }
-          }
-        });
-
-        const payload = parseResponseJson(response);
-        const run = normalizeDiscoveryRun(payload, {
-          promptVariation: index + 1,
-          question,
-          usesWebSearch: containsWebSearchCall(response),
-          rawResponse: response
         });
         warnings.push(...run.warnings);
         runs.push(run);
@@ -455,7 +372,7 @@ async function scoreDiscoverabilityWithOpenAIModel(
       throw new Error("All discoverability runs failed.");
     }
 
-    const sourceCoverage = await auditDiscoverySources(client, runs, input.scan, input.categoryModel, input.targetIntentModel);
+    const sourceCoverage = await auditDiscoverySources(provider, model, runs, input.scan, input.categoryModel, input.targetIntentModel);
     warnings.push(...sourceCoverage.warnings);
     const scorecard = buildDiscoverabilityScorecard(runs, input.scan, input.categoryModel, warnings, sourceCoverage.coverage);
     scorecard.model = model;
@@ -467,22 +384,8 @@ async function scoreDiscoverabilityWithOpenAIModel(
   } catch (error) {
     return {
       scorecard: null,
-      error: error instanceof Error ? error.message : "Unable to score website discoverability with the OpenAI model."
+      error: error instanceof Error ? error.message : `Unable to score website discoverability with ${provider}.`
     };
-  }
-}
-
-async function createResponseWithModelFallback(client: OpenAI, request: OpenAI.Responses.ResponseCreateParamsNonStreaming) {
-  try {
-    return await client.responses.create(request);
-  } catch (error) {
-    if (isModelNotFound(error) && request.model !== FALLBACK_MODEL) {
-      return client.responses.create({
-        ...request,
-        model: FALLBACK_MODEL
-      });
-    }
-    throw error;
   }
 }
 
@@ -521,7 +424,7 @@ export function normalizeDiscoverabilityScorecard(value: unknown): Discoverabili
     );
 
     return {
-      model: typeof payload.model === "string" ? payload.model : DEFAULT_MODEL,
+      model: typeof payload.model === "string" ? payload.model : getDiscoverabilityModel(),
       scoringProfileId: DISCOVERABILITY_SCORING_PROFILE_ID,
       usesWebSearch: Boolean(payload.usesWebSearch),
       category: typeof payload.category === "string" ? payload.category : "",
@@ -564,7 +467,7 @@ function buildDiscoverabilityScorecard(
   }
 
   return {
-    model: DEFAULT_MODEL,
+    model: getDiscoverabilityModel(),
     scoringProfileId: DISCOVERABILITY_SCORING_PROFILE_ID,
     usesWebSearch: runs.every((run) => run.usesWebSearch),
     category: categoryModel.category,
@@ -813,7 +716,8 @@ function buildDiscoverabilitySummary(
 }
 
 async function auditDiscoverySources(
-  client: OpenAI,
+  provider: ModelProvider,
+  model: string,
   runs: DiscoveryRun[],
   scan: ProjectScanRun,
   categoryModel: CategoryModel,
@@ -827,91 +731,17 @@ async function auditDiscoverySources(
     .join("\n");
 
   try {
-    const response = await createResponseWithModelFallback(client, {
-      model: DEFAULT_MODEL,
-      input: [
-        {
-          role: "system",
-          content: [
-            "You are auditing category-level discovery sources for AI recommendations.",
-            "Use web search for current evidence.",
-            "Return only JSON matching the provided schema.",
-            "Focus on external source paths that help AI discover websites in this category.",
-            "For each source, state whether the target website appears to be present and which competitors are supported.",
-            "Use source_type search_engine_result for search result pages, SERP rankings, or search snippets."
-          ].join(" ")
-        },
-        {
-          role: "user",
-          content: [
-            `Category: ${categoryModel.category}`,
-            `User context: ${buildUserContext(categoryModel, targetIntentModel)}`,
-            `Location targeting: ${targetIntentModel?.isLocationSpecific ? buildLocationScopePhrase(targetIntentModel) : "Australia-wide market context"}`,
-            `Target website: ${scan.websiteUrl}`,
-            `Target website name: ${scan.projectName}`,
-            "",
-            "Competitor websites discovered across repeated runs:",
-            competitorContext || "No competitor context provided.",
-            "",
-            "Identify the most valuable source paths for discoverability in this category.",
-            "These can include search results/SERPs, review platforms, Google Business Profile, directories, marketplaces, editorial pages, government registers, forums, or social profiles.",
-            "Only include official sites if they are clearly acting as a discovery-supporting source beyond the main homepage."
-          ].join("\n")
-        }
-      ],
-      tools: [
-        {
-          type: "web_search" as const,
-          user_location: buildWebSearchUserLocation(targetIntentModel)
-        }
-      ],
-      tool_choice: "required",
-      text: {
-        format: {
-          type: "json_schema",
-          name: "siteintent_discoverability_source_audit",
-          strict: true,
-          schema: SOURCE_AUDIT_RESPONSE_SCHEMA
-        }
-      }
-    });
-
-    const payload = parseResponseJson(response) as RawSourceAuditPayload;
-    const opportunities = normalizeSourceOpportunities(payload.source_opportunities);
-    return {
-      coverage: buildSourceCoverage(opportunities),
-      warnings: Array.isArray(payload.warnings) ? payload.warnings.map((warning) => String(warning)) : []
-    };
-  } catch (error) {
-    return {
-      coverage: buildSourceCoverage([]),
-      warnings: [error instanceof Error ? error.message : "Unable to audit discoverability sources."]
-    };
-  }
-}
-
-async function auditDiscoverySourcesWithLocalModel(
-  runs: DiscoveryRun[],
-  scan: ProjectScanRun,
-  categoryModel: CategoryModel,
-  targetIntentModel?: TargetIntentModel
-): Promise<{ coverage: DiscoverabilitySourceCoverage; warnings: string[] }> {
-  const aggregatedCandidates = aggregateCandidates(runs, normalizeDomain(scan.websiteUrl));
-  const leadingCompetitors = aggregatedCandidates
-    .filter((candidate) => !candidate.isTargetWebsite)
-    .slice(0, 5);
-
-  try {
-    const response = await generateJsonWithLocalSearch<RawSourceAuditPayload>({
-      model: getLocalDiscoverabilityModel(),
-      responseSchema: SOURCE_AUDIT_RESPONSE_SCHEMA,
+    const response = await generateJsonWithProviderSearch<RawSourceAuditPayload>({
+      provider,
+      model,
       systemPrompt: [
         "You are auditing category-level discovery sources for AI recommendations.",
-        "Use the provided search evidence for current external facts.",
-        "Return only JSON matching the required shape.",
+        "Use web search for current evidence.",
+        "Return only JSON matching the provided schema.",
         "Focus on external source paths that help AI discover websites in this category.",
         "For each source, state whether the target website appears to be present and which competitors are supported.",
-        "Use source_type search_engine_result for search result pages, SERP rankings, or search snippets."
+        "Use source_type search_engine_result for search result pages, SERP rankings, or search snippets.",
+        buildSourceAuditJsonContract()
       ].join(" "),
       userPrompt: [
         `Category: ${categoryModel.category}`,
@@ -921,32 +751,26 @@ async function auditDiscoverySourcesWithLocalModel(
         `Target website name: ${scan.projectName}`,
         "",
         "Competitor websites discovered across repeated runs:",
-        leadingCompetitors.map((candidate) => `${candidate.name} - ${candidate.website}`).join("\n") || "No competitor context provided.",
+        competitorContext || "No competitor context provided.",
         "",
         "Identify the most valuable source paths for discoverability in this category.",
         "These can include search results/SERPs, review platforms, Google Business Profile, directories, marketplaces, editorial pages, government registers, forums, or social profiles.",
-        "Only include official sites if they are clearly acting as a discovery-supporting source beyond the main homepage.",
-        "",
-        buildSourceAuditJsonContract()
+        "Only include official sites if they are clearly acting as a discovery-supporting source beyond the main homepage."
       ].join("\n"),
-      searchQueries: buildSourceAuditSearchQueries(scan, categoryModel, leadingCompetitors, targetIntentModel),
-      maxResultsPerQuery: 7,
-      maxAttempts: 3,
-      temperature: 0.1
+      responseSchema: SOURCE_AUDIT_RESPONSE_SCHEMA,
+      temperature: 0.1,
+      userLocation: buildWebSearchUserLocation(targetIntentModel)
     });
 
     const opportunities = normalizeSourceOpportunities(response.content.source_opportunities);
     return {
       coverage: buildSourceCoverage(opportunities),
-      warnings: [
-        ...response.warnings,
-        ...(Array.isArray(response.content.warnings) ? response.content.warnings.map((warning) => String(warning)) : [])
-      ]
+      warnings: Array.isArray(response.content.warnings) ? response.content.warnings.map((warning) => String(warning)) : []
     };
   } catch (error) {
     return {
       coverage: buildSourceCoverage([]),
-      warnings: [error instanceof Error ? error.message : "Unable to audit discoverability sources with the local model."]
+      warnings: [error instanceof Error ? error.message : "Unable to audit discoverability sources."]
     };
   }
 }
@@ -1118,42 +942,6 @@ function buildUserContext(categoryModel: CategoryModel, targetIntentModel?: Targ
   return buildLocationAwareContext(categoryModel.customer, categoryModel.category, targetIntentModel, "looking for");
 }
 
-function buildDiscoverabilitySearchQueries(
-  question: string,
-  scan: ProjectScanRun,
-  categoryModel: CategoryModel,
-  mode: "category" | "domain",
-  targetIntentModel?: TargetIntentModel
-) {
-  const domain = normalizeDomain(scan.websiteUrl);
-  const locationTerms = buildLocationSearchTerms(targetIntentModel);
-
-  return uniqueStrings([
-    question,
-    ...locationTerms.map((location) => `${categoryModel.category} ${location}`),
-    `${scan.projectName} ${categoryModel.category}`,
-    ...locationTerms.map((location) =>
-      mode === "domain" ? `${domain} competitors ${location}` : `${categoryModel.category} alternatives ${location}`
-    )
-  ]);
-}
-
-function buildSourceAuditSearchQueries(
-  scan: ProjectScanRun,
-  categoryModel: CategoryModel,
-  competitors: AggregatedCandidate[],
-  targetIntentModel?: TargetIntentModel
-) {
-  const locationTerms = buildLocationSearchTerms(targetIntentModel);
-  return uniqueStrings([
-    ...locationTerms.map((location) => `${categoryModel.category} ${location} reviews`),
-    ...locationTerms.map((location) => `${categoryModel.category} ${location} directory`),
-    ...locationTerms.map((location) => `${categoryModel.category} ${location} comparison`),
-    `${scan.projectName} reviews`,
-    ...competitors.slice(0, 3).map((candidate) => `${candidate.name} reviews`)
-  ]);
-}
-
 function buildDiscoverabilityJsonContract() {
   return [
     "Return valid JSON with these top-level keys: category, context, top_candidates, target_website, common_sources, summary, warnings.",
@@ -1173,12 +961,8 @@ function buildSourceAuditJsonContract() {
   ].join("\n");
 }
 
-function getLocalDiscoverabilityModel() {
-  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || MODEL_CONFIG.worker;
-}
-
 function getDiscoverabilityModel() {
-  return process.env.SITEINTENT_DISCOVERABILITY_LOCAL_MODEL || process.env.SITEINTENT_DISCOVERABILITY_MODEL || MODEL_CONFIG.worker;
+  return process.env.SITEINTENT_DISCOVERABILITY_MODEL || DEFAULT_PROVIDER_MODEL_SELECTION.openai;
 }
 
 function formatQuestion(
@@ -1193,47 +977,82 @@ function formatQuestion(
     .replaceAll("{domain}", normalizeDomain(websiteUrl));
 }
 
-function parseResponseJson(response: { output_text?: string; output?: unknown[] }) {
-  const text = response.output_text || extractTextFromOutput(response.output);
-  if (!text) {
-    throw new Error("OpenAI response did not include output text.");
+export function mergeDiscoverabilityScorecards(
+  scorecards: DiscoverabilityScorecard[],
+  scan: ProjectScanRun,
+  categoryModel: CategoryModel
+) {
+  if (!scorecards.length) {
+    return null;
   }
 
-  return JSON.parse(stripJsonFence(text));
-}
-
-function extractTextFromOutput(output: unknown[] | undefined) {
-  if (!Array.isArray(output)) {
-    return "";
-  }
-
-  const texts: string[] = [];
-  for (const item of output) {
-    if (!item || typeof item !== "object") {
-      continue;
-    }
-    const content = (item as { content?: unknown[] }).content;
-    if (!Array.isArray(content)) {
-      continue;
-    }
-    for (const part of content) {
-      if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-        texts.push(part.text);
-      }
+  const mergedRuns: DiscoveryRun[] = [];
+  for (const scorecard of scorecards) {
+    for (const run of scorecard.discoveryRuns) {
+      mergedRuns.push({
+        ...run,
+        promptVariation: mergedRuns.length + 1,
+        question: `[${scorecard.model}] ${run.question}`
+      });
     }
   }
 
-  return texts.join("\n").trim();
+  const merged = buildDiscoverabilityScorecard(
+    mergedRuns,
+    scan,
+    categoryModel,
+    uniqueStrings(scorecards.flatMap((scorecard) => scorecard.warnings)),
+    mergeSourceCoverage(scorecards.map((scorecard) => scorecard.sourceCoverage))
+  );
+  merged.model = "multi-model-aggregate";
+  return merged;
 }
 
-function stripJsonFence(value: string) {
-  return value.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
+function mergeSourceCoverage(sourceCoverageValues: DiscoverabilitySourceCoverage[]): DiscoverabilitySourceCoverage {
+  if (!sourceCoverageValues.length) {
+    return createEmptySourceCoverage();
+  }
+
+  const strongestSources = dedupeSourceOpportunities(
+    sourceCoverageValues.flatMap((coverage) => coverage.strongestSources)
+  )
+    .sort((left, right) => sourceOpportunityScore(right) - sourceOpportunityScore(left))
+    .slice(0, 8);
+  const missingHighValueSources = dedupeSourceOpportunities(
+    sourceCoverageValues.flatMap((coverage) => coverage.missingHighValueSources)
+  )
+    .sort((left, right) => sourceOpportunityScore(right) - sourceOpportunityScore(left))
+    .slice(0, 6);
+
+  return {
+    coverageScore: roundOne(average(sourceCoverageValues.map((coverage) => coverage.coverageScore))),
+    targetSourceCount: Math.round(average(sourceCoverageValues.map((coverage) => coverage.targetSourceCount))),
+    sourceTypeCoverageScore: roundOne(average(sourceCoverageValues.map((coverage) => coverage.sourceTypeCoverageScore))),
+    highValueSourceCoverageScore: roundOne(average(sourceCoverageValues.map((coverage) => coverage.highValueSourceCoverageScore))),
+    targetSourceTypes: uniqueStrings(
+      sourceCoverageValues.flatMap((coverage) => coverage.targetSourceTypes)
+    ) as DiscoverySourceType[],
+    strongestSources,
+    missingHighValueSources
+  };
 }
 
-function containsWebSearchCall(response: { output?: unknown[] }) {
-  return Array.isArray(response.output)
-    ? response.output.some((item) => item && typeof item === "object" && (item as { type?: string }).type === "web_search_call")
-    : false;
+function dedupeSourceOpportunities(opportunities: DiscoverySourceOpportunity[]) {
+  const byKey = new Map<string, DiscoverySourceOpportunity>();
+  for (const opportunity of opportunities) {
+    const key = [
+      opportunity.sourceDomain,
+      opportunity.sourceName,
+      opportunity.sourceType,
+      opportunity.recommendedAction
+    ]
+      .map((part) => part.trim().toLowerCase())
+      .join("::");
+    if (!byKey.has(key)) {
+      byKey.set(key, opportunity);
+    }
+  }
+  return [...byKey.values()];
 }
 
 function normalizeRank(value: unknown, fallback: number) {
@@ -1410,13 +1229,4 @@ function average(values: number[]) {
 
 function roundOne(value: number) {
   return Math.round(value * 10) / 10;
-}
-
-function isModelNotFound(error: unknown) {
-  return Boolean(
-    error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: string }).code === "model_not_found"
-  );
 }

@@ -1,9 +1,9 @@
-import OpenAI from "openai";
-
-import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
-import { MODEL_CONFIG } from "@/lib/llm/model-config";
-import { createRemoteLLMClient } from "@/lib/llm/remote";
-import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
+import { generateJsonWithProviderSearch } from "@/lib/llm/web-json";
+import {
+  getProviderForModel,
+  normalizeProviderModelSelection,
+  type ProviderModelSelection
+} from "@/lib/llm/provider-models";
 import { buildLocationAwareContext, buildLocationSearchTerms, buildWebSearchUserLocation } from "@/lib/location-targeting";
 import type { CategoryModel, CompetitorAnalysis } from "@/lib/models";
 import type { ProjectScanRun, WebsiteScanPage } from "@/lib/scan/types";
@@ -14,11 +14,11 @@ import {
   RANKABILITY_WEIGHTS,
   type RankabilityFactorId,
   type RankabilityFactorScore,
+  type RankabilityProviderResult,
   type RankabilityScorecard
 } from "@/lib/scoring/types";
 
-const DEFAULT_MODEL = MODEL_CONFIG.worker;
-const FALLBACK_MODEL = "openai/gpt-5.4-mini";
+const DEFAULT_MODEL = process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5.4-mini";
 type ScoreWebsiteInput = {
   scan: ProjectScanRun;
   categoryModel: CategoryModel;
@@ -108,96 +108,58 @@ export async function scoreWebsite(input: ScoreWebsiteInput): Promise<{
   }
 
   const selectedModel = input.model ?? getRankabilityModel();
-
-  if (shouldUseRemoteProvider()) {
-    return scoreWebsiteWithLocalModel(input, selectedModel);
+  const provider = getProviderForModel(selectedModel);
+  if (!provider) {
+    return { scorecard: null, error: `Unsupported scoring model: ${selectedModel}` };
   }
 
-  const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (isOpenAIModelName(selectedModel)) {
-    if (openAiApiKey) {
-      return scoreWebsiteWithOpenAIModel(input, selectedModel);
-    }
-
-    return scoreWebsiteWithLocalModel(input, getLocalRankabilityModel());
-  }
-
-  return scoreWebsiteWithLocalModel(input, selectedModel);
+  return scoreWebsiteWithProviderModel(input, provider, selectedModel);
 }
 
-export async function scoreWebsiteWithJudgeModel(
-  scan: ProjectScanRun,
-  categoryModel: CategoryModel,
-  factorScorecards: Array<{ model: string; scorecard: RankabilityScorecard }>
-): Promise<RankabilityScorecard | null> {
-  const judgeModel = MODEL_CONFIG.judge;
+export async function scoreWebsiteAcrossModels(
+  input: Omit<ScoreWebsiteInput, "model"> & { models: Partial<ProviderModelSelection> }
+): Promise<{
+  scorecard: RankabilityScorecard | null;
+  results: RankabilityProviderResult[];
+  error: string | null;
+}> {
+  const selections = normalizeProviderModelSelection(input.models);
+  const results: RankabilityProviderResult[] = [];
 
-  const scoringProfile = factorScorecards.map((f) => ({
-    model: f.model,
-    summary: f.scorecard.summary,
-    overall: f.scorecard.weightedTotalScore,
-    factors: Object.fromEntries(
-      RANKABILITY_FACTORS.map((factor) => [
-        factor.id,
-        f.scorecard.factorScores?.[factor.id] ?? null
-      ])
-    )
-  }));
-
-  const systemPrompt = [
-    "You are a neutral scoring judge. Given independent rankability assessments from multiple AI models, produce a final consensus scorecard.",
-    "Weight each model's assessment equally unless one provides significantly stronger evidence.",
-    "Return only valid JSON matching the required schema."
-  ].join(" ");
-
-  const userPrompt = [
-    `Website: ${scan.projectName} (${scan.websiteUrl})`,
-    `Category: ${categoryModel.category}`,
-    `Context: ${categoryModel.context}`,
-    "",
-    "Below are the independent assessments from each analysis model:",
-    JSON.stringify(scoringProfile, null, 2),
-    "",
-    "Produce a final consensus scorecard. For each factor, synthesize the evidence from all models. The overall score should reflect the combined assessment.",
-    buildRankabilityJsonContract()
-  ].join("\n");
-
-  const client = createRemoteLLMClient({ defaultModel: judgeModel });
-  const result = await client.generate<RawRankabilityResponse>({
-    model: judgeModel,
-    responseFormat: "json",
-    responseSchema: RANKABILITY_RESPONSE_SCHEMA,
-    temperature: 0.1,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ]
-  });
-
-  if (!result.ok) {
-    return null;
+  for (const [provider, model] of Object.entries(selections) as Array<[keyof ProviderModelSelection, string]>) {
+    const result = await scoreWebsiteWithProviderModel(input, provider, model);
+    results.push({
+      provider,
+      model,
+      scorecard: result.scorecard,
+      error: result.error
+    });
   }
 
-  const scorecard = normalizeRankabilityScorecard(result.content, scan);
-  scorecard.model = judgeModel;
-  return scorecard;
+  const scorecards = results.map((result) => result.scorecard).filter((result): result is RankabilityScorecard => Boolean(result));
+  return {
+    scorecard: mergeRankabilityScorecards(scorecards),
+    results,
+    error: scorecards.length ? null : results.map((result) => result.error).filter(Boolean).join(" | ") || "All provider models failed."
+  };
 }
 
-async function scoreWebsiteWithLocalModel(
+async function scoreWebsiteWithProviderModel(
   input: ScoreWebsiteInput,
+  provider: ReturnType<typeof getProviderForModel> extends infer T ? Exclude<T, null> : never,
   model: string
 ): Promise<{
   scorecard: RankabilityScorecard | null;
   error: string | null;
 }> {
   try {
-    const response = await generateJsonWithLocalSearch<RawRankabilityResponse>({
+    const response = await generateJsonWithProviderSearch<RawRankabilityResponse>({
+      provider,
       model,
-      responseSchema: RANKABILITY_RESPONSE_SCHEMA,
       systemPrompt: [
         "You are scoring website rankability for AI recommendations.",
-        "Use the provided stored crawl plus the collected web search evidence for current external validation.",
-        "Return only JSON matching the required shape.",
+        "Use web search for current external evidence.",
+        "Return only JSON matching the provided schema.",
         "Do not invent URLs or sources.",
         "Score each fixed factor independently.",
         "Do not reward a website for the same evidence in multiple factors unless it genuinely applies to both.",
@@ -205,119 +167,60 @@ async function scoreWebsiteWithLocalModel(
         "The app will calculate weighted totals. Do not calculate the final weighted score."
       ].join(" "),
       userPrompt: `${buildScorePrompt(input.scan, input.categoryModel, input.competitorAnalyses, input.targetIntentModel)}\n\n${buildRankabilityJsonContract()}`,
-      searchQueries: buildRankabilitySearchQueries(input.scan, input.categoryModel, input.targetIntentModel),
-      maxResultsPerQuery: 6,
-      maxAttempts: 3,
-      temperature: 0.1
+      responseSchema: RANKABILITY_RESPONSE_SCHEMA,
+      temperature: 0.1,
+      userLocation: buildWebSearchUserLocation(input.targetIntentModel)
     });
 
     const scorecard = normalizeRankabilityScorecard(response.content, {
       model: response.model,
-      usesWebSearch: response.searchRuns.some((run) => run.results.length > 0)
-    });
-
-    if (!scorecard) {
-      return {
-        scorecard: null,
-        error: "Unable to normalize local rankability scoring response."
-      };
-    }
-
-    scorecard.warnings = uniqueStrings([...scorecard.warnings, ...response.warnings]);
-    return {
-      scorecard,
-      error: null
-    };
-  } catch (error) {
-    return {
-      scorecard: null,
-      error: error instanceof Error ? error.message : "Unable to score website rankability with the local model."
-    };
-  }
-}
-
-async function scoreWebsiteWithOpenAIModel(
-  input: ScoreWebsiteInput,
-  model: string
-): Promise<{
-  scorecard: RankabilityScorecard | null;
-  error: string | null;
-}> {
-  const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (!openAiApiKey) {
-    return scoreWebsiteWithLocalModel(input, model);
-  }
-
-  try {
-    const client = new OpenAI({ apiKey: openAiApiKey });
-    const response = await createResponseWithModelFallback(client, {
-      model,
-      input: [
-        {
-          role: "system",
-          content: [
-            "You are scoring website rankability for AI recommendations.",
-            "Use web search for current external evidence.",
-            "Return only JSON matching the provided schema.",
-            "Do not invent URLs or sources.",
-            "Score each fixed factor independently.",
-            "Do not reward a website for the same evidence in multiple factors unless it genuinely applies to both.",
-            "Treat product fit, materials, features, menus, service range, compliance, and category-specific details as part of website_content_relevance_completeness.",
-            "The app will calculate weighted totals. Do not calculate the final weighted score."
-          ].join(" ")
-        },
-        {
-          role: "user",
-          content: buildScorePrompt(input.scan, input.categoryModel, input.competitorAnalyses, input.targetIntentModel)
-        }
-      ],
-      tools: [
-        {
-          type: "web_search" as const,
-          user_location: buildWebSearchUserLocation(input.targetIntentModel)
-        }
-      ],
-      tool_choice: "required",
-      text: {
-        format: {
-          type: "json_schema",
-          name: "siteintent_rankability_score",
-          strict: true,
-          schema: RANKABILITY_RESPONSE_SCHEMA
-        }
-      }
-    });
-
-    const parsed = parseResponseJson(response);
-    const scorecard = normalizeRankabilityScorecard(parsed, {
-      model: response.model || model,
-      usesWebSearch: containsWebSearchCall(response)
+      usesWebSearch: response.usesWebSearch
     });
 
     return {
       scorecard,
-      error: scorecard ? null : "Unable to normalize website scoring response."
+      error: scorecard ? null : `Unable to normalize ${provider} website scoring response.`
     };
   } catch (error) {
     return {
       scorecard: null,
-      error: error instanceof Error ? error.message : "Unable to score website rankability."
+      error: error instanceof Error ? error.message : `Unable to score website rankability with ${provider}.`
     };
   }
 }
 
-async function createResponseWithModelFallback(client: OpenAI, request: OpenAI.Responses.ResponseCreateParamsNonStreaming) {
-  try {
-    return await client.responses.create(request);
-  } catch (error) {
-    if (isModelNotFound(error) && request.model !== FALLBACK_MODEL) {
-      return client.responses.create({
-        ...request,
-        model: FALLBACK_MODEL
-      });
-    }
-    throw error;
+export function mergeRankabilityScorecards(scorecards: RankabilityScorecard[]) {
+  if (!scorecards.length) {
+    return null;
   }
+
+  const factorScores = {} as Record<RankabilityFactorId, RankabilityFactorScore>;
+
+  for (const factor of RANKABILITY_FACTORS) {
+    const factorSet = scorecards.map((scorecard) => scorecard.factorScores[factor.id]);
+    const averageScore = roundOne(average(factorSet.map((entry) => entry.score)));
+    factorScores[factor.id] = {
+      score: averageScore,
+      weight: factor.weight,
+      weightedContribution: roundOne(averageScore * (factor.weight / 100)),
+      confidence: averageConfidence(factorSet.map((entry) => entry.confidence)),
+      couldVerifySignal: factorSet.filter((entry) => entry.couldVerifySignal).length >= Math.ceil(factorSet.length / 2),
+      evidence: `Merged from ${scorecards.map((scorecard) => scorecard.model).join(", ")}.`,
+      sources: uniqueStrings(factorSet.flatMap((entry) => entry.sources)).slice(0, 8)
+    };
+  }
+
+  return {
+    model: "multi-model-average",
+    scoringProfileId: RANKABILITY_SCORING_PROFILE_ID,
+    usesWebSearch: scorecards.every((scorecard) => scorecard.usesWebSearch),
+    weightedTotalScore: roundOne(
+      RANKABILITY_FACTORS.reduce((sum, factor) => sum + factorScores[factor.id].weightedContribution, 0)
+    ),
+    factorScores,
+    summary: `Merged average across ${scorecards.map((scorecard) => scorecard.model).join(", ")}.`,
+    warnings: uniqueStrings(scorecards.flatMap((scorecard) => scorecard.warnings))
+  } satisfies RankabilityScorecard;
 }
 
 export function normalizeRankabilityScorecard(
@@ -462,12 +365,8 @@ function buildRankabilitySearchQueries(scan: ProjectScanRun, categoryModel: Cate
   ]);
 }
 
-function getLocalRankabilityModel() {
-  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b";
-}
-
 function getRankabilityModel() {
-  return process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || process.env.SITEINTENT_AI_MODEL || "gpt-5-mini";
+  return process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5.4-mini";
 }
 
 function buildRankabilityJsonContract() {
@@ -505,51 +404,6 @@ function isKeyPage(page: WebsiteScanPage) {
   );
 }
 
-function parseResponseJson(response: { output_text?: string; output?: unknown[] }) {
-  const text = response.output_text || extractTextFromOutput(response.output);
-  if (!text) {
-    throw new Error("OpenAI response did not include output text.");
-  }
-
-  return JSON.parse(stripJsonFence(text));
-}
-
-function extractTextFromOutput(output: unknown[] | undefined) {
-  if (!Array.isArray(output)) {
-    return "";
-  }
-
-  const texts: string[] = [];
-  for (const item of output) {
-    if (!item || typeof item !== "object") {
-      continue;
-    }
-
-    const content = (item as { content?: unknown[] }).content;
-    if (!Array.isArray(content)) {
-      continue;
-    }
-
-    for (const part of content) {
-      if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-        texts.push(part.text);
-      }
-    }
-  }
-
-  return texts.join("\n").trim();
-}
-
-function containsWebSearchCall(response: { output?: unknown[] }) {
-  return Array.isArray(response.output)
-    ? response.output.some((item) => item && typeof item === "object" && (item as { type?: string }).type === "web_search_call")
-    : false;
-}
-
-function stripJsonFence(value: string) {
-  return value.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "");
-}
-
 function normalizeConfidence(value: unknown): "high" | "medium" | "low" {
   return value === "high" || value === "medium" || value === "low" ? value : "low";
 }
@@ -577,13 +431,23 @@ function roundOne(value: number) {
   return Math.round(value * 10) / 10;
 }
 
-function isModelNotFound(error: unknown) {
-  return Boolean(
-    error &&
-      typeof error === "object" &&
-      "code" in error &&
-      (error as { code?: string }).code === "model_not_found"
-  );
+function average(values: number[]) {
+  if (!values.length) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function averageConfidence(values: Array<"high" | "medium" | "low">): "high" | "medium" | "low" {
+  const score = average(values.map((value) => (value === "high" ? 3 : value === "medium" ? 2 : 1)));
+  if (score >= 2.5) {
+    return "high";
+  }
+  if (score >= 1.5) {
+    return "medium";
+  }
+  return "low";
 }
 
 function safePath(value: string) {

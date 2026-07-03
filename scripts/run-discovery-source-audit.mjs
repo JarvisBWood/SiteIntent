@@ -10,7 +10,6 @@ const MODEL =
   process.env.SITEINTENT_DISCOVERABILITY_MODEL ||
   process.env.SITEINTENT_RANKABILITY_MODEL ||
   "gpt-5-mini";
-const FALLBACK_MODEL = "gpt-5.4-mini";
 const API_TIMEOUT_MS = 180000;
 const OUTPUT_FILE = path.resolve(process.cwd(), "research-results/discovery-source-audit.json");
 const INPUT_FILES = [
@@ -105,7 +104,6 @@ for (const file of INPUT_FILES) {
 const output = {
   generated_at: new Date().toISOString(),
   requested_model: MODEL,
-  fallback_model: FALLBACK_MODEL,
   categories: []
 };
 
@@ -173,10 +171,6 @@ async function createResponseWithModelFallback(client, request) {
   try {
     return await createResponseWithTimeout(client, request);
   } catch (error) {
-    if (error?.code === "model_not_found" && request.model !== FALLBACK_MODEL) {
-      console.warn(`Model ${request.model} not found. Falling back to ${FALLBACK_MODEL}.`);
-      return createResponseWithTimeout(client, { ...request, model: FALLBACK_MODEL });
-    }
     throw error;
   }
 }

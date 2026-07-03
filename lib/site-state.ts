@@ -1,4 +1,9 @@
 import type { CompetitorAnalysis } from "@/lib/models";
+import {
+  DEFAULT_PROVIDER_MODEL_SELECTION,
+  normalizeProviderModelSelection,
+  type ProviderModelSelection
+} from "@/lib/llm/provider-models";
 import type {
   AnalysisPassName,
   AnalysisPassResult,
@@ -97,6 +102,7 @@ export type ProjectOnboardingState = {
 export type AppPreferences = {
   pageAnalysisModel: string;
   scoringModel: string;
+  comparisonModels: ProviderModelSelection;
 };
 
 export type SiteIntentSessionState = {
@@ -133,8 +139,13 @@ export function createEmptyState(): SiteIntentSessionState {
 
 export function createDefaultPreferences(): AppPreferences {
   return {
-    pageAnalysisModel: process.env.SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "llama3.1:8b",
-    scoringModel: process.env.SITEINTENT_RANKABILITY_LOCAL_MODEL || process.env.SITEINTENT_AI_MODEL || process.env.OLLAMA_MODEL || "qwen2.5:14b"
+    pageAnalysisModel: process.env.SITEINTENT_PAGE_ANALYSIS_MODEL || process.env.SITEINTENT_WORKER_MODEL || "gpt-5.4-mini",
+    scoringModel: process.env.SITEINTENT_DISCOVERABILITY_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || "gpt-5.4-mini",
+    comparisonModels: normalizeProviderModelSelection({
+      openai: process.env.SITEINTENT_DISCOVERABILITY_MODEL || process.env.SITEINTENT_RANKABILITY_MODEL || DEFAULT_PROVIDER_MODEL_SELECTION.openai,
+      anthropic: process.env.SITEINTENT_ANTHROPIC_MODEL || DEFAULT_PROVIDER_MODEL_SELECTION.anthropic,
+      google: process.env.SITEINTENT_GEMINI_MODEL || DEFAULT_PROVIDER_MODEL_SELECTION.google
+    })
   };
 }
 

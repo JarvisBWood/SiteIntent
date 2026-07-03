@@ -156,6 +156,13 @@ export type DiscoverabilityScorecard = {
   warnings: string[];
 };
 
+export type DiscoverabilityProviderResult = {
+  provider: import("@/lib/llm/provider-models").ModelProvider;
+  model: string;
+  scorecard: DiscoverabilityScorecard | null;
+  error: string | null;
+};
+
 export const DISCOVERABILITY_WEIGHTS: Record<DiscoverabilityFactorId, number> = Object.fromEntries(
   DISCOVERABILITY_FACTORS.map((factor) => [factor.id, factor.weight])
 ) as Record<DiscoverabilityFactorId, number>;

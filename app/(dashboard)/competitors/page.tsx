@@ -5,53 +5,43 @@ import { BarChart3, PlayCircle, ScanLine } from "lucide-react";
 
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
-import type { ProjectCompetitorReport } from "@/lib/reports";
 import { shortenDisplayUrl } from "@/lib/site-state";
 
 export default function CompetitorsPage() {
-  const { hydrated, projects, activeProjectId, scanProgressByProject, startScan, isScanning } = useSiteIntent();
+  const {
+    hydrated,
+    projects,
+    activeProjectId,
+    scanProgressByProject,
+    competitorReportsByProject,
+    loadProjectCompetitorReport,
+    startScan,
+    isScanning
+  } = useSiteIntent();
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null;
   const liveScanProgress = activeProject ? scanProgressByProject[activeProject.id] ?? null : null;
-  const [report, setReport] = useState<ProjectCompetitorReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const report = activeProject ? competitorReportsByProject[activeProject.id] ?? null : null;
 
   useEffect(() => {
     if (!hydrated || !activeProject?.id) {
-      setReport(null);
       return;
     }
 
-    const controller = new AbortController();
-
     async function loadReport() {
+      if (Object.prototype.hasOwnProperty.call(competitorReportsByProject, activeProject.id)) {
+        return;
+      }
+      setReportLoading(true);
       try {
-        const response = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/competitors`, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal
-        });
-        if (!response.ok) {
-          throw new Error("Unable to load competitor report.");
-        }
-
-        const payload = (await response.json()) as { report?: ProjectCompetitorReport };
-        setReport(payload.report ?? null);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setReport(null);
+        await loadProjectCompetitorReport(activeProject.id);
+      } finally {
+        setReportLoading(false);
       }
     }
 
     void loadReport();
-    return () => controller.abort();
-  }, [
-    activeProject?.id,
-    hydrated,
-    liveScanProgress?.stage,
-    liveScanProgress?.progress,
-    liveScanProgress?.completedCompetitors,
-    liveScanProgress?.totalCompetitors
-  ]);
+  }, [activeProject?.id, competitorReportsByProject, hydrated, loadProjectCompetitorReport]);
 
   const competitorUrls = activeProject?.competitorUrls.slice(0, 5) ?? [];
   const sortedCompetitors = report?.competitors
@@ -98,6 +88,12 @@ export default function CompetitorsPage() {
           </button>
         </div>
       </div>
+      {reportLoading ? (
+        <section className="section-note">
+          <strong>Loading competitor data</strong>
+          <div>The saved competitor report for this website is being loaded.</div>
+        </section>
+      ) : null}
       {sortedCompetitors.length ? (
         <div className="stack">
           {sortedCompetitors.map((competitor, index) => {

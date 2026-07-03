@@ -1,9 +1,9 @@
 import OpenAI from "openai";
 
 import { loadAppState } from "@/lib/app-state";
-import { generateJsonWithLocalSearch } from "@/lib/llm/local-web-scoring";
 import { MODEL_CONFIG } from "@/lib/llm/model-config";
-import { isOpenAIModelName, shouldUseRemoteProvider } from "@/lib/llm/provider";
+import { normalizeProviderModelSelection, type ModelProvider } from "@/lib/llm/provider-models";
+import { coerceWebSearchCapableModel } from "@/lib/llm/web-search-models";
 import {
   buildCategoryModel,
   buildCompetitorAnalyses,
@@ -11,10 +11,10 @@ import {
   buildObservedIntent,
   type CompetitorAnalysis
 } from "@/lib/models";
-import { scoreDiscoverability } from "@/lib/discoverability/score-site";
-import type { AggregatedCandidate } from "@/lib/discoverability/types";
-import { scoreWebsite, scoreWebsiteWithJudgeModel } from "@/lib/scoring/score-site";
-import type { RankabilityScorecard } from "@/lib/scoring/types";
+import { scoreDiscoverabilityAcrossModels } from "@/lib/discoverability/score-site";
+import type { AggregatedCandidate, DiscoverabilityProviderResult } from "@/lib/discoverability/types";
+import { scoreWebsiteAcrossModels } from "@/lib/scoring/score-site";
+import type { RankabilityProviderResult } from "@/lib/scoring/types";
 import { analyzePage } from "@/lib/scan/analyze";
 import { crawlSite } from "@/lib/scan/crawl";
 import { logScanEvent, toErrorDetails } from "@/lib/scan/logging";
@@ -36,6 +36,7 @@ export async function runProjectScan(
     onScanSnapshot?: (scan: ProjectScanRun) => void;
   }
 ): Promise<ProjectScanRun> {
+  const requestedComparisonModels = normalizeProviderModelSelection(request.comparisonModels);
   if (request.scanMode === "competitors") {
     return runCompetitorOnlyScan(request, options);
   }
@@ -52,11 +53,13 @@ export async function runProjectScan(
       competitorCount: request.competitorUrls.length,
       scanDepth: request.scanDepth,
       pageAnalysisModel: request.pageAnalysisModel ?? null,
-      scoringModel: request.scoringModel ?? null
+      scoringModel: request.scoringModel ?? null,
+      comparisonModels: requestedComparisonModels
     }
   });
 
   const startedAt = new Date().toISOString();
+  const comparisonModels = requestedComparisonModels;
   const scanMode: ScanMode = request.scanMode ?? "full";
   const isWebsiteFirstScan = scanMode === "initial";
   const isFullWebsiteScan = scanMode === "full";
@@ -181,40 +184,22 @@ export async function runProjectScan(
     competitorAnalyses: baselineCompetitorAnalyses
   });
 
-  const analysisModelResults: Array<{ model: string; scorecard: RankabilityScorecard }> = [];
-  for (const analysisModel of MODEL_CONFIG.analysis) {
-    const result = await scoreWebsite({
-      scan: completedRun,
-      categoryModel: initialCategoryModel,
-      competitorAnalyses: [],
-      targetIntentModel: request.targetIntentModel,
-      model: analysisModel
-    });
-    if (result.scorecard) {
-      analysisModelResults.push({ model: analysisModel, scorecard: result.scorecard });
-    }
-  }
-
-  let websiteRankability: RankabilityScorecard | null = null;
-  let scoringError: string | null = null;
-  if (analysisModelResults.length > 1) {
-    websiteRankability = await scoreWebsiteWithJudgeModel(
-      completedRun,
-      initialCategoryModel,
-      analysisModelResults
-    );
-    if (!websiteRankability) {
-      scoringError = "Judge model failed to produce a consensus score.";
-    }
-  } else if (analysisModelResults.length === 1) {
-    websiteRankability = analysisModelResults[0].scorecard;
-  } else {
-    scoringError = "All analysis models failed to score the website.";
-  }
+  const rankabilityResult = await scoreWebsiteAcrossModels({
+    scan: completedRun,
+    categoryModel: initialCategoryModel,
+    competitorAnalyses: [],
+    targetIntentModel: request.targetIntentModel,
+    models: comparisonModels
+  });
+  const websiteRankability = rankabilityResult.scorecard;
+  const scoringError = rankabilityResult.error;
+  const providerScanResults = combineProviderScanResults(rankabilityResult.results, []);
 
   completedRun = completeWebsiteScan(completedRun, {
     completedAt: new Date().toISOString(),
     rankability: websiteRankability ?? undefined,
+    modelSelections: comparisonModels,
+    providerScanResults,
     scoringStatus: websiteRankability ? "completed" : "failed",
     scoringError
   });
@@ -245,15 +230,18 @@ export async function runProjectScan(
     discoveredPages: completedRun.websiteScanPages.length
   });
 
-  const discoverabilityResult = await scoreDiscoverability({
+  const discoverabilityResult = await scoreDiscoverabilityAcrossModels({
     scan: completedRun,
     categoryModel: initialCategoryModel,
+    models: comparisonModels,
     targetIntentModel: request.targetIntentModel,
     onPartialScorecard(partialScorecard) {
       const partialRun = completeWebsiteScan(completedRun, {
         completedAt: new Date().toISOString(),
         rankability: websiteRankability ?? undefined,
         discoverability: partialScorecard,
+        modelSelections: comparisonModels,
+        providerScanResults,
         scoringStatus: websiteRankability || partialScorecard ? "completed" : "failed",
         scoringError: scoringError ?? null
       });
@@ -298,6 +286,8 @@ export async function runProjectScan(
     completedAt: new Date().toISOString(),
     rankability: websiteRankability ?? undefined,
     discoverability: discoverability ?? undefined,
+    modelSelections: comparisonModels,
+    providerScanResults: combineProviderScanResults(rankabilityResult.results, discoverabilityResult.results),
     scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
     scoringError: [scoringError, discoverabilityResult.error].filter(Boolean).join(" | ") || null
   });
@@ -396,6 +386,8 @@ export async function runProjectScan(
     completedAt: new Date().toISOString(),
     rankability: websiteRankability ?? undefined,
     discoverability: discoverability ?? undefined,
+    modelSelections: comparisonModels,
+    providerScanResults: combineProviderScanResults(rankabilityResult.results, discoverabilityResult.results),
     scoringStatus: websiteRankability || discoverability ? "completed" : "failed",
     scoringError: [scoringError, discoverabilityResult.error].filter(Boolean).join(" | ") || null
   });
@@ -459,6 +451,11 @@ async function runCompetitorOnlyScan(
     onScanSnapshot?: (scan: ProjectScanRun) => void;
   }
 ): Promise<ProjectScanRun> {
+  const emitProgress = (event: ScanProgressEvent) => options?.onProgress?.(event);
+  const persistedState = await loadAppState();
+  const baseScan = persistedState.scanRuns.find((scan) => scan.projectId === request.projectId) ?? null;
+  const comparisonModels = normalizeProviderModelSelection(request.comparisonModels ?? baseScan?.modelSelections);
+
   logScanEvent({
     level: "info",
     event: "competitor_scan_started",
@@ -470,12 +467,10 @@ async function runCompetitorOnlyScan(
     details: {
       scanDepth: request.scanDepth,
       pageAnalysisModel: request.pageAnalysisModel ?? null,
-      scoringModel: request.scoringModel ?? null
+      scoringModel: request.scoringModel ?? null,
+      comparisonModels
     }
   });
-  const emitProgress = (event: ScanProgressEvent) => options?.onProgress?.(event);
-  const persistedState = await loadAppState();
-  const baseScan = persistedState.scanRuns.find((scan) => scan.projectId === request.projectId) ?? null;
 
   if (!baseScan || !baseScan.pages.length) {
     logScanEvent({
@@ -489,7 +484,6 @@ async function runCompetitorOnlyScan(
     });
     throw new Error("A website scan must exist before running a competitor-only scan.");
   }
-
   const startedAt = new Date().toISOString();
   const baselineCompetitorAnalyses = buildCompetitorAnalyses([]);
   const initialCategoryModel = buildCategoryModel({
@@ -534,9 +528,10 @@ async function runCompetitorOnlyScan(
     discoveredPages: baseScan.websiteScanPages.length
   });
 
-  const discoverabilityResult = await scoreDiscoverability({
+  const discoverabilityResult = await scoreDiscoverabilityAcrossModels({
     scan: baseScan,
     categoryModel: initialCategoryModel,
+    models: comparisonModels,
     targetIntentModel: request.targetIntentModel
   });
   const discoverability = discoverabilityResult.scorecard ?? baseScan.discoverability ?? undefined;
@@ -580,6 +575,7 @@ async function runCompetitorOnlyScan(
       targetScan: baseScan,
       categoryModel: initialCategoryModel,
       targetIntentModel: request.targetIntentModel,
+      comparisonModels,
       onPartialAnalyses(nextAnalyses) {
         const partialRun = completeWebsiteScan(createWebsiteScan({ request, startedAt, status: "completed" }), {
           completedAt: new Date().toISOString(),
@@ -589,6 +585,8 @@ async function runCompetitorOnlyScan(
           competitorAnalyses: nextAnalyses,
           rankability: baseScan.rankability,
           discoverability,
+          modelSelections: comparisonModels,
+          providerScanResults: combineProviderScanResultsFromScan(baseScan, discoverabilityResult.results),
           scoringError: discoverabilityResult.error ?? null,
           observedIntent: baseScan.observedIntent ?? undefined
         });
@@ -625,6 +623,8 @@ async function runCompetitorOnlyScan(
     competitorAnalyses,
     rankability: baseScan.rankability,
     discoverability,
+    modelSelections: comparisonModels,
+    providerScanResults: combineProviderScanResultsFromScan(baseScan, discoverabilityResult.results),
     scoringError: discoverabilityResult.error ?? null,
     observedIntent:
       baseScan.observedIntent ??
@@ -671,7 +671,7 @@ async function runCompetitorOnlyScan(
 }
 
 function selectAutoCompetitorCandidates(
-  discoverability: Awaited<ReturnType<typeof scoreDiscoverability>>["scorecard"],
+  discoverability: Awaited<ReturnType<typeof scoreDiscoverabilityAcrossModels>>["scorecard"],
   websiteUrl: string
 ) {
   if (!discoverability) {
@@ -682,6 +682,39 @@ function selectAutoCompetitorCandidates(
   return discoverability.aggregatedCandidates
     .filter((candidate) => normalizeDomain(candidate.website) !== targetDomain)
     .slice(0, 10);
+}
+
+function combineProviderScanResults(
+  rankabilityResults: RankabilityProviderResult[],
+  discoverabilityResults: DiscoverabilityProviderResult[]
+) {
+  const providers: ModelProvider[] = ["openai", "anthropic", "google"];
+  return providers.map((provider) => {
+    const rankability = rankabilityResults.find((entry) => entry.provider === provider);
+    const discoverability = discoverabilityResults.find((entry) => entry.provider === provider);
+
+    return {
+      provider,
+      model: discoverability?.model ?? rankability?.model ?? "",
+      rankability: rankability?.scorecard ?? null,
+      discoverability: discoverability?.scorecard ?? null,
+      rankabilityError: rankability?.error ?? null,
+      discoverabilityError: discoverability?.error ?? null
+    };
+  });
+}
+
+function combineProviderScanResultsFromScan(
+  scan: ProjectScanRun,
+  discoverabilityResults: DiscoverabilityProviderResult[]
+) {
+  const existingRankabilityResults: RankabilityProviderResult[] = (scan.providerScanResults ?? []).map((entry) => ({
+    provider: entry.provider,
+    model: entry.model,
+    scorecard: entry.rankability ?? null,
+    error: entry.rankabilityError ?? null
+  }));
+  return combineProviderScanResults(existingRankabilityResults, discoverabilityResults);
 }
 
 async function analyzeProjectPages(input: {
@@ -792,6 +825,7 @@ async function analyzeCompetitorHomepages(
     targetScan: ProjectScanRun;
     categoryModel: ReturnType<typeof buildCategoryModel>;
     targetIntentModel?: ProjectScanRequest["targetIntentModel"];
+    comparisonModels?: ProjectScanRequest["comparisonModels"];
     onPartialAnalyses?: (analyses: CompetitorAnalysis[]) => void;
   }
 ) {
@@ -1027,16 +1061,21 @@ async function analyzeCompetitorHomepages(
         ...context.categoryModel,
         updatedAt: new Date().toISOString()
       };
-      const competitorDiscoverabilityResult = await scoreDiscoverability({
+      const competitorModels = normalizeProviderModelSelection(
+        context.comparisonModels ?? context.targetScan.modelSelections
+      );
+      const competitorDiscoverabilityResult = await scoreDiscoverabilityAcrossModels({
         scan: competitorScan,
         categoryModel: competitorScoreCategoryModel,
+        models: competitorModels,
         targetIntentModel: context.targetIntentModel
       });
-      const competitorRankabilityResult = await scoreWebsite({
+      const competitorRankabilityResult = await scoreWebsiteAcrossModels({
         scan: competitorScan,
         categoryModel: competitorScoreCategoryModel,
         competitorAnalyses: [],
-        targetIntentModel: context.targetIntentModel
+        targetIntentModel: context.targetIntentModel,
+        models: competitorModels
       });
       const rankabilityScore = competitorRankabilityResult.scorecard?.weightedTotalScore ?? null;
       const discoverabilityScore = competitorDiscoverabilityResult.scorecard?.discoverabilityScore ?? null;
@@ -1137,8 +1176,10 @@ async function analyzeCompetitorHomepages(
   return analyses;
 }
 
-const COMPETITOR_VALIDATION_MODEL = process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || MODEL_CONFIG.worker;
-const COMPETITOR_VALIDATION_FALLBACK_MODEL = MODEL_CONFIG.judge;
+const COMPETITOR_VALIDATION_MODEL = coerceWebSearchCapableModel(
+  process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL,
+  MODEL_CONFIG.worker
+);
 const COMPETITOR_VALIDATION_THRESHOLD = 75;
 const COMPETITOR_VALIDATION_RECHECK_MIN = 65;
 const COMPETITOR_VALIDATION_SCHEMA = {
@@ -1168,92 +1209,17 @@ async function validateCompetitorCandidate(input: {
   candidate: AggregatedCandidate;
   retryMode?: "initial" | "recheck";
 }) {
-  const model = getCompetitorValidationModel();
-
-  if (shouldUseRemoteProvider()) {
-    return validateCompetitorCandidateWithLocalModel(input, model);
-  }
-
+  const model = coerceWebSearchCapableModel(getCompetitorValidationModel(), MODEL_CONFIG.worker);
   const openAiApiKey = process.env.OPENAI_API_KEY;
-  if (isOpenAIModelName(model)) {
-    if (openAiApiKey) {
-      return validateCompetitorCandidateWithOpenAIModel(input, model);
-    }
-
-    return validateCompetitorCandidateWithLocalModel(input, getLocalCompetitorValidationModel());
-  }
-
-  return validateCompetitorCandidateWithLocalModel(input, model);
-}
-
-async function validateCompetitorCandidateWithLocalModel(input: {
-  targetScan: ProjectScanRun;
-  categoryModel: ReturnType<typeof buildCategoryModel>;
-  candidate: AggregatedCandidate;
-  retryMode?: "initial" | "recheck";
-}, model: string) {
-  try {
-    const response = await generateJsonWithLocalSearch<{
-      is_competitor?: unknown;
-      confidence?: unknown;
-      reasoning?: unknown;
-    }>({
-      model,
-      responseSchema: COMPETITOR_VALIDATION_SCHEMA,
-      systemPrompt: [
-        "You are validating whether a website is a true competitor to another website.",
-        "Use the provided search evidence for current external facts.",
-        "Return only JSON matching the required shape.",
-        "A true competitor should serve a meaningfully similar product or service to a similar buyer in the same market context.",
-        "The primary decision should be whether the candidate offers the same product or service target as the scanned website.",
-        "For visitor management systems in Australia, a candidate that clearly offers visitor management software or visitor management systems for workplaces should usually be treated as a competitor unless it is clearly a directory, roundup, marketplace listing, agency, or unrelated adjacent tool.",
-        input.retryMode === "recheck"
-          ? "This is a second-pass review for a borderline candidate. Re-check carefully and do not reject a genuine direct competitor just because positioning, sector emphasis, or wording differs slightly."
-          : "Focus on whether the candidate is a real direct alternative rather than a directory, review page, marketplace listing, or editorial roundup."
-      ].join(" "),
-      userPrompt: [
-        `Target website: ${input.targetScan.websiteUrl}`,
-        `Target website name: ${input.targetScan.projectName}`,
-        `Primary product/service target: ${input.categoryModel.category}`,
-        `Candidate website: ${input.candidate.website}`,
-        `Candidate name: ${input.candidate.name}`,
-        `Category: ${input.categoryModel.category}`,
-        `Customer: ${input.categoryModel.customer}`,
-        `Problem: ${input.categoryModel.problem}`,
-        `Expected concepts: ${input.categoryModel.expectedConcepts.slice(0, 8).join(", ") || "none"}`,
-        `Why the candidate surfaced: ${input.candidate.reasons.slice(0, 3).join(" ") || "No stored reason."}`,
-        "",
-        "Decide whether the candidate is truly a competitor to the target website.",
-        input.retryMode === "recheck"
-          ? "This candidate was close to the acceptance threshold on the first pass. Reassess carefully and return valid JSON with keys: is_competitor (boolean), confidence (0-100), reasoning (string)."
-          : "Return valid JSON with keys: is_competitor (boolean), confidence (0-100), reasoning (string)."
-      ].join("\n"),
-      searchQueries: uniqueStrings([
-        `${input.targetScan.projectName} ${input.categoryModel.category}`,
-        `${input.candidate.name} ${input.categoryModel.category}`,
-        `${normalizeDomain(input.candidate.website)} competitor`,
-        `${normalizeDomain(input.targetScan.websiteUrl)} alternative`
-      ]),
-      maxResultsPerQuery: 6,
-      maxAttempts: 3,
-      temperature: 0.1
-    });
-
+  if (!openAiApiKey) {
     return {
-      isCompetitor: Boolean(response.content.is_competitor),
-      confidence: clampScore(response.content.confidence),
-      reasoning: typeof response.content.reasoning === "string" ? response.content.reasoning.trim() : ""
-    };
-  } catch (error) {
-    return {
-      isCompetitor: true,
-      confidence: 30,
-      reasoning:
-        error instanceof Error
-          ? `Local competitor validation failed, so the candidate was kept for manual review: ${error.message}`
-          : "Local competitor validation failed, so the candidate was kept for manual review."
+      isCompetitor: false,
+      confidence: 0,
+      reasoning: "OPENAI_API_KEY is required for hosted scans because SiteIntent now uses model-native web search only."
     };
   }
+
+  return validateCompetitorCandidateWithOpenAIModel(input, model);
 }
 
 async function validateCompetitorCandidateWithOpenAIModel(
@@ -1267,7 +1233,11 @@ async function validateCompetitorCandidateWithOpenAIModel(
 ) {
   const openAiApiKey = process.env.OPENAI_API_KEY;
   if (!openAiApiKey) {
-    return validateCompetitorCandidateWithLocalModel(input, model);
+    return {
+      isCompetitor: false,
+      confidence: 0,
+      reasoning: "OPENAI_API_KEY is required for hosted scans because SiteIntent now uses model-native web search only."
+    };
   }
 
   const client = new OpenAI({ apiKey: openAiApiKey });
@@ -1357,17 +1327,7 @@ async function createCompetitorValidationResponse(
   client: OpenAI,
   request: OpenAI.Responses.ResponseCreateParamsNonStreaming
 ) {
-  try {
-    return await client.responses.create(request);
-  } catch (error) {
-    if (isModelNotFound(error) && request.model !== COMPETITOR_VALIDATION_FALLBACK_MODEL) {
-      return client.responses.create({
-        ...request,
-        model: COMPETITOR_VALIDATION_FALLBACK_MODEL
-      });
-    }
-    throw error;
-  }
+  return client.responses.create(request);
 }
 
 function parseOpenAiJson(response: { output_text?: string; output?: unknown[] }) {
@@ -1403,15 +1363,6 @@ function extractTextFromOutput(output: unknown[] | undefined) {
   return texts.join("\n").trim();
 }
 
-function isModelNotFound(error: unknown) {
-  return (
-    error instanceof OpenAI.APIError &&
-    error.status === 404 &&
-    typeof error.message === "string" &&
-    error.message.toLowerCase().includes("model")
-  );
-}
-
 function clampScore(value: unknown) {
   const numeric = typeof value === "number" ? value : Number.parseFloat(String(value ?? ""));
   if (!Number.isFinite(numeric)) {
@@ -1438,10 +1389,6 @@ function normalizeDomain(value: string) {
   }
 }
 
-function getLocalCompetitorValidationModel() {
-  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || MODEL_CONFIG.worker;
-}
-
 function getCompetitorValidationModel() {
-  return process.env.SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL || process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL || MODEL_CONFIG.worker;
+  return coerceWebSearchCapableModel(process.env.SITEINTENT_COMPETITOR_VALIDATION_MODEL, MODEL_CONFIG.worker);
 }

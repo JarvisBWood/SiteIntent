@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isAuthError, requireRequestSession } from "@/lib/auth";
-import { getCloudflareEnv, isCloudflareRuntime } from "@/lib/cloudflare-runtime";
+import { getCloudflareEnv } from "@/lib/cloudflare-runtime";
 import {
   persistCompletedScan,
   persistScanRunSnapshot,
@@ -30,8 +30,9 @@ export async function POST(request: Request) {
       competitorUrls: Array.isArray(body.competitorUrls) ? body.competitorUrls : [],
       scanMode: body.scanMode ?? "full",
       scanDepth: Number.isFinite(body.scanDepth) ? body.scanDepth : 1,
-      pageAnalysisModel: isCloudflareRuntime() ? undefined : typeof body.pageAnalysisModel === "string" ? body.pageAnalysisModel : undefined,
-      scoringModel: isCloudflareRuntime() ? undefined : typeof body.scoringModel === "string" ? body.scoringModel : undefined,
+      pageAnalysisModel: undefined,
+      scoringModel: undefined,
+      comparisonModels: body.comparisonModels,
       targetIntentModel: body.targetIntentModel
     };
 
@@ -63,64 +64,59 @@ export async function POST(request: Request) {
         };
 
         try {
-          const restoreEnv = applyRequestLocalModels(payload.pageAnalysisModel, payload.scoringModel);
-          try {
-            logScanEvent({
-              level: "info",
-              event: "scan_request_received",
-              projectId: payload.projectId,
-              projectName: payload.projectName,
-              websiteUrl: payload.websiteUrl,
-              scanMode: payload.scanMode,
-              message: "Starting scan request.",
-              details: {
-                competitorCount: payload.competitorUrls.length,
-                scanDepth: payload.scanDepth,
-                pageAnalysisModel: payload.pageAnalysisModel ?? null,
-                scoringModel: payload.scoringModel ?? null
+          logScanEvent({
+            level: "info",
+            event: "scan_request_received",
+            projectId: payload.projectId,
+            projectName: payload.projectName,
+            websiteUrl: payload.websiteUrl,
+            scanMode: payload.scanMode,
+            message: "Starting scan request.",
+            details: {
+              competitorCount: payload.competitorUrls.length,
+              scanDepth: payload.scanDepth,
+              pageAnalysisModel: null,
+              scoringModel: null
+            }
+          });
+          const scan = await runProjectScan(payload, {
+            async onProgress(progress: ScanProgressEvent) {
+              try {
+                await updateScanProgress(payload.projectId, progress);
+              } catch (err) {
+                console.error("[scan] progress save failed:", err);
               }
-            });
-            const scan = await runProjectScan(payload, {
-              async onProgress(progress: ScanProgressEvent) {
-                try {
-                  await updateScanProgress(payload.projectId, progress);
-                } catch (err) {
-                  console.error("[scan] progress save failed:", err);
-                }
-                send({ type: "progress", progress });
-              },
-              async onScanSnapshot(scanSnapshot) {
-                try {
-                  await persistScanRunSnapshot(scanSnapshot);
-                } catch (err) {
-                  console.error("[scan] snapshot save failed:", err);
-                }
+              send({ type: "progress", progress });
+            },
+            async onScanSnapshot(scanSnapshot) {
+              try {
+                await persistScanRunSnapshot(scanSnapshot);
+              } catch (err) {
+                console.error("[scan] snapshot save failed:", err);
               }
-            });
+            }
+          });
 
-            await persistCompletedScan(scan);
-            await updateScanProgress(payload.projectId, null);
-            logScanEvent({
-              level: "info",
-              event: "scan_request_completed",
-              projectId: payload.projectId,
-              projectName: payload.projectName,
-              websiteUrl: payload.websiteUrl,
-              scanId: scan.id,
-              scanMode: scan.scanMode,
-              message: "Scan request completed.",
-              details: {
-                status: scan.status,
-                scoringStatus: scan.scoringStatus,
-                scoringError: scan.scoringError ?? null,
-                errorCount: scan.errors.length
-              }
-            });
-            send({ type: "result", scan });
-            close();
-          } finally {
-            restoreEnv();
-          }
+          await persistCompletedScan(scan);
+          await updateScanProgress(payload.projectId, null);
+          logScanEvent({
+            level: "info",
+            event: "scan_request_completed",
+            projectId: payload.projectId,
+            projectName: payload.projectName,
+            websiteUrl: payload.websiteUrl,
+            scanId: scan.id,
+            scanMode: scan.scanMode,
+            message: "Scan request completed.",
+            details: {
+              status: scan.status,
+              scoringStatus: scan.scoringStatus,
+              scoringError: scan.scoringError ?? null,
+              errorCount: scan.errors.length
+            }
+          });
+          send({ type: "result", scan });
+          close();
         } catch (error) {
           void updateScanProgress(payload.projectId, null);
           logScanEvent({
@@ -170,11 +166,17 @@ function applyCloudflareEnvToProcess() {
 
   const keys = [
     "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "SITEINTENT_WORKER_MODEL",
+    "SITEINTENT_JUDGE_MODEL",
+    "SITEINTENT_ANALYSIS_MODELS",
     "SITEINTENT_PAGE_ANALYSIS_MODEL",
-    "SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL",
-    "SITEINTENT_DISCOVERABILITY_LOCAL_MODEL",
-    "SITEINTENT_RANKABILITY_LOCAL_MODEL",
-    "SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL"
+    "SITEINTENT_DISCOVERABILITY_MODEL",
+    "SITEINTENT_RANKABILITY_MODEL",
+    "SITEINTENT_COMPETITOR_VALIDATION_MODEL",
+    "SITEINTENT_ANTHROPIC_MODEL",
+    "SITEINTENT_GEMINI_MODEL"
   ] as const;
 
   for (const key of keys) {
@@ -183,39 +185,4 @@ function applyCloudflareEnvToProcess() {
       process.env[key] = value;
     }
   }
-}
-
-function applyRequestLocalModels(pageAnalysisModel?: string, scoringModel?: string) {
-  if (isCloudflareRuntime() || (!pageAnalysisModel?.trim() && !scoringModel?.trim())) {
-    return () => {};
-  }
-
-  const overrides = {
-    OLLAMA_MODEL: pageAnalysisModel || scoringModel,
-    SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL: pageAnalysisModel,
-    SITEINTENT_DISCOVERABILITY_LOCAL_MODEL: scoringModel,
-    SITEINTENT_RANKABILITY_LOCAL_MODEL: scoringModel,
-    SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL: scoringModel
-  } as const;
-  const keys = Object.keys(overrides) as Array<keyof typeof overrides>;
-  const previous = new Map<string, string | undefined>();
-
-  for (const key of keys) {
-    previous.set(key, process.env[key]);
-    const nextValue = overrides[key];
-    if (nextValue?.trim()) {
-      process.env[key] = nextValue;
-    }
-  }
-
-  return () => {
-    for (const key of keys) {
-      const value = previous.get(key);
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-  };
 }

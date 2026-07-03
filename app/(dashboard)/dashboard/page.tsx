@@ -1,65 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, PlayCircle, ScanLine, Sparkles } from "lucide-react";
 
 import { ProjectSetupModal } from "@/components/project-setup-modal";
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
+import { DISCOVERABILITY_FACTORS, type DiscoverabilityFactorId } from "@/lib/discoverability/types";
+import { type ModelProvider } from "@/lib/llm/provider-models";
 import type { ProjectOverviewReport } from "@/lib/reports";
+import { RANKABILITY_FACTORS, type RankabilityFactorId } from "@/lib/scoring/types";
+import type { ProjectScanRun } from "@/lib/site-state";
+
+type ProviderScoreRow = {
+  provider: ModelProvider;
+  model: string;
+  label: string;
+  score: number | null;
+};
+
+const PROVIDER_META: Record<ModelProvider, { label: string; iconSrc: string }> = {
+  openai: { label: "OpenAI", iconSrc: "/provider-icons/openai.svg" },
+  anthropic: { label: "Anthropic", iconSrc: "/provider-icons/anthropic.svg" },
+  google: { label: "Gemini", iconSrc: "/provider-icons/google.svg" }
+};
 
 export default function DashboardPage() {
   const {
     hydrated,
     projects,
     activeProjectId,
+    scanRuns,
+    overviewReportsByProject,
+    loadProjectOverviewReport,
     startScan,
     isScanning,
     lastScanError,
     scanProgressByProject
   } = useSiteIntent();
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null;
+  const latestScan = useMemo(
+    () => (activeProject ? scanRuns.find((scan) => scan.projectId === activeProject.id) ?? null : null),
+    [activeProject, scanRuns]
+  );
   const progress = activeProject ? scanProgressByProject[activeProject.id] ?? null : null;
-  const [overview, setOverview] = useState<ProjectOverviewReport | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(false);
+  const overview = activeProject ? overviewReportsByProject[activeProject.id] ?? null : null;
 
   useEffect(() => {
     if (!hydrated || !activeProject?.id) {
-      setOverview(null);
       return;
     }
 
-    const controller = new AbortController();
-
     async function loadOverview() {
+      if (Object.prototype.hasOwnProperty.call(overviewReportsByProject, activeProject.id)) {
+        return;
+      }
       setOverviewLoading(true);
       try {
-        const response = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/overview`, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal
-        });
-        if (!response.ok) {
-          throw new Error("Unable to load project overview.");
-        }
-
-        const payload = (await response.json()) as { report?: ProjectOverviewReport };
-        setOverview(payload.report ?? null);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setOverview(null);
+        await loadProjectOverviewReport(activeProject.id);
       } finally {
-        if (!controller.signal.aborted) {
-          setOverviewLoading(false);
-        }
+        setOverviewLoading(false);
       }
     }
 
     void loadOverview();
-    return () => controller.abort();
-  }, [activeProject?.id, hydrated, progress?.stage, progress?.progress, progress?.analyzedPages, progress?.completedCompetitors]);
+  }, [activeProject?.id, hydrated, loadProjectOverviewReport, overviewReportsByProject]);
+
+  const aiSearchProviderScores = useMemo(() => buildAiSearchProviderScores(latestScan), [latestScan]);
+  const rankabilityProviderScores = useMemo(
+    () => buildProviderMetricRows(latestScan, (entry) => entry.rankability?.weightedTotalScore ?? null),
+    [latestScan]
+  );
+  const discoverabilityProviderScores = useMemo(
+    () => buildProviderMetricRows(latestScan, (entry) => entry.discoverability?.discoverabilityScore ?? null),
+    [latestScan]
+  );
 
   if (!activeProject) {
     return (
@@ -106,7 +123,7 @@ export default function DashboardPage() {
             />
             <h1 className="page-title">{activeProject.name}</h1>
           </div>
-          <p className="page-copy">Track how strong your website looks to AI systems and where it is still getting missed.</p>
+          <p className="page-copy">Track the averaged score plus the individual OpenAI, Anthropic, and Gemini results behind it.</p>
         </div>
         <div className="page-header-inline__actions">
           <button
@@ -137,19 +154,22 @@ export default function DashboardPage() {
           label="AI Search Score"
           value={overview?.aiSearchScore ?? null}
           benchmark={overview?.competitorBenchmarks.aiSearchScore ?? null}
-          note="A blended view of how strong the site looks and how often it gets discovered."
+          note="Average blended score across the three provider runs."
+          providerRows={aiSearchProviderScores}
         />
         <MetricCard
           label="Rankability"
           value={overview?.rankabilityScore ?? null}
           benchmark={overview?.competitorBenchmarks.rankabilityScore ?? null}
-          note="How strong the website looks once AI includes it as a candidate."
+          note="Average of the provider-specific rankability scores."
+          providerRows={rankabilityProviderScores}
         />
         <MetricCard
           label="Discoverability"
           value={overview?.discoverabilityScore ?? null}
           benchmark={overview?.competitorBenchmarks.discoverabilityScore ?? null}
-          note="How likely AI is to find the website in repeated recommendation searches."
+          note="Average of the provider-specific discoverability scores."
+          providerRows={discoverabilityProviderScores}
         />
       </div>
 
@@ -160,6 +180,7 @@ export default function DashboardPage() {
           tone="rankability"
           items={overview?.rankabilityBreakdown ?? []}
           pending={!hasRankability}
+          providerFactorScores={buildRankabilityFactorMap(latestScan)}
         />
         <BreakdownCard
           title="Discoverability Breakdown"
@@ -167,6 +188,7 @@ export default function DashboardPage() {
           tone="discoverability"
           items={overview?.discoverabilityBreakdown ?? []}
           pending={!hasDiscoverability}
+          providerFactorScores={buildDiscoverabilityFactorMap(latestScan)}
         />
       </div>
     </div>
@@ -177,12 +199,14 @@ function MetricCard({
   label,
   value,
   benchmark,
-  note
+  note,
+  providerRows
 }: {
   label: string;
   value: number | null;
   benchmark: ProjectOverviewReport["competitorBenchmarks"]["aiSearchScore"] | null;
   note: string;
+  providerRows: ProviderScoreRow[];
 }) {
   const scoreTone = value == null ? null : getScoreTone(value);
 
@@ -196,6 +220,13 @@ function MetricCard({
         {benchmark ? <MetricBenchmark benchmark={benchmark} /> : null}
       </div>
       <div className="metric-card__note">{note}</div>
+      {providerRows.length ? (
+        <div className="metric-card__providers">
+          {providerRows.map((row) => (
+            <ProviderScoreRowCard key={row.provider} row={row} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -217,7 +248,8 @@ function BreakdownCard({
   summary,
   tone,
   items,
-  pending
+  pending,
+  providerFactorScores
 }: {
   title: string;
   summary: string | null;
@@ -233,6 +265,7 @@ function BreakdownCard({
     evidence: string;
     bestCompetitor: ProjectOverviewReport["competitorBenchmarks"]["aiSearchScore"];
   }>;
+  providerFactorScores: Record<string, ProviderScoreRow[]>;
 }) {
   return (
     <section className={`card score-breakdown score-breakdown--${tone}`}>
@@ -253,11 +286,15 @@ function BreakdownCard({
                   {Math.round(item.score)}%
                 </div>
               </div>
-              <div className="score-factor-bar" aria-hidden="true">
-                <div
-                  className="score-factor-bar__fill"
-                  style={{ width: `${Math.max(0, Math.min(100, item.score))}%` }}
-                />
+              <div className="score-factor-card__bar-group">
+                <ScoreBar score={item.score} />
+                {(providerFactorScores[item.id] ?? []).length ? (
+                  <div className="score-factor-card__providers">
+                    {(providerFactorScores[item.id] ?? []).map((row) => (
+                      <ProviderBarRow key={`${item.id}-${row.provider}`} row={row} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               {item.bestCompetitor ? (
                 <div className="score-factor-card__benchmark">
@@ -281,6 +318,51 @@ function BreakdownCard({
       )}
     </section>
   );
+}
+
+function ScoreBar({ score }: { score: number }) {
+  return (
+    <div className="score-factor-bar" aria-hidden="true">
+      <div className="score-factor-bar__fill" style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+    </div>
+  );
+}
+
+function ProviderScoreRowCard({ row }: { row: ProviderScoreRow }) {
+  return (
+    <div className="provider-score-row">
+      <div className="provider-score-row__identity">
+        <ProviderIcon provider={row.provider} />
+        <div className="provider-score-row__copy">
+          <strong>{row.label}</strong>
+          <span>{formatModelName(row.model)}</span>
+        </div>
+      </div>
+      <div className={row.score == null ? "provider-score-row__score" : `provider-score-row__score provider-score-row__score--${getScoreTone(row.score)}`}>
+        {row.score == null ? "N/A" : `${Math.round(row.score)}%`}
+      </div>
+    </div>
+  );
+}
+
+function ProviderBarRow({ row }: { row: ProviderScoreRow }) {
+  return (
+    <div className="provider-bar-row">
+      <div className="provider-bar-row__label">
+        <ProviderIcon provider={row.provider} />
+        <span>{row.label}</span>
+      </div>
+      <div className="provider-bar-row__track" aria-hidden="true">
+        <div className="provider-bar-row__fill" style={{ width: `${Math.max(0, Math.min(100, row.score ?? 0))}%` }} />
+      </div>
+      <div className="provider-bar-row__score">{row.score == null ? "N/A" : `${Math.round(row.score)}%`}</div>
+    </div>
+  );
+}
+
+function ProviderIcon({ provider }: { provider: ModelProvider }) {
+  const meta = PROVIDER_META[provider];
+  return <img className="provider-icon" src={meta.iconSrc} alt={`${meta.label} icon`} />;
 }
 
 function getScoreTone(score: number) {
@@ -314,4 +396,68 @@ function BenchmarkPill({
       </span>
     </span>
   );
+}
+
+function buildProviderMetricRows(
+  scan: ProjectScanRun | null,
+  selector: (entry: NonNullable<ProjectScanRun["providerScanResults"]>[number]) => number | null
+) {
+  return (scan?.providerScanResults ?? [])
+    .map((entry) => ({
+      provider: entry.provider,
+      model: entry.model,
+      label: PROVIDER_META[entry.provider].label,
+      score: selector(entry)
+    }))
+    .filter((entry) => entry.score != null);
+}
+
+function buildAiSearchProviderScores(scan: ProjectScanRun | null) {
+  return buildProviderMetricRows(scan, (entry) => {
+    const rankability = entry.rankability?.weightedTotalScore ?? null;
+    const discoverability = entry.discoverability?.discoverabilityScore ?? null;
+    return rankability == null || discoverability == null ? null : roundOne(rankability * 0.4 + discoverability * 0.6);
+  });
+}
+
+function buildRankabilityFactorMap(scan: ProjectScanRun | null) {
+  const entries = scan?.providerScanResults ?? [];
+  return Object.fromEntries(
+    RANKABILITY_FACTORS.map((factor) => [
+      factor.id,
+      entries
+        .map((entry) => ({
+          provider: entry.provider,
+          model: entry.model,
+          label: PROVIDER_META[entry.provider].label,
+          score: entry.rankability?.factorScores[factor.id as RankabilityFactorId]?.score ?? null
+        }))
+        .filter((row) => row.score != null)
+    ])
+  ) as Record<RankabilityFactorId, ProviderScoreRow[]>;
+}
+
+function buildDiscoverabilityFactorMap(scan: ProjectScanRun | null) {
+  const entries = scan?.providerScanResults ?? [];
+  return Object.fromEntries(
+    DISCOVERABILITY_FACTORS.map((factor) => [
+      factor.id,
+      entries
+        .map((entry) => ({
+          provider: entry.provider,
+          model: entry.model,
+          label: PROVIDER_META[entry.provider].label,
+          score: entry.discoverability?.factorScores[factor.id as DiscoverabilityFactorId]?.score ?? null
+        }))
+        .filter((row) => row.score != null)
+    ])
+  ) as Record<DiscoverabilityFactorId, ProviderScoreRow[]>;
+}
+
+function formatModelName(model: string) {
+  return model.replace(/-/g, " ");
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10;
 }

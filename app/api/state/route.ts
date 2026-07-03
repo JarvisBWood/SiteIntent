@@ -58,6 +58,8 @@ function mergeStateWithPersistedScans(nextState: SiteIntentSessionState, persist
       competitorAnalyses: scan.competitorAnalyses?.length ? scan.competitorAnalyses : persisted.competitorAnalyses,
       rankability: scan.rankability ?? persisted.rankability,
       discoverability: scan.discoverability ?? persisted.discoverability,
+      modelSelections: scan.modelSelections ?? persisted.modelSelections,
+      providerScanResults: scan.providerScanResults ?? persisted.providerScanResults,
       observedIntent: scan.observedIntent ?? persisted.observedIntent,
       scoringError: scan.scoringError ?? persisted.scoringError
     };

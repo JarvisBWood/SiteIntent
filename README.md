@@ -2,6 +2,14 @@
 
 SiteIntent is a Next.js app that scans a website, works out what category the site appears to be in, measures whether AI systems are likely to discover it, and then scores how strong the site looks once AI has found it.
 
+The app now runs as a hosted Cloudflare dashboard backed by model-native web search. Production no longer uses Ollama, Groq-style remote model proxies, Playwright-based discovery, Serper, or app-managed DuckDuckGo scraping. Web-dependent stages run through the model providers' built-in search tools only:
+
+- OpenAI Responses API with `web_search`
+- Anthropic Messages API with Claude web search
+- Gemini Interactions API with Google Search grounding
+
+Each scan now runs three scoring passes in parallel configuration terms: one selected OpenAI model, one selected Anthropic model, and one selected Gemini model. The dashboard stores each provider result separately and also computes a temporary merged scorecard so the current UI can keep working while scoring logic evolves.
+
 The product currently centers on three outputs:
 
 - `Discoverability`: does AI find this site during recommendation-style searches?
@@ -52,7 +60,7 @@ Production intentionally splits the dashboard and the public site. The dashboard
 - [lib/d1-state.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/d1-state.ts)
   - D1 implementation of app persistence
 - [lib/sqlite.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/sqlite.ts)
-  - Local SQLite schema and connection for offline fallback
+  - Local SQLite schema and connection for `npm run dev`
 - [lib/auth.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/auth.ts)
   - Auth implementation for both D1 and SQLite modes
 - [public/_headers](/Users/jarvis/Documents/GitHub/SiteIntent/public/_headers)
@@ -82,6 +90,8 @@ These secrets are required in the `siteintent-dashboard` Worker:
 
 ```txt
 OPENAI_API_KEY
+ANTHROPIC_API_KEY
+GEMINI_API_KEY
 DASH_ADMIN_EMAIL
 DASH_ADMIN_PASSWORD
 SESSION_SECRET
@@ -90,26 +100,39 @@ SESSION_SECRET
 Runtime env keys used by the app:
 
 - `OPENAI_API_KEY`
-  - Required for production scans
+  - Required for OpenAI-backed page analysis and OpenAI scoring passes
+- `ANTHROPIC_API_KEY`
+  - Required for Anthropic scoring passes
+- `GEMINI_API_KEY`
+  - Required for Gemini scoring passes
 - `DASH_ADMIN_EMAIL`
   - Bootstrap admin email
 - `DASH_ADMIN_PASSWORD`
   - Bootstrap admin password
 - `SESSION_SECRET`
   - HMAC secret used to sign the session cookie
+- `SITEINTENT_WORKER_MODEL`
+  - Optional hosted model override for page analysis fallback
 - `SITEINTENT_PAGE_ANALYSIS_MODEL`
-  - Optional override for page analysis model in Cloudflare
-- `SITEINTENT_PAGE_ANALYSIS_LOCAL_MODEL`
-- `SITEINTENT_DISCOVERABILITY_LOCAL_MODEL`
-- `SITEINTENT_RANKABILITY_LOCAL_MODEL`
-- `SITEINTENT_COMPETITOR_VALIDATION_LOCAL_MODEL`
-  - Local model settings retained for non-Cloudflare/local workflows
+  - Optional hosted model override for page analysis
+- `SITEINTENT_DISCOVERABILITY_MODEL`
+  - Optional default OpenAI model for discoverability when a scan does not send an explicit model selection
+- `SITEINTENT_RANKABILITY_MODEL`
+  - Optional default OpenAI model for rankability when a scan does not send an explicit model selection
+- `SITEINTENT_ANTHROPIC_MODEL`
+  - Optional default Anthropic scan model
+- `SITEINTENT_GEMINI_MODEL`
+  - Optional default Gemini scan model
+- `SITEINTENT_COMPETITOR_VALIDATION_MODEL`
+  - Optional hosted model override for competitor validation
+
+Current selectable scan model IDs are exposed by `GET /api/local-models`. That endpoint now returns provider-specific dropdown options for OpenAI, Anthropic, and Gemini so the hosted settings page can persist one model choice per provider.
 
 Local preview secrets live in `.dev.vars`, using [.dev.vars.example](/Users/jarvis/Documents/GitHub/SiteIntent/.dev.vars.example) as the template.
 
 ### Database Model
 
-Cloudflare production uses D1 as the source of truth. Local `npm run dev` uses `data/siteintent.sqlite` through `better-sqlite3`. The schemas are intentionally kept aligned.
+Cloudflare production uses D1 as the source of truth. Local `npm run dev` uses SQLite through `better-sqlite3`. The schemas are intentionally kept aligned.
 
 Tables in D1 and SQLite:
 
@@ -142,6 +165,10 @@ Tables in D1 and SQLite:
   - Columns: `id`, `project_id`, `sort_order`, `started_at`, `completed_at`, `data_json`
   - Stores metadata for each scan run
   - Indexed on `project_id`
+  - `data_json` now includes:
+    - the selected model per provider
+    - the merged rankability/discoverability scorecards used by the dashboard
+    - per-provider raw scorecards and errors for OpenAI, Anthropic, and Gemini
 - `scan_pages`
   - Columns: `scan_id`, `page_index`, `data_json`
   - Stores the page-level payloads for a scan
@@ -188,8 +215,8 @@ There are three meaningful execution modes:
 
 - `npm run dev`
   - Standard Next.js local development
-  - Uses SQLite in `data/siteintent.sqlite`
-  - Good for offline/local app testing
+  - Uses SQLite
+  - Still uses hosted provider APIs for AI work
 - `npm run cf:preview`
   - Local Cloudflare Worker preview
   - Uses local D1 through Wrangler
@@ -197,13 +224,14 @@ There are three meaningful execution modes:
 - Cloudflare production
   - Uses D1 binding `DB`
   - Uses Worker secrets instead of `.env`
-  - Should be treated as OpenAI-backed production mode
+  - Should be treated as multi-provider hosted production mode
 
 Rules to remember:
 
 - Do not assume local SQLite data exists in Cloudflare
 - Do not read or write directly to SQLite from code that must run in the Worker
-- Production scans should use OpenAI, not local Ollama
+- Both preview and production scans use hosted model-native search APIs only
+- Do not reintroduce local-model fallbacks, remote proxy providers, or app-managed web search
 
 ### Build And Deploy Flow
 
@@ -334,7 +362,7 @@ The main flow lives in [lib/scan/run-scan.ts](/Users/jarvis/Documents/GitHub/Sit
 
 At a high level, a full scan does this:
 
-1. Crawl the target site and save the crawl snapshot locally.
+1. Crawl the target site and save the crawl snapshot.
 2. Run page-level AI analysis on each included page.
 3. Build a category model from the analyzed pages.
 4. Score `Rankability` for the target website.
@@ -347,8 +375,10 @@ Important implementation detail:
 
 - The category model is mostly heuristic code, not a separate AI prompt.
 - Rankability uses the saved crawl snapshot, not a fresh scrape of the site.
-- Discoverability and competitor validation use live web search.
-- Web search is currently hard-coded to `Australia/Sydney`.
+- Discoverability, discoverability source audit, rankability, and competitor validation use model-native `web_search`.
+- The page-analysis stage uses the same hosted OpenAI model family, but it does not attach external tools because it reasons over the stored crawl only.
+- The app no longer uses Serper, DuckDuckGo scraping, Playwright, Ollama, or remote OpenAI-compatible proxy providers for production scans.
+- Web search user location is derived from the target-intent model when available, otherwise it defaults to the current Australia/Sydney configuration used by the scan code.
 
 ## Every AI Prompt Used During A Scan
 
@@ -428,6 +458,11 @@ What this is used for:
 - Power the category model.
 - Power the stored context later used by Rankability.
 
+Important note:
+
+- This prompt family does not use external web search because it is intentionally constrained to the stored crawl snapshot.
+- It still runs on the same hosted model allowlist used by the rest of the app, so production only uses OpenAI models that support native web search when needed elsewhere in the pipeline.
+
 ### 2. Discoverability Prompt Set
 
 File: [lib/discoverability/score-site.ts](/Users/jarvis/Documents/GitHub/SiteIntent/lib/discoverability/score-site.ts)
@@ -467,6 +502,11 @@ Use official provider websites where possible.
 Assess the target website honestly.
 Classify SERP-style evidence as search_engine_result.
 ```
+
+Implementation note:
+
+- In production this stage is executed through the OpenAI Responses API with `tool_choice: "required"` and the `web_search` tool attached.
+- The app no longer performs its own search before prompting the model.
 
 Each variation is wrapped in a larger user prompt:
 
@@ -533,6 +573,10 @@ For each source, state whether the target website appears to be present and whic
 Use source_type search_engine_result for SERP-like sources.
 ```
 
+Implementation note:
+
+- This stage also runs through the OpenAI Responses API with native `web_search`.
+
 The user prompt is effectively:
 
 ```txt
@@ -576,6 +620,11 @@ Do not invent URLs or sources.
 Score each fixed factor independently.
 Do not calculate the final weighted score.
 ```
+
+Implementation note:
+
+- This stage runs through the OpenAI Responses API with native `web_search`.
+- The judge pass that merges multiple independent rankability scorecards does not need external search because it synthesizes already-scored outputs.
 
 The user prompt is built from:
 
@@ -664,6 +713,10 @@ Return only JSON matching the provided schema.
 A true competitor should serve a meaningfully similar product or service to a similar buyer in the same market context.
 Focus on whether the candidate is a real direct alternative rather than a directory, review page, marketplace listing, or editorial roundup.
 ```
+
+Implementation note:
+
+- This stage runs through the OpenAI Responses API with native `web_search`.
 
 The user prompt is effectively:
 
@@ -935,6 +988,8 @@ The current code does not do these things:
 - It does not calculate Rankability by repeated top-10 frequency.
 - It does not directly turn the 7 top-10 discoverability runs into a final top 5 without validation.
 - It does not build the category model from a separate category-classification prompt.
+- It does not use Serper, DuckDuckGo HTML scraping, Playwright, or any other app-managed search adapter in production.
+- It does not use Ollama or an OpenAI-compatible remote proxy provider for the live dashboard.
 
 ## Short Plain-English Summary
 

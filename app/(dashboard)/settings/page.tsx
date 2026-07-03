@@ -6,6 +6,7 @@ import { Settings2, Trash2, Globe2, CheckCircle2, Sparkles, Target, X } from "lu
 import { SiteFavicon } from "@/components/site-favicon";
 import { useSiteIntent } from "@/components/site-intent-provider";
 import { TargetIntentEditor } from "@/components/target-intent-editor";
+import type { ModelProvider, ProviderModelOption } from "@/lib/llm/provider-models";
 type ModelConfigItem = {
   id: string;
   role: "worker" | "judge" | "analysis";
@@ -23,8 +24,26 @@ const SETTINGS_TABS: Array<{ id: SettingsTab; label: string }> = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("websites");
   const [editingTargetProjectId, setEditingTargetProjectId] = useState<string | null>(null);
+  const [websiteSearch, setWebsiteSearch] = useState("");
   const [modelConfig, setModelConfig] = useState<ModelConfigItem[]>([]);
+  const [providerOptions, setProviderOptions] = useState<Record<ModelProvider, ProviderModelOption[]>>({
+    openai: [],
+    anthropic: [],
+    google: []
+  });
   const { projects, activeProjectId, selectProject, deleteProject, preferences, updatePreferences } = useSiteIntent();
+  const filteredProjects = projects.filter((project) => {
+    const query = websiteSearch.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+
+    return (
+      project.name.toLowerCase().includes(query) ||
+      project.websiteDisplayUrl.toLowerCase().includes(query) ||
+      project.websiteUrl.toLowerCase().includes(query)
+    );
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,16 +58,31 @@ export default function SettingsPage() {
           headers: { Accept: "application/json" },
           signal: controller.signal
         });
-        const payload = (await response.json()) as { models?: ModelConfigItem[] };
+        const payload = (await response.json()) as {
+          models?: ModelConfigItem[];
+          providerOptions?: Record<ModelProvider, ProviderModelOption[]>;
+        };
         if (controller.signal.aborted) {
           return;
         }
         setModelConfig(Array.isArray(payload.models) ? payload.models : []);
+        setProviderOptions(
+          payload.providerOptions ?? {
+            openai: [],
+            anthropic: [],
+            google: []
+          }
+        );
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
         setModelConfig([]);
+        setProviderOptions({
+          openai: [],
+          anthropic: [],
+          google: []
+        });
       }
     }
 
@@ -99,10 +133,18 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
+          <input
+            className="input"
+            type="search"
+            value={websiteSearch}
+            onChange={(event) => setWebsiteSearch(event.target.value)}
+            placeholder="Search websites"
+            aria-label="Search websites"
+          />
 
           {projects.length ? (
             <div className="settings-list">
-              {projects.map((project) => {
+              {filteredProjects.map((project) => {
                 const isActive = project.id === activeProjectId;
 
                 return (
@@ -176,6 +218,15 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+          {projects.length && !filteredProjects.length ? (
+            <div className="empty-state settings-empty">
+              <Sparkles size={18} />
+              <div>
+                <strong>No websites match that search</strong>
+                <p>Try a different website name or domain.</p>
+              </div>
+            </div>
+          ) : null}
 
           {editingTargetProjectId ? (
             <div className="modal-backdrop" role="presentation">
@@ -218,45 +269,112 @@ export default function SettingsPage() {
           <div className="card__header">
             <div>
               <h2 className="card__title">AI model configuration</h2>
-              <p className="card__copy">Fixed models used for all scans. Configured in environment variables.</p>
+              <p className="card__copy">Choose one web-search-capable model from OpenAI, Anthropic, and Gemini for every scan run. The app records each provider's results separately.</p>
             </div>
           </div>
 
           <div className="settings-model-grid" style={{ display: "grid", gap: 16 }}>
             <div style={{ display: "grid", gap: 8 }}>
-              <span className="settings-item__title">Worker model</span>
-              <code className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
-                {modelConfig.find((m) => m.role === "worker")?.id ?? "Loading..."}
-              </code>
+              <label className="settings-item__title" htmlFor="page-analysis-model">Page analysis model</label>
+              <select
+                id="page-analysis-model"
+                className="input"
+                value={preferences.pageAnalysisModel}
+                onChange={(event) => updatePreferences({ pageAnalysisModel: event.target.value })}
+              >
+                {providerOptions.openai.map((option) => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
               <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
-                Crawl, page analysis, competitor discovery, competitor validation
+                Page analysis still runs on the OpenAI path because it works only from the stored crawl snapshot.
               </p>
             </div>
 
             <div style={{ display: "grid", gap: 8 }}>
-              <span className="settings-item__title">Analysis models</span>
+              <label className="settings-item__title" htmlFor="openai-model">OpenAI scan model</label>
+              <select
+                id="openai-model"
+                className="input"
+                value={preferences.comparisonModels.openai}
+                onChange={(event) =>
+                  updatePreferences({
+                    comparisonModels: {
+                      ...preferences.comparisonModels,
+                      openai: event.target.value
+                    },
+                    scoringModel: event.target.value
+                  })
+                }
+              >
+                {providerOptions.openai.map((option) => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Used for OpenAI discoverability and rankability runs with native `web_search`.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+              <label className="settings-item__title" htmlFor="anthropic-model">Anthropic scan model</label>
+              <select
+                id="anthropic-model"
+                className="input"
+                value={preferences.comparisonModels.anthropic}
+                onChange={(event) =>
+                  updatePreferences({
+                    comparisonModels: {
+                      ...preferences.comparisonModels,
+                      anthropic: event.target.value
+                    }
+                  })
+                }
+              >
+                {providerOptions.anthropic.map((option) => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Used for Claude web-search-backed discoverability and rankability runs.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+              <label className="settings-item__title" htmlFor="gemini-model">Gemini scan model</label>
+              <select
+                id="gemini-model"
+                className="input"
+                value={preferences.comparisonModels.google}
+                onChange={(event) =>
+                  updatePreferences({
+                    comparisonModels: {
+                      ...preferences.comparisonModels,
+                      google: event.target.value
+                    }
+                  })
+                }
+              >
+                {providerOptions.google.map((option) => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
+                Used for Google Search-grounded Gemini discoverability and rankability runs.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+              <span className="settings-item__title">Current hosted defaults</span>
               <div style={{ display: "grid", gap: 4 }}>
-                {(modelConfig.filter((m) => m.role === "analysis").length
-                  ? modelConfig.filter((m) => m.role === "analysis")
-                  : []
-                ).map((m) => (
-                  <code key={m.id} className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
-                    {m.id}
+                {modelConfig.map((item) => (
+                  <code key={`${item.role}:${item.id}`} className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
+                    {item.role}: {item.id}
                   </code>
                 ))}
               </div>
               <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
-                Each independently scores the website; results are aggregated by the judge model
-              </p>
-            </div>
-
-            <div style={{ display: "grid", gap: 8 }}>
-              <span className="settings-item__title">Judge model</span>
-              <code className="input" style={{ padding: "8px 12px", background: "var(--surface-2)", userSelect: "all" }}>
-                {modelConfig.find((m) => m.role === "judge")?.id ?? "Loading..."}
-              </code>
-              <p style={{ fontSize: "0.85em", color: "var(--text-2)" }}>
-                Aggregates all analysis model scores into a final consensus scorecard
+                These are the environment-backed hosted defaults used when a saved preference is missing.
               </p>
             </div>
           </div>
@@ -265,5 +383,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-
