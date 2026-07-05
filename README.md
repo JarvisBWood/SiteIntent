@@ -246,7 +246,8 @@ Scripts:
 - `npm run cf:preview`
   - Runs the built Worker locally with Wrangler
 - `npm run cf:deploy`
-  - Deploys the dashboard Worker
+  - Deploys the dashboard Worker from the existing `.open-next` bundle
+  - Important: this does not guarantee a fresh rebuild by itself
 - `npm run cf:deploy:coming-soon`
   - Deploys the apex coming-soon Worker
 - `npm run db:migrate:local`
@@ -262,6 +263,20 @@ npm run db:migrate:remote
 npm run cf:build
 npm run cf:deploy
 npm run cf:deploy:coming-soon
+```
+
+Critical deployment rule:
+
+- Always run `npm run cf:build` immediately before `npm run cf:deploy` for a manual production deploy.
+- `cf:deploy` publishes the current `.open-next` output. If that folder was built from older code, Cloudflare will deploy older code even if the working tree is newer.
+- Symptom of skipping `cf:build`: the deploy succeeds, but pages like `/settings` or `/dashboard` still show the old UI.
+
+Safe manual production shortcut:
+
+```bash
+npm run typecheck
+npm run cf:build
+npm run cf:deploy
 ```
 
 ### Automatic Deploys From GitHub
@@ -280,6 +295,7 @@ Important warning:
 - Do not use Cloudflare's default `npx wrangler deploy` deploy command for this app.
 - This repo must deploy through the `cf:deploy` package script.
 - `cf:deploy` runs `opennextjs-cloudflare deploy --config wrangler.jsonc`.
+- For manual deploys, `cf:deploy` should be treated as the publish step only. The fresh bundle must come from `npm run cf:build` first.
 
 How to think about Git deploys:
 
@@ -316,14 +332,19 @@ If an AI agent is asked to update the hosted app:
 4. Run local checks:
    - `npm run typecheck`
    - `npm run cf:build`
-5. If auth changes are made, verify:
+5. Before any manual production deploy, run:
+   - `npm run cf:build`
+   - `npm run cf:deploy`
+   - in that order, without skipping the build
+6. If auth changes are made, verify:
    - `POST /api/auth/login`
    - `GET /api/auth/session`
    - browser login flow
-6. If deploy/runtime changes are made, verify:
+7. If deploy/runtime changes are made, verify:
    - `/_next/static/*` assets return `200`
    - `/login` loads and hydrates
    - authenticated navigation reaches `/dashboard`
+   - recent UI changes are actually visible on the live site, not just locally
 
 ### Troubleshooting
 
@@ -335,6 +356,9 @@ Common problems and what they usually mean:
 - Cloudflare build succeeds but deploy fails with OpenNext config errors
   - Usually means the deploy command is wrong
   - It must be `npm run cf:deploy`, not raw `wrangler deploy`
+- Cloudflare deploy succeeds but the live app still shows the previous UI
+  - Usually means the Worker was deployed from a stale `.open-next` bundle
+  - Run `npm run cf:build` and then `npm run cf:deploy` again
 - API login works in curl but the browser login page does not redirect
   - Usually means frontend assets are not being served
 - D1 works locally but not in production
